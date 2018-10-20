@@ -1,12 +1,6 @@
 module simplex
     implicit none
 
-    abstract interface
-        real(8) pure function func(arg_x)
-            real(8), dimension(:), intent(in) :: arg_x
-        end function
-    end interface
-
 contains
     subroutine step(x, fn)
         ! parameters
@@ -17,7 +11,8 @@ contains
 
         ! arguments
         real(8), dimension(n, n+1), intent(inout) :: x
-        procedure(func) :: fn
+        real(8) :: fn
+        external :: fn
 
         ! values fn(x)
         real(8), dimension(n+1) :: z

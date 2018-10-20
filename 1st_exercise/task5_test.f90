@@ -4,8 +4,8 @@ module test
     implicit none
 
     abstract interface
-        real(8) pure function test_func(x)
-            real(8), dimension(2), intent(in) :: x
+        real(8) pure function test_func(x, y)
+            real(8), intent(in) :: x, y
         end function
     end interface
 
@@ -33,8 +33,8 @@ contains
         yl = linspace(ydom(1), ydom(2), N)
         call meshgrid(x, y, xl, yl)
         allocate( z(size(x, dim=1), size(x, dim=2)) )
-        ! z = func([x, y])
-        z = 20d0 + x**2 - 10d0*cos(2d0*PI*x) + y**2 - 10d0*cos(2d0*PI*y)
+        z = func(x, y)
+        ! z = 20d0 + x**2 - 10d0*cos(2d0*PI*x) + y**2 - 10d0*cos(2d0*PI*y)
 
         ! print *, z
 
@@ -61,10 +61,10 @@ contains
     ! global minimum: f(0, 0) = 0
     ! domain: -5.12 <= x(i) <= 5.12
     real(8) pure &
-    function rastrigin(x)
-        real(8), dimension(2), intent(in) :: x
+    function rastrigin(x, y)
+        real(8), intent(in) :: x, y
         real(8), parameter :: a = 10d0
-        rastrigin = 2d0*A + sum(x**2 - A*cos(2d0*PI*x))
+        rastrigin = 2d0*A + sum([x, y]**2 - A*cos(2d0*PI*[x, y]))
     end function rastrigin
 
     ! global minimum: f(0, 0) = 0
