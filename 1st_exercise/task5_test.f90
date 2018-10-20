@@ -3,16 +3,10 @@ module test
     use simplex, only: step
     implicit none
 
-    ! procedure(interf_func), pointer :: fnptr => null()
-
     abstract interface
         real(8) pure function test_func(x)
             real(8), dimension(2), intent(in) :: x
         end function
-
-        ! real(8) pure function interf_func(x)
-        !     real(8), intent(in) :: x
-        ! end function
     end interface
 
 contains
@@ -22,37 +16,32 @@ contains
         ! domains
         real(8), dimension(2), intent(in) :: xdom, ydom
         ! simplex vertices to start with
-        real(8), dimension(3), intent(inout) :: sim
+        real(8), dimension(3), intent(in) :: sim
         ! convergence tolerance
         real(8), intent(in) :: tol
         ! max iterations
         integer, intent(in) :: maxiter
 
+        real(8), parameter :: PI = 4*atan(1d0)
         integer, parameter :: N = 100
 
         type(gpf) :: gp
         real(8), dimension(N) :: xl, yl
         real(8), allocatable :: x(:,:), y(:,:), z(:,:)
 
-        ! fnptr => func
-
         xl = linspace(xdom(1), xdom(2), N)
         yl = linspace(ydom(1), ydom(2), N)
         call meshgrid(x, y, xl, yl)
         allocate( z(size(x, dim=1), size(x, dim=2)) )
-        ! z = elem_func(x, y)
-        z = func([x, y])
+        ! z = func([x, y])
+        z = 20d0 + x**2 - 10d0*cos(2d0*PI*x) + y**2 - 10d0*cos(2d0*PI*y)
 
-        call gp%contour(x, y, z)
+        ! print *, z
+
+        call gp%contour(x, y, z, palette='set1')
 
     end subroutine do_test
 
-
-    ! real(8) elemental &
-    ! function elem_func(x, y) result(res)
-    !     real(8), intent(in) :: x, y
-    !     if (associated(fnptr)) res = fnptr([x, y])
-    ! end function elem_func
 
 end module test
 
@@ -65,8 +54,7 @@ program main
     real(8), parameter :: eps = epsilon(1d0)
     integer :: res
 
-
-    call do_test(rastrigin, [-5d0, 5d0], [-5d0, 5d0], [1, 2, 3], eps, 100)
+    call do_test(rastrigin, [-5d0, 5d0], [-5d0, 5d0], [1d0, 2d0, 3d0], eps, 100)
 
 
 contains
