@@ -2,6 +2,31 @@
 
 import numpy as np
 
+def make_shekel(lo, hi, m):
+    """
+    To look at different shekel functions:
+        >>> f, a = plt.subplots()
+        >>> lo, hi = 0, 10
+        >>> step = (hi-lo)/100
+        >>> xm, ym = np.mgrid[lo:hi:step, lo:hi:step]
+        >>> def gen(lines=20, maxnum=10):
+        ...:    while 1:
+        ...:        s = make_shekel(lo, hi, maxnum)
+        ...:        a.clear()
+        ...:        a.contour(xm, ym, s(xm, ym), lines)
+        ...:        yield
+        ...:
+        >>> g = gen()
+        >>> next(g)
+    """
+    a = np.random.uniform(lo, hi, (m, 2))
+    c = np.random.uniform(lo, hi, (m,))
+    def shekel(x, y):
+        return -np.sum( np.array([c[i]+(x-a[i,0])**2+(y-a[i,1])**2
+                                  for i in range(m)])**(-1), axis=0 )
+    return shekel
+
+
 # global minimum: f(0, 0) = 0
 # domain: -5.12 <= x(i) <= 5.12
 def rastrigin(x, y):
@@ -108,4 +133,5 @@ test_functions = {
     'rosenbrock'        :   (rosenbrock,        [-100, 100]),
     'styblinski-tang'   :   (styblinski_tang,   [-5, 5]),
     'tal'               :   (tal,               [-3, 3], [-2, 2]),
+    'shekel'            :   (make_shekel,       [-5, 5])
 }

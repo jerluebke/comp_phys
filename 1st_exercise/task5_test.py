@@ -39,9 +39,12 @@ def setup(func_name, xydoms_distinct, numpoints=100, lines=20):
         x[:,1] = np.random.uniform(*ybounds, (3,))
     else:
         func, bounds = test_functions[func_name]
+        if func_name == 'shekel':
+            #  func = func(*bounds, 10)
+            func = func(0, 10, 100)
         xl = np.linspace(*bounds, numpoints)
         yl = xl[:]
-        x = np.random.uniform(*xbounds, (3, 2))
+        x = np.random.uniform(*bounds, (3, 2))
 
     X, Y = np.meshgrid(xl, yl)
     ax.contour(X, Y, func(X, Y), lines)
@@ -62,6 +65,7 @@ def anim_py(tol=1e-7, N=100):
         except StopIteration:
             print('found minimum at (%f, %f)\nafter %d steps' \
                   % (*x[0], i))
+            raise
         if i >= N:
             print('no convergence after %d steps\nlast position: (%f, %f)' \
                   % (i, *x[0]))
@@ -69,7 +73,8 @@ def anim_py(tol=1e-7, N=100):
         s.set_data(x[:,0], x[:,1])
         return s,
 
-    s, = ax.plot([*x[:,0], x[0, 0]], [*x[:,1], x[1, 0]], 'r')
+    #  s, = ax.plot([*x[:,0], x[0, 0]], [*x[:,1], x[1, 0]], 'r')
+    s, = ax.plot([], [], 'r')
     anim = animation.FuncAnimation(fig, anim_func, frames=100,
                                    interval=500, blit=True, init_func=init)
     return anim
@@ -95,13 +100,14 @@ def anim_fortran(tol=1e-7, N=100):
 
     step_gen = Step_Gen(x, lambda arg: func(*arg), tol=tol, N=N)
     iter(step_gen)
-    s, = ax.plot([*step_gen.simplex[0], step_gen.simplex[0, 0]],
-                 [*step_gen.simplex[1], step_gen.simplex[1, 0]], 'r')
+    #  s, = ax.plot([*step_gen.simplex[0], step_gen.simplex[0, 0]],
+    #               [*step_gen.simplex[1], step_gen.simplex[1, 0]], 'r')
+    s, = ax.plot([], [], 'r')
     anim = animation.FuncAnimation(fig, anim_func, frames=100,
                                    interval=500, blit=True, init_func=init)
     return anim
 
 
-setup('tal', True)
+#  setup('tal', True)
 #  a = anim_fortran()
-a = anim_py()
+#  a = anim_py()
