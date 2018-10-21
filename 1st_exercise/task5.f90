@@ -14,6 +14,8 @@ contains
         real(8) :: fn
         external :: fn
 
+        ! indices
+        ! integer, dimension(3) :: idx
         ! values fn(x)
         real(8), dimension(n+1) :: z
         ! middle, reflected, expanded, contracted
@@ -27,6 +29,10 @@ contains
         ! ONLY FOR size(x) == 3
         z = [( fn(x(:, i)), i=1,n+1 )]
         call sort3r(x, z)
+        ! argsort doesn't quite work yet...
+        ! idx = argsort3(z)
+        ! z = z(idx)
+        ! x = x(:,idx)
 
         ! calculate middle, omitting x(:,n+1)
         m = sum(x(:,1:n), dim=1) / n
@@ -65,6 +71,14 @@ contains
         return
     end subroutine step
 
+    function argsort3(x) result(idx)
+        real(8), dimension(3), intent(in) :: x
+        integer, dimension(3) :: idx
+        idx = [1, 2, 3]
+        if (x(1) > x(2)) call swapi(idx(1), idx(2))
+        if (x(2) > x(3)) call swapi(idx(2), idx(3))
+        if (x(1) > x(2)) call swapi(idx(1), idx(2))
+    end function
 
     subroutine sort3r(x, z)
         real(8), dimension(3) :: z
@@ -92,6 +106,13 @@ contains
         a = b
         b = t
     end subroutine swapr
+
+    subroutine swapi(a, b)
+        integer :: a, b, t
+        t = a
+        a = b
+        b = t
+    end subroutine
 end module simplex
 
 
