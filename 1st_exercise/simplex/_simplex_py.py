@@ -16,6 +16,10 @@ class Step_Gen:
         >>> for step in sg:
         ...     # update
 
+    or
+        >>> sg = iter(Step_Gen(simplex, func))
+        >>> current_simplex = next(sg)
+
     """
     required_shape = (2, 3)
 
@@ -25,6 +29,7 @@ class Step_Gen:
         =========
         simplex :   ndarray, ndim=2, shape=(2, 3), Fortran-contiguous
         func    :   callback function to optimize
+                    f(x) = z, x like simplex, z scalar
         tol     :   convergence tolerance (default 1e-19)
         N       :   max. steps (default 1000)
         """
@@ -38,16 +43,16 @@ class Step_Gen:
 
     def __iter__(self):
         self.steps      = 0
-        self.converges  = False
+        #  self.converges  = False
         return self
 
     def __next__(self):
-        if self.steps >= self.N or self._does_converge():
+        if self.steps >= self.N or self.converges:
             raise StopIteration
         self.steps += 1
         _step_fortran(self.simplex, self.func)
         return self.simplex
 
-    def _does_converge(self):
-        self.converges = std(self.simplex) < self.tol
-        return self.converges
+    @property
+    def converges(self):
+        return all(std(self.simplex, axis=1) < self.tol)

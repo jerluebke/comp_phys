@@ -29,7 +29,7 @@ contains
         call sort3r(x, z)
 
         ! calculate middle, omitting x(:,n+1)
-        m = sum(x(:,1:n), dim=2) / n
+        m = sum(x(:,1:n), dim=1) / n
 
         ! calculate reflection
         r = m + a*(m - x(:, n+1))
@@ -67,17 +67,21 @@ contains
 
 
     subroutine sort3r(x, z)
-        real(8), dimension(3) :: x, z
+        real(8), dimension(3) :: z
+        real(8), dimension(2, 3) :: x
         if (z(1) > z(2)) then
-            call swapr(x(1), x(2))
+            call swapr(x(1,1), x(1,2))
+            call swapr(x(2,1), x(2,2))
             call swapr(z(1), z(2))
         end if
         if (z(2) > z(3)) then
-            call swapr(x(2), x(3))
+            call swapr(x(1,2), x(1,3))
+            call swapr(x(2,2), x(2,3))
             call swapr(z(2), z(3))
         end if
         if (z(1) > z(2)) then
-            call swapr(x(1), x(2))
+            call swapr(x(1,1), x(1,2))
+            call swapr(x(2,1), x(2,2))
             call swapr(z(1), z(2))
         end if
     end subroutine sort3r
@@ -90,6 +94,7 @@ contains
     end subroutine swapr
 end module simplex
 
+
 program test
     use simplex, only: step
     implicit none
@@ -97,13 +102,13 @@ program test
     real(8), dimension(2, 3) :: x = reshape([-1.9, -1.2, -0.7, -1.9, -1.5, -1.8], &
                                             [2, 3])
 
-    100 format(2(3(3X, F4.1)/))
+    100 format(2(3(3X, F9.6)/))
 
-    print 100, x
+    ! print 100, transpose(x)
 
     do i=1, 20
         call step(x, himmelblau)
-        print 100, x
+        print 100, transpose(x)
     end do
 
 contains
