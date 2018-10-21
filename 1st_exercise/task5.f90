@@ -26,7 +26,7 @@ contains
         ! calculate and sort values fn(x)
         ! ONLY FOR size(x) == 3
         z = [( fn(x(:, i)), i=1,n+1 )]
-        call sort3r(z)
+        call sort3r(x, z)
 
         ! calculate middle, omitting x(:,n+1)
         m = sum(x(:,1:n), dim=2) / n
@@ -66,11 +66,20 @@ contains
     end subroutine step
 
 
-    subroutine sort3r(z)
-        real(8), dimension(3) :: z
-        if (z(1) > z(2)) call swapr(z(1), z(2))
-        if (z(2) > z(3)) call swapr(z(2), z(3))
-        if (z(1) > z(2)) call swapr(z(1), z(2))
+    subroutine sort3r(x, z)
+        real(8), dimension(3) :: x, z
+        if (z(1) > z(2)) then
+            call swapr(x(1), x(2))
+            call swapr(z(1), z(2))
+        end if
+        if (z(2) > z(3)) then
+            call swapr(x(2), x(3))
+            call swapr(z(2), z(3))
+        end if
+        if (z(1) > z(2)) then
+            call swapr(x(1), x(2))
+            call swapr(z(1), z(2))
+        end if
     end subroutine sort3r
 
     subroutine swapr(a, b)
@@ -80,3 +89,28 @@ contains
         b = t
     end subroutine swapr
 end module simplex
+
+program test
+    use simplex, only: step
+    implicit none
+    integer :: i
+    real(8), dimension(2, 3) :: x = reshape([-1.9, -1.2, -0.7, -1.9, -1.5, -1.8], &
+                                            [2, 3])
+
+    100 format(2(3(3X, F4.1)/))
+
+    print 100, x
+
+    do i=1, 20
+        call step(x, himmelblau)
+        print 100, x
+    end do
+
+contains
+    real(8) pure &
+    function himmelblau(x)
+        real(8), dimension(2), intent(in) :: x
+        himmelblau = (x(1)**2+x(2)-11d0)**2 + (x(1)+x(2)**2-7d0)**2
+    end function himmelblau
+
+end program

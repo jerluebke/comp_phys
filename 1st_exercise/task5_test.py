@@ -2,7 +2,8 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-#  from simplex import Step_Gen
+from matplotlib import animation
+from simplex import Step_Gen
 
 
 # global minimum: f(0, 0) = 0
@@ -93,35 +94,51 @@ def styblinski_tang(x, y):
 
 
 test_functions = {
-    'ackley'            :   (ackley, [-5, 5]),
-    'bukin_n6'          :   (bukin_n6, [-15, -5], [-3, 3]),
-    'cross_in_tray'     :   (cross_in_tray, [-10, 10]),
-    'easom'             :   (easom, [-100, 100]),
-    'eggholder'         :   (eggholder, [-512, 512]),
-    'goldstein_prince'  :   (goldstein_prince, [-2, 2]),
-    'himmelblau'        :   (himmelblau, [-5, 5]),
-    'hoelder_table'     :   (hoelder_table, [-10, 10]),
-    'levi_n13'          :   (levi_n13, [-10, 10]),
-    'rastrigin'         :   (rastrigin, [-5.12, 5.12]),
-    'rosenbrock'        :   (rosenbrock, [-100, 100]),
-    'styblinski_tang'   :   (styblinski_tang,[-5, 5]),
+    'ackley'            :   (ackley,            [-5, 5]),
+    'bukin_n6'          :   (bukin_n6,          [-15, -5], [-3, 3]),
+    'cross_in_tray'     :   (cross_in_tray,     [-10, 10]),
+    'easom'             :   (easom,             [-100, 100]),
+    'eggholder'         :   (eggholder,         [-512, 512]),
+    'goldstein_prince'  :   (goldstein_prince,  [-2, 2]),
+    'himmelblau'        :   (himmelblau,        [-5, 5]),
+    'hoelder_table'     :   (hoelder_table,     [-10, 10]),
+    'levi_n13'          :   (levi_n13,          [-10, 10]),
+    'rastrigin'         :   (rastrigin,         [-5.12, 5.12]),
+    'rosenbrock'        :   (rosenbrock,        [-100, 100]),
+    'styblinski_tang'   :   (styblinski_tang,   [-5, 5]),
 }
 
 
-func, bounds = test_functions['ackley']
+func, xbounds = test_functions['himmelblau']
 #  func, xbounds, ybounds = test_functions['bukin_n6']
 
 
 
-fig, ax = plt.subplot()
-xl = np.linspace(*bounds, 100)
+fig, ax = plt.subplots()
+xl = np.linspace(*xbounds, 100)
+#  yl = np.linspace(*ybounds, 100)
 yl = xl[:]
 X, Y = np.meshgrid(xl, yl)
 
-ax.countour(X, Y, func(X, Y))
+ax.contour(X, Y, func(X, Y))
 
-#  step_gen = Step_Gen(np.array([[-4.5, -4.5], [0, 4.5], [4.5, -4.5]]),
-#                      lambda x: func(*x))
-#  
-#  def step(i):
-#      pass
+step_gen = Step_Gen(np.array([[-1.9, -1.9], [-1.2, -1.5], [-0.7, -1.8]]),
+#  step_gen = Step_goldstein_prince(np.array([[-4.5, -4.5], [-3.5, -2.], [-2.5, -4.5]]),
+                    lambda x: func(*x))
+iter(step_gen)
+s, = ax.plot([*step_gen.simplex[0], step_gen.simplex[0, 0]],
+             [*step_gen.simplex[1], step_gen.simplex[1, 0]], 'r')
+
+def init():
+    s.set_data([], [])
+    return s,
+
+def step(i):
+    simplex = next(step_gen)
+    print(simplex)
+    s.set_data([*simplex[0], simplex[0, 0]],
+               [*simplex[1], simplex[1, 0]])
+    return s,
+
+#  anim = animation.FuncAnimation(fig, step, frames=100, interval=500, blit=True,
+#                                 init_func=init)
