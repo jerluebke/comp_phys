@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import animation
 from simplex import Step_Gen
-from simplex_py import step
+from simplex_py import step, find
 from test_functions import *
 
 
@@ -22,7 +22,7 @@ s   = None
 # functions #
 #############
 
-def setup(func_name, xydoms_distinct, numpoints=100, lines=20):
+def setup(func_name, xydoms_distinct, numpoints=100, lines=20, randx=True):
     global x, func, fig, ax
 
     fig, ax = plt.subplots()
@@ -35,8 +35,9 @@ def setup(func_name, xydoms_distinct, numpoints=100, lines=20):
         xl = np.linspace(*xbounds, numpoints)
         yl = np.linspace(*ybounds, numpoints)
         x = np.zeros((3, 2))
-        x[:,0] = np.random.uniform(*xbounds, (3,))
-        x[:,1] = np.random.uniform(*ybounds, (3,))
+        if x is None or randx:
+            x[:,0] = np.random.uniform(*xbounds, (3,))
+            x[:,1] = np.random.uniform(*ybounds, (3,))
     else:
         func, bounds = test_functions[func_name]
         if func_name == 'shekel':
@@ -44,7 +45,8 @@ def setup(func_name, xydoms_distinct, numpoints=100, lines=20):
             func = func(0, 10, 100)
         xl = np.linspace(*bounds, numpoints)
         yl = xl[:]
-        x = np.random.uniform(*bounds, (3, 2))
+        if x is None or randx:
+            x = np.random.uniform(*bounds, (3, 2))
 
     X, Y = np.meshgrid(xl, yl)
     ax.contour(X, Y, func(X, Y), lines)
@@ -111,3 +113,29 @@ def anim_fortran(tol=1e-7, N=100):
 #  setup('tal', True)
 #  a = anim_fortran()
 #  a = anim_py()
+
+x = np.array([[-1., -3.5], [0., -4.5], [1., -3.5]])
+setup('himmelblau', False, randx=False)
+sg = Step_Gen(x, lambda arg: func(*arg), 1e-7, 100)
+res_fortran = sg.find()
+res_python = find(x, lambda arg: func(*arg.T), 1e-7, 100)
+
+print(
+'''
+Fortran
+    converges: %d
+    position: %f, %f
+
+Python
+    converges: %d
+    position: %f, %f
+    ''' % (res_fortran[0], *res_fortran[1][:,0],
+           res_python[0], *res_python[1][0])
+)
+
+def timeit_find():
+    x = sg._orig_simplex.copy(order='C').T
+    return find(x, lambda arg: func(*arg.T), 1e-7, 100)
+
+#  %timeit sg.find()
+#  %timeit timeit_find()

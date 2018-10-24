@@ -4,6 +4,7 @@ from numpy import std
 import _simplex
 
 _step_fortran = _simplex.simplex.step
+_find_fortran = _simplex.simplex.find
 
 
 class Step_Gen:
@@ -37,13 +38,14 @@ class Step_Gen:
         if self.simplex.shape != self.required_shape:
             raise ValueError('Required shape: (%d, %d); Received: (%d, %d)'
                              % (*self.required_shape, *self.simplex.shape))
+        self._orig_simplex = self.simplex.copy(order='F')
         self.func = func
         self.tol  = tol
         self.N    = N
 
     def __iter__(self):
-        self.steps      = 0
-        #  self.converges  = False
+        self.steps = 0
+        self.simplex = self._orig_simplex.copy(order='F')
         return self
 
     def __next__(self):
@@ -56,3 +58,8 @@ class Step_Gen:
     @property
     def converges(self):
         return all(std(self.simplex, axis=1) < self.tol)
+
+    def find(self):
+        self.simplex = self._orig_simplex.copy(order='F')
+        conv = _find_fortran(self.simplex, self.func, self.tol, self.N)
+        return conv, self.simplex
