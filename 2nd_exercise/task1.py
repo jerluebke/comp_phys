@@ -24,35 +24,26 @@ def simpson(f, a, b, N):
     return h * (ar + 4*au + 2*ag) / 3
 
 test_functions = {
-    #  'x^3 - x^2' : (lambda x: x**3-x**2,
-    #                 lambda x: x**4/4-x**3/3),
-    #  'sin^2 x'   : (lambda x: np.sin(x)**2,
-    #                 lambda x: x/2-np.sin(x)*np.cos(x)/2),
-    #  # divide by zero in [0, 1] (log(0), duh...)
-    #  #  'x * log(x)': (lambda x: x*np.log(x),
-    #  #                 lambda x: x**2*np.log(x)/2-x**2/4),
-    #  'x * e^{-x}': (lambda x: x*np.exp(-x),
-    #                 lambda x: -(x+1)*np.exp(-x)),
+    'x^3 - x^2' : (lambda x: x**3-x**2,
+                   lambda x: x**4/4-x**3/3),
+    'sin^2 x'   : (lambda x: np.sin(x)**2,
+                   lambda x: x/2-np.sin(x)*np.cos(x)/2),
+    # divide by zero in [0, 1] (log(0), duh...)
+    #  'x * log(x)': (lambda x: x*np.log(x),
+    #                 lambda x: x**2*np.log(x)/2-x**2/4),
+    'x * e^{-x}': (lambda x: x*np.exp(-x),
+                   lambda x: -(x+1)*np.exp(-x)),
     'fn' : (lambda x: np.exp(-x)*np.sin(x),
             lambda x: -np.exp(-x)*np.sin(x)/2-np.exp(-x)*np.cos(x)/2)
 }
 
-#  integrations = [
-#      rectangle,
-#      trapez,
-#      simpson
-#  ]
-#  
-#  for n, (f, F) in test_functions.items():
-#      print(n)
-#      for i in integrations:
-#          print('\t%f' % i(f, 0.1, 1, 10))
-#      print('analytic: %f' % (F(1)-F(0)), '\n\n')
 
-A, B = 0., 10.
-M = 25 
-Ns = np.arange(2, 2*M+2, 2)
-L = 3
+A, B = 0., 1.
+#  M = 25 
+#  Ns = np.arange(2, 2*M+2, 2)
+Ns = 2**np.arange(0, 13)
+M = len(Ns)
+L = len(test_functions)
 
 res = {
     'rectangle' : (rectangle, np.zeros((M, L)), np.zeros(M)),
@@ -61,13 +52,15 @@ res = {
 }
 
 fig, ax = plt.subplots()
+ax.set_xscale('log')
 ax.set_yscale('log')
 
 for ni, (integ, resarr, errarr) in res.items():
     for i, (nf, (f, F)) in enumerate(test_functions.items()):
         resarr[:,i] = np.array([integ(f, A, B, n) for n in Ns])
+        print(ni, nf, np.min(resarr[:,i]))
         resarr[:,i] = np.abs(resarr[:,i] - (F(B)-F(A)))
-    #  errarr = np.mean(resarr, axis=1)
-    ax.plot(Ns, resarr[:,0], label=ni)
+    errarr = np.mean(resarr, axis=1)
+    ax.plot(Ns, errarr, label=ni)
 
 plt.legend()
