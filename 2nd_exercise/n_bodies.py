@@ -16,9 +16,12 @@ def solve_all_two(q0, q1, m, dt, steps, F, *fargs, **fkwds):
 def F_two(r, m):
     return m * r / np.sum(r**2)**(3./2.)
 
-#  q0 = np.array([[1., 1.], [0., 0.]])
-#  q1 = q0 + np.array([[.05, 0.], [0., 0.]])
-#  m = np.array([1, 2])
+q0 = np.array([[1., 1.], [0., 0.]])
+q1 = q0 + np.array([[.05, 0.], [0., 0.]])
+m = np.array([1, 2])
+res = solve_all_two(q0, q1, m, .05, 1000, F_two)
+plt.figure()
+[plt.plot(res[i,0,:], res[i,1,:], label='mass = %f' % m[i]) for i in (0, 1)]
 
 
 
@@ -44,6 +47,10 @@ def F_three(rj, rk, mj, mk):
 q0 = np.array([[1., 1.], [0., 0.], [2., 0.]])
 q1 = q0 + np.array([[.05, 0.], [0., 0.], [0., 0.]])
 m = np.array([1, 2, 1])
+res = solve_all_three(q0, q1, m, .05, 60, F_three)
+plt.figure()
+[plt.plot(res[i,0,:], res[i,1,:], label='mass = %f' % m[i]) for i in (0, 1, 2)]
+plt.legend()
 
 
 
