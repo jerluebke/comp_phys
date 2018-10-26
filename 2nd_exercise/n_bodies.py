@@ -47,8 +47,6 @@ m = np.array([1, 2, 1])
 
 
 
-
-
 def solve_all_n(q0, q1, m, dt, steps, F, *fargs, **fkwds):
     """
     traj[particle, dimension, steps]
