@@ -5,3 +5,7 @@ Ruhr-University Bochum
 ## 1st Exercise
 numerical differentiation, root finding, optimization in 2d (simplex-downhill
 method)
+
+## 2nd Exercise
+numerical integration, ODEs (Kepler), PDEs (Heat)  
+
