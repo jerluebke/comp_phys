@@ -97,9 +97,11 @@ def test_2d(N=100, tmax=100):
     # circle, soft
     get_f0 = lambda s, x, y: np.exp(-(x**2+y**2)/(2*s**2)) / (s*np.sqrt(2*np.pi))
     # line
-    #  get_f0 = lambda s: np.exp(-(x**2)/(2*s**2)) / (s*np.sqrt(2*np.pi))
+    #  get_f0 = lambda s, x, y: np.exp(-(x**2)/(2*s**2)) / (s*np.sqrt(2*np.pi))
     f0 = get_f0(2, x+4, y+4) + get_f0(2, x-4, y-4) + get_f0(2, x+4, y-4) \
         + get_f0(2, x-4, y+4)
+    #  f0 = get_f0(2, x)
+    #  f0 *= 1e24
     # circle, sharp
     #  f0 = np.piecewise(x, [np.abs(x**2+y**2)<1.], [1.])
     # rectangle, sharp
@@ -110,7 +112,6 @@ def test_2d(N=100, tmax=100):
     #  fegd = fwd_euler_gen_direct(f0, step, dt, tmax)
 
     # PLOTTING
-    plt.grid(False)
     fig = plt.figure()
     ax = fig.add_subplot(111, xticklabels=[], yticklabels=[],
                          title='2D Heat Equation over time - Forward Euler solver')
