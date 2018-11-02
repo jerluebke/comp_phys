@@ -4,6 +4,10 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy import sparse
 
+#  TODO
+#  test other functions
+#  documentation!
+
 
 #  multigrid
 #  =========
@@ -26,7 +30,10 @@ class Multigrid:
         self._interpolation = []
         self.L              = []
         self.psi            = []
-        self.defect         = []
+        self.defect         = None
+        self.N              = N
+        self.maxlevel       = maxlevel
+        self.iterations     = 0
 
         for i in range(maxlevel):
             n = N // 2**i
@@ -50,27 +57,27 @@ class Multigrid:
                              format='csc') / self.dx[i]**2
             )
             self.psi.append(np.zeros(n))
-            self.defect.append(np.zeros(n))
+            #  self.defect.append(np.zeros(n))
 
-        self.N          = N
-        self.maxlevel   = maxlevel
         self.restrict   = self._weighting
         self.prolong    = self._interpolation
         self._solver    = self._jacobi
 
 
-    def solve(self, rho, steps, tol=1e-7, maxiter=50):
+    def solve(self, rho, steps=[0], tol=1e-7, maxiter=1000):
         if callable(rho):
             rho = rho(self.x[0])
         # reset psi
         for i in range(self.maxlevel):
             self.psi[i] = np.zeros(self.N//2**i)
+        self.iterations = 0
 
         for i in range(maxiter):
             self.solve_one(rho, 0, steps)
-            if np.mean(np.abs(rho - self.L[0] @ self.psi[0])) < tol:
-                pass
-        self.smooth(rho, 0, steps[0])
+            self.defect = rho - self.L[0] @ self.psi[0]
+            if np.mean(np.abs(self.defect[1:-1])) < tol:
+                print('convergence after %d iterations' % self.iterations)
+                return self.psi[0]
         return self.psi[0]
 
 
@@ -79,13 +86,15 @@ class Multigrid:
         RECURSIVE
         """
         self.smooth(rho, level, steps[level])
-        self.defect[level] = rho - self.L[level] @ self.psi[level]
+        defect = rho - self.L[level] @ self.psi[level]
 
         if level < self.maxlevel-1 and steps[level+1]:
-            self.solve_one(self.restrict[level] @ self.defect[level],
+            self.solve_one(self.restrict[level] @ defect,
                            level+1, steps)
             error = self.prolong[level] @ self.psi[level+1]
             self.psi[level] += error
+
+        self.smooth(rho, level, steps[level])
 
 
     def smooth(self, rho, level, steps=1):
@@ -94,6 +103,7 @@ class Multigrid:
                                            self.psi[level],
                                            self.dx[level])
             self.psi[level][0] = self.psi[level][-1] = 0
+        self.iterations += steps
 
 
     def _jacobi(self, rho, psi, dx):
@@ -102,3 +112,25 @@ class Multigrid:
 
     def _gaus_seidel(self, rho, psi, dx):
         pass
+
+
+
+def rho_func(x):
+    return np.sin(x)*np.exp(-x**2)
+
+mg  = Multigrid(-5, 5, 128, 3)
+x   = mg.x[0]
+rho = rho_func(x)
+L   = mg.L[0]
+
+sol = mg.solve(rho, steps=[10, 0])          # 10740 iterations
+sol = mg.solve(rho, steps=[100, 21, 0])     # 17182 iterations
+sol = mg.solve(rho, steps=[160, 15, 120])   # 21240 iterations
+
+fig, ax = plt.subplots()
+ax.set_title('Comparison Multigrid - poisson equation')
+ax.plot(x, rho, label=r'$\rho$')
+ax.plot(x, sol, label=r'$\psi$')
+ax.plot(x, L@sol, label=r'$\Delta\psi$')
+
+plt.legend()
