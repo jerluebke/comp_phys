@@ -27,6 +27,7 @@ class Multigrid:
         self.L              = []
         self.psi            = []
         self.defect         = []
+
         for i in range(maxlevel):
             n = N // 2**i
             self.x.append(np.linspace(xmin, xmax, n))
@@ -49,42 +50,55 @@ class Multigrid:
                              format='csc') / self.dx[i]**2
             )
             self.psi.append(np.zeros(n))
-            self.defect.append([np.zeros(n),    # before
-                                np.zeros(n)])   # after
+            self.defect.append(np.zeros(n))
+
+        self.N          = N
         self.maxlevel   = maxlevel
-        self.restrict   = self._injection
+        self.restrict   = self._weighting
         self.prolong    = self._interpolation
         self._solver    = self._jacobi
 
-    def solve(self, rho, i=0, steps=1):
+
+    def solve(self, rho, steps, tol=1e-7, maxiter=50):
+        if callable(rho):
+            rho = rho(self.x[0])
+        # reset psi
+        for i in range(self.maxlevel):
+            self.psi[i] = np.zeros(self.N//2**i)
+
+        for i in range(maxiter):
+            self.solve_one(rho, 0, steps)
+            if np.mean(np.abs(rho - self.L[0] @ self.psi[0])) < tol:
+                pass
+        self.smooth(rho, 0, steps[0])
+        return self.psi[0]
+
+
+    def solve_one(self, rho, level=0, steps=[0]):
         """
         RECURSIVE
+        """
+        self.smooth(rho, level, steps[level])
+        self.defect[level] = rho - self.L[level] @ self.psi[level]
 
-        V scheme
-        """
-        if callable(rho):
-            rho = rho(self.x[i])
-        self.psi[i] = self.smooth(rho, i, steps)
-        self.defect[i][0] = rho - self.L[i] @ self.psi[i]
-        if i < self.maxlevel-1:
-            error = self.solve(self.restrict[i] @ self.defect[i][0], i+1)
-            self.psi[i] -= self.prolong[i] @ error
-        self.psi[i] = self.smooth(rho, i, steps)
-        self.defect[i][1] = rho - self.L[i] @ self.psi[i]
-        return self.psi[i]
+        if level < self.maxlevel-1 and steps[level+1]:
+            self.solve_one(self.restrict[level] @ self.defect[level],
+                           level+1, steps)
+            error = self.prolong[level] @ self.psi[level+1]
+            self.psi[level] += error
 
-    def smooth(self, rho, i, j=1):
-        """
-        perform j solution steps for the poisson equation on gridlevel i
-        """
-        psi = self.psi[i]
-        for k in range(j):
-            psi = self._solver(rho, psi, self.dx[i])
-            psi[0] = psi[-1] = 0
-        return psi
+
+    def smooth(self, rho, level, steps=1):
+        for _ in range(steps):
+            self.psi[level] = self._solver(rho,
+                                           self.psi[level],
+                                           self.dx[level])
+            self.psi[level][0] = self.psi[level][-1] = 0
+
 
     def _jacobi(self, rho, psi, dx):
         return (np.roll(psi, 1) + np.roll(psi, -1) - dx**2 * rho) / 2.
+
 
     def _gaus_seidel(self, rho, psi, dx):
         pass

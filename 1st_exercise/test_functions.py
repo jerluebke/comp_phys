@@ -127,10 +127,11 @@ test_functions = {
     'eggholder'         :   (eggholder,         [-512, 512]),
     'goldstein-prince'  :   (goldstein_prince,  [-2, 2]),
     'himmelblau'        :   (himmelblau,        [-5, 5]),
-    'hoelder-table'     :   (hoelder_table,     [-10, 10]),
+    'hoelder-table'     :   (hoelder_table,     [-8, 8]),
     'levi-n13'          :   (levi_n13,          [-10, 10]),
     'rastrigin'         :   (rastrigin,         [-5.12, 5.12]),
-    'rosenbrock'        :   (rosenbrock,        [-100, 100]),
+    'rosenbrock'        :   (rosenbrock,        # [-100, 100]),
+                             [-2, 2], [-3, 5]),
     'styblinski-tang'   :   (styblinski_tang,   [-5, 5]),
     'tal'               :   (tal,               [-3, 3], [-2, 2]),
     'shekel'            :   (make_shekel,       [-5, 5])
