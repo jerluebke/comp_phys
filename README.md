@@ -7,5 +7,8 @@ numerical differentiation, root finding, optimization in 2d (simplex-downhill
 method)
 
 ## 2nd Exercise
-numerical integration, ODEs (Kepler), PDEs (Heat)  
+numerical integration, ODEs (Kepler, animated n bodies), PDEs (Heat)  
+
+## 3rd Exercise
+multigrid (in progress...)  
 

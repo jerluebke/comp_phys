@@ -25,8 +25,9 @@ s   = None
 def setup(func_name, xydoms_distinct, numpoints=100, lines=20, randx=True):
     global x, func, fig, ax
 
-    fig, ax = plt.subplots()
-    ax.set_title(func_name)
+    if not fig:
+        fig, ax = plt.subplots()
+        ax.set_title(func_name)
 
     # 'bukin-n6' and 'tal' need special treatment, since their x- and y-domains are not the
     # same (unlike the other functions present here)
