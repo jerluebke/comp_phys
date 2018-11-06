@@ -110,8 +110,16 @@ class Multigrid:
         return (np.roll(psi, 1) + np.roll(psi, -1) - dx**2 * rho) / 2.
 
 
+    def _omega_jacobi(self, rho, psi, dx, omega):
+        return (1-omega)*psi + omega*(
+            np.roll(psi, 1) + np.roll(psi, -1) - dx**2*rho) / 2.
+
+
     def _gaus_seidel(self, rho, psi, dx):
-        pass
+        res = np.zeros(psi.size)
+        for i in range(1, psi.size-1):
+            res[i] = (psi[i+1] + res[i-1] - rho[i]*dx**2) / 2.
+        return res
 
 
 
