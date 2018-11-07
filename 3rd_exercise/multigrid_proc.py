@@ -100,7 +100,7 @@ def solve_one_v(grids, level, steps):
 def solve_one_scheme(grids, level, steps, scheme):
     g = grids[level]
     iters = 0
-    for _ in scheme[level]:
+    for _ in range(scheme[level]):
         iters += smooth(g, steps[level])
         g.d = g.rho - Lap(g)
         if level < len(grids)-1:
