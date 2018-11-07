@@ -48,6 +48,7 @@ def smooth(g, steps):
     for i in range(steps):
         g.f = SOLVER(g.f, g.rho, g.dx)
         g.f[0] = g.f[-1] = 0
+    return steps
 
 def _jacobi(f, rho, dx):
     return (np.roll(f, 1) + np.roll(f, -1) - rho*dx**2)/2.
@@ -86,15 +87,28 @@ SOLVER = _jacobi
 
 def solve_one_v(grids, level, steps):
     g = grids[level]
-    smooth(g, steps[level])
-    iters = steps[level]
+    iters = smooth(g, steps[level])
     g.d = g.rho - Lap(g)
-    if level < len(grids)-1 and steps[level+1]:
+    if level < len(grids)-1:
         grids[level+1].rho = RESTRICT(g.d)
         iters += solve_one_v(grids, level+1, steps)
         g.f += PROLONG(grids[level+1].f)
-    smooth(g, steps[level])
-    return iters + steps[level]
+    iters += smooth(g, steps[level])
+    return iters
+
+
+def solve_one_scheme(grids, level, steps, scheme):
+    g = grids[level]
+    iters = 0
+    for _ in scheme[level]:
+        iters += smooth(g, steps[level])
+        g.d = g.rho - Lap(g)
+        if level < len(grids)-1:
+            grids[level+1].rho = RESTRICT(g.d)
+            iters += solve_one_scheme(grids, level+1, steps, scheme)
+            g.f += PROLONG(grids[level+1].f)
+        iters += smooth(g, steps[level])
+    return iters
 
 
 def rho_1(x):
@@ -108,9 +122,6 @@ def rho_3(x, d=1):
     return rho_2(x)*np.exp(-x**2*np.pi*d)
 
 
-#  %timeit solve(init(rho, -5, 5, 64, 4), [100, 30, 0], [1, 1, 1])
-#  %timeit solve(init(rho, -5, 5, 64, 3), [50, 20, 0], [1, 1, 1])
-#  %timeit solve(init(rho, -5, 5, 64, 3), [1, 0, 0], [1, 1, 1])
 
 def test_mg(N, rho_func,
             solver=(_jacobi, 'jacobi'),
@@ -134,8 +145,8 @@ def test_mg(N, rho_func,
     conv = False
     for i in range(1, maxsteps):
         iters[i] = iters[i-1] + solve_one_v(g, 0, steps)
-        err[i] = np.mean((g[0].rho - Lap(g[0]))[1:-1])
-        if not conv and abs(err[i]) < tol:
+        err[i] = np.mean(np.abs(g[0].rho - Lap(g[0]))[1:-1])
+        if not conv and err[i] < tol:
             res_grid = copy(g[0])
             ax.plot([iters[i]], [err[i]], 'ro', zorder=2)
             conv = True
@@ -165,7 +176,7 @@ def test_solvers(N, rho_func, solvers, tol=1e-7, maxiter=10000):
             f = solver(f, rho, dx)
             f[0] = f[-1] = 0
             err[i] = np.mean((rho-Lap_arr(f, dx))[1:-1])
-            if conv and err[i] < tol:
+            if not conv and err[i] < tol:
                 ax.plot([i], [err[i]], 'ro', zorder=2)
                 conv = True
                 print('%s reached tol after %d iterations' % (label, i))
@@ -179,3 +190,4 @@ solvers = [(_jacobi, 'jacobi'),
            (_gauss_seidel, 'gauss-seidel')]
 
 #  test_solvers(100, rho_1, solvers, maxiter=20000)
+#  test_mg(1024, rho_1, steps=[1, 10], tol=1e-3, maxsteps=100, ax=plt.gca())
