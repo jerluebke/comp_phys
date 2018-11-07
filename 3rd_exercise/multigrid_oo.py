@@ -102,7 +102,7 @@ class Multigrid:
                 conv = True
                 print('convergence after %d iterations' % self.iterations)
 
-        ax.plot(iter_arr, err_arr,
+        ax.loglog(iter_arr, err_arr,
                 label='%s - %s - %s' % (label, str(steps), solver),
                 zorder=1)
         ax.plot([0, iter_arr[-1]], [tol, tol], 'k:')
@@ -116,8 +116,8 @@ class Multigrid:
         i = 0
         while i < scheme[level]:
             self.smooth(level, steps[level])
-            defect = self.rho[level] - self.L[level] @ self.psi[level]
             if level < self.maxlevel-1:
+                defect = self.rho[level] - self.L[level] @ self.psi[level]
                 self.rho[level+1] = self.restrict[level] @ defect
                 self.solve_one(level+1, steps, scheme)
                 self.psi[level] += self.prolong[level] @ self.psi[level+1]
@@ -140,7 +140,7 @@ class Multigrid:
         return (np.roll(psi, 1) + np.roll(psi, -1) - dx**2 * rho) / 2.
 
 
-    def _omega_jacobi(self, psi, rho, dx, omega=2./3.):
+    def _omega_jacobi(self, psi, rho, dx, omega=1./2.):
         return (1-omega)*psi + omega*(
             np.roll(psi, 1) + np.roll(psi, -1) - dx**2*rho) / 2.
 
@@ -174,4 +174,4 @@ def rho_func(x):
 #  plt.legend()
 
 mg = Multigrid(rho_func, 0, 1, 128, 3)
-mg.solve('jacobi', [2, 50, 0], [1, 1, 0], tol=1e-3, maxiter=100)
+mg.solve('jacobi', [2, 50, 0], [1, 1, 0], tol=1e-3, maxiter=100, ax=plt.gca())

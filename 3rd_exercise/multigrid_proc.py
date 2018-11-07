@@ -79,8 +79,8 @@ def _interpolation(f):
     #                              for i in range(f.size-1)]), (f.size*2,))
 
 
-RESTRICT = _injection
-#  RESTRICT = _weighting
+#  RESTRICT = _injection
+RESTRICT = _weighting
 PROLONG = _interpolation
 SOLVER = _jacobi
 
@@ -137,7 +137,7 @@ def test_mg(N, rho_func,
     ax.set(xlabel='iterations', ylabel='error mean',
            title='Multigrid - datapoints = %d, solver = %s' % (N, solver[1]))
 
-    g = init(rho_func, 0, 1, N, levels)
+    g = init(rho_func, -5, 5, N, levels)
     res_grid = None
 
     iters = np.zeros(maxsteps)
@@ -152,8 +152,8 @@ def test_mg(N, rho_func,
             conv = True
             print('convergence after %d iterations' % iters[i])
 
-    ax.plot(iters, err, label='%s - %s' % (label, str(steps)), zorder=1)
-    ax.plot([0, iters[-1]], [tol, tol], 'k:')
+    ax.semilogy(iters, err, label='%s - %s' % (label, str(steps)), zorder=1)
+    #  ax.plot([0, iters[-1]], [tol, tol], 'k:')
     ax.legend()
 
     return res_grid
@@ -190,4 +190,4 @@ solvers = [(_jacobi, 'jacobi'),
            (_gauss_seidel, 'gauss-seidel')]
 
 #  test_solvers(100, rho_1, solvers, maxiter=20000)
-#  test_mg(1024, rho_1, steps=[1, 10], tol=1e-3, maxsteps=100, ax=plt.gca())
+test_mg(256, rho_1, steps=np.ones(int(np.log(256)), dtype=int), tol=1e-3, maxsteps=100)#, ax=plt.gca())
