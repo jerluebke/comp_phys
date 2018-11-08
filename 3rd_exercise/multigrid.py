@@ -64,7 +64,7 @@ def solve(imax=100, tol=1e-7, ax=None, **gridkwds):
     while i < imax:
         solve_one_v(grids)
         err[i] = np.max(np.abs(
-            grids[0].rho - grids[0].L @ grids[0].f))
+            grids[0].rho - grids[0].L @ grids[0].f)[1:-1])
         if err[i] < tol:
             print('convergence after %d iterations' % i)
             break
