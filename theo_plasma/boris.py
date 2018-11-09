@@ -2,8 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-#  import mpl_toolkits.mplot3d.axes3d as p3
-#  import matplotlib.animation as animation
+import matplotlib.animation as animation
 from mayavi import mlab
 
 
@@ -47,12 +46,15 @@ steps = int(tmax/dt)
 
 boris = boris_gen(r0, v0, E, B, qm, dt, 0, tmax)
 
-#  fig = plt.figure()
-#  ax = p3.Axes3D(fig)
-#  ax.set(xlim3d=(-5, 5), ylim3d=(-5, 5), zlim3d=(-1, 1))
+#  fig, axs = plt.subplots(1, 3)
 
 data = np.zeros((steps, 3))
 data[0] = r0
+
+#  lines = [ax.plot([], [])[0] for ax in axs]
+
+#  def update(i):
+#      pass
 #  traj, = ax.plot(*[[r0[i]] for i in (0, 1, 2)], 'b-')
 #  part, = ax.plot(*[[r0[i]] for i in (0, 1, 2)], 'ro')
 #
