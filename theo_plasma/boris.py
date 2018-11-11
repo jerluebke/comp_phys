@@ -71,11 +71,15 @@ def update(i):
     ax.set_xlim3d(xmin-.1, xmax+.1)
     ax.set_ylim3d(ymin-.1, ymax+.1)
     ax.set_zlim3d(zmin-.1, zmax+.1)
+    fig.canvas.draw()
     return traj, part
 
-anim = animation.FuncAnimation(fig, update, range(1, steps), interval=50,
-                               blit=True, repeat=False)
-ax.plot(data[:,0], data[:,1], data[:,2])
+for i in range(1, steps):
+    update(i)
+
+# for saving to file
+#  anim = animation.FuncAnimation(fig, update, range(1, steps), interval=50,
+#                                 blit=True, repeat=False)
 
 #  sc = np.zeros(steps)
 #  fig = mlab.figure()
@@ -85,8 +89,8 @@ ax.plot(data[:,0], data[:,1], data[:,2])
 #                       scale_factor=.1, color=(1., 0., 0.))
 #  ts = traj.mlab_source
 #  ps = part.mlab_source
-#  
-#  
+#
+#
 #  @mlab.animate(delay=100, ui=False)
 #  def update():
 #      i = 1
@@ -97,5 +101,5 @@ ax.plot(data[:,0], data[:,1], data[:,2])
 #          fig.scene.reset_zoom()
 #          i += 1
 #          yield
-#  
+#
 #  anim = update()
