@@ -2,13 +2,7 @@
 
 import math
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy import sparse
-
-N = 256
-SOLVER = 'red_black'
-gridkwds = dict(rho_func=lambda x: np.sin(x)*np.exp(-x**2),
-                N=N, xmin=-5, xmax=5, levels=int(math.log(N, 2)+1e-2)-1)
 
 
 class Grid:
@@ -34,7 +28,7 @@ def init(rho_func, N, xmin, xmax, levels):
     grids[0].rho[1:N-2] = rho_func(grids[0].x[1:N-2])
     return grids
 
-def smooth(g, solver=SOLVER, **kwds):
+def smooth(g, solver, **kwds):
     def jacobi(g, n, **kwds):
         g.f[1:n-1] = .5 * (g.f[0:n-2] + g.f[2:n] - g.dx**2 * g.rho[1:n-1])
     def omega_jacobi(g, n, **kwds):
@@ -75,29 +69,24 @@ def prolong(arr):
     res[1:nf-1:2] = (arr[0:nc-1] + arr[1:nc]) * .5
     return res
 
-def solve_one_v(grids, level=0):
+def solve_one_v(grids, solver, level=0):
     fine = grids[level]
-    smooth(fine)
+    smooth(fine, solver)
     if level < len(grids)-1:
         coarse = grids[level+1]
         coarse.rho = restrict(fine.defect)
         coarse.f[:] = 0
-        solve_one_v(grids, level+1)
+        solve_one_v(grids, solver, level+1)
         fine.f += prolong(coarse.f)
-    smooth(fine)
+    smooth(fine, solver)
 
-def solve(imax=20, tol=1e-7, ax=None, **gridkwds):
-    if not ax:
-        ax = plt.gca()
-    grids = init(**gridkwds)
-    err = [np.max(np.abs(grids[0].defect))]
+
+def err(solver, imax, **gridkwds):
+    g = init(**gridkwds)
+    err = [np.max(np.abs(g[0].defect))]
     i = 1
     while i < imax:
-        solve_one_v(grids, 0)
-        err.append(np.max(np.abs(grids[0].defect)))
+        solve_one_v(g, solver)
+        err.append(np.max(np.abs(g[0].defect)))
         i += 1
-    ax.semilogy(np.arange(i), err)
-    return grids
-
-
-g = solve(**gridkwds)
+    return err

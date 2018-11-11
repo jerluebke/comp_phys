@@ -10,5 +10,14 @@ method)
 numerical integration, ODEs (Kepler, animated n bodies), PDEs (Heat)  
 
 ## 3rd Exercise
-multigrid (in progress...)  
+multigrid
+
+## 4th Exercise
+conjugate gradient  
+
+---
+
+## misc
+plotting with fortran, dense diag matrix from stencil (fortran), movements of
+charged particles in em fields (boris algorithm)  
 
