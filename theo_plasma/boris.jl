@@ -12,16 +12,16 @@ end
 function boris_step!(r :: Vector{Float64}, v :: Vector{Float64},
                      qm :: Float64, dt :: Float64, t :: Float64) :: Tuple{Vector, Vector}
     dtqm = dt * qm
-    r += .5 * dt * v
+    r += .5 * dt .* v
     B_rt = B(r, t)
     E_rt = E(r, t)
-    p = .5 * dtqm * B_rt
+    p = .5 * dtqm .* B_rt
     a_sq = .25 * dtqm^2 * dot(B_rt, B_rt)
-    v += .5 * dtqm * E_rt
-    v_prime = v + cross(v, p)
-    v += 2. * cross(v_prime, p) / (1 + a_sq)
-    v += .5 * dtqm * E_rt
-    r += .5 * dt * v
+    v += .5 * dtqm .* E_rt
+    v_prime = v .+ cross(v, p)
+    v += 2. .* cross(v_prime, p) / (1 + a_sq)
+    v += .5 * dtqm .* E_rt
+    r += .5 * dt .* v
     return r, v
 end
 
