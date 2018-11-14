@@ -24,7 +24,9 @@ L = sparse.diags([1, -2, 1], [-1, 0, 1], (N, N), format='csc')
 
 def compare(imax_cg, imax_mg):
     x_cg = np.arange(imax_cg)
-    x_mg = np.arange(0, imax_cg, imax_cg//imax_mg)
+    # one mg iteration contains 2*levels single iterations of the solver
+    N = 2*gridkwds['levels']*imax_mg
+    x_mg = np.arange(0, N, 2*gridkwds['levels'])
     err_cg          = cg.cg(L, rho, imax=imax_cg)[2]
     err_jacobi      = mg.err(solver='jacobi', imax=imax_mg, **gridkwds)
     err_omegajac    = mg.err(solver='omega_jacobi', imax=imax_mg, **gridkwds)
@@ -37,7 +39,7 @@ def compare(imax_cg, imax_mg):
     ax.semilogy(x_mg, err_omegajac, label='mg - omega-jacobi')
     ax.semilogy(x_mg, err_gaussseidel, label='mg - gauss-seidel')
     ax.semilogy(x_mg, err_redblack, label='mg - red-black')
-    ax.title('comparision - Multigrid and Conjugate Gradient')
+    ax.set_title('comparision - Multigrid and Conjugate Gradient')
     ax.legend()
 
 

@@ -36,8 +36,8 @@ def smooth(g, solver, **kwds):
         g.f[1:n-1] = .5 * omega * (g.f[0:n-2] + g.f[2:n] - g.dx**2 * g.rho[1:n-1])\
                 + (1. - omega) * g.f[1:n-1]
     def gauss_seidel(g, n, **kwds):
-        g.f[1:n-1] = np.array([.5 * (g.f[i-1] + g.f[i+1] - g.dx**2 * g.rho[i])
-                               for i in range(1, n-1)])
+        for i in range(1, n-1):
+            g.f[i] = .5 * (g.f[i+1] + g.f[i-1] - g.dx**2 * g.rho[i])
     def red_black(g, n, **kwds):
         g.f[1:n-1:2] = .5 * (g.f[0:n-2:2] + g.f[2:n:2] - g.dx**2 * g.rho[1:n-1:2])
         g.f[2:n-2:2] = .5 * (g.f[1:n-3:2] + g.f[3:n-1:2] - g.dx**2 * g.rho[2:n-2:2])

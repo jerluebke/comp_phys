@@ -64,7 +64,7 @@ def smooth(grid):
     # grid.f[1:n-1] = 0.5 * omega * ( grid.f[0:n-2] + grid.f[2:n] - grid.dx**2 * grid.rho[1:n-1] ) \
     #              + (1.-omega) * grid.f[1:n-1];
     # Gauss-Seidel:
-    # for i in range(1, n-1):
+    #  for i in range(1, n-1):
     #     grid.f[i] = 0.5 * (grid.f[i-1] + grid.f[i+1] - grid.dx**2 * grid.rho[i])
     # Red-Black Gauss-Seidel:
     grid.f[1:n-1:2] = 0.5 * (grid.f[0:n-2:2] + grid.f[2:n:2] - grid.dx**2 * grid.rho[1:n-1:2])
