@@ -69,8 +69,35 @@ def solve_all_n(q0, q1, m, dt, steps, F, *fargs, **fkwds):
     for i in range(2, steps):
         dist_vec, dist_mag = get_dist(traj[:,:,i-1])
         for j in range(p):
+            # verlet
             traj[j,:,i] = 2. * traj[j,:,i-1] - traj[j,:,i-2] + dt**2 \
                     * F(dist_vec, dist_mag, m, j)
+    return traj
+
+# TODO: diverges...
+def solve_all_n_leapfrog(q, p, m, dt, steps, F, *fargs, **fkwds):
+    """
+    traj[particle, dimension, steps]
+    """
+    part = q0.shape[0]
+    ndim = q0.shape[1]
+    traj = np.zeros((part, ndim, steps))
+    traj[:,:,0] = q
+    #  q_h = np.zeros((part, ndim))
+    dist_vec, dist_mag = get_dist(traj[:,:,0])
+    a = np.array([F(dist_vec, dist_mag, m, i) for i in range(part)])
+    a_n = np.zeros((part, ndim))
+    for i in range(2, steps):
+        for j in range(part):
+            #  q_h[j] = traj[j,:,i-1] + dt/2. * p[j]
+            traj[j,:,i] = traj[j,:,i-1] + p[j] * dt \
+                    + dt**2/2. * a[j]
+        dist_vec, dist_mag = get_dist(traj[:,:,i])
+        for j in range(part):
+            a_n[j] = F(dist_vec, dist_mag, m, j)
+            p[j] = p[j] + dt/2. * (a[j] + a_n[j])
+            #  traj[j,:,i] = q_h[j] + dt/2. * p[j]
+        a[:] = a_n[:]
     return traj
 
 def get_dist(q):
@@ -87,14 +114,10 @@ def get_dist(q):
 
 def F_n(rv, rm, m, i):
     p = m.size
-    return np.sum(
-            [m[j]*rv[i,j,:]/rm[i,j]**(3./2.)
-            for j in range(i)],
-        axis=0) \
-        - np.sum(
-            [m[j]*rv[j,i,:]/rm[j,i]**(3./2.)
-            for j in range(i+1, p)],
-        axis=0)
+    return np.sum([m[j]*rv[i,j,:]/rm[i,j]**(3./2.)
+                  for j in range(i)], axis=0) \
+        - np.sum([m[j]*rv[j,i,:]/rm[j,i]**(3./2.)
+                 for j in range(i+1, p)], axis=0)
 
 
 q0 = np.array([
@@ -109,33 +132,44 @@ q1 = q0 + np.array([
     [.05, 0.],
     [0., .05]
 ])
+p0 = np.array([
+    [-1., 0.],
+    [0., -1.],
+    [1., 0.],
+    [0., 1.]
+])
 m = np.array([1., 1., 1., 1.])
 #  m = np.array([10., 2., 1.])
 STEPS = 1000
-res = solve_all_n(q0, q1, m, .05, STEPS, F_n)
-#  plt.figure()
-#  [plt.plot(res[i,0,:], res[i,1,:]) for i in range(m.size)]
-
-fig = plt.figure()
-ax = fig.add_subplot(111, xlim=(-5, 5), ylim=(-5, 5))
-lines = [ax.plot([], [], 'b--', zorder=1)[0] for _ in range(m.size)]
-points = [ax.plot([], [], 'ro', zorder=2)[0] for _ in range(m.size)]
-
-def init():
-    for i in range(m.size):
-        lines[i].set_data([], [])
-        points[i].set_data([], [])
-    return [*lines, *points]
-
-def step(i):
-    for j in range(m.size):
-        lines[j].set_data(res[j,0,:i], res[j,1,:i])
-        points[j].set_data(res[j,0,i], res[j,1,i])
-    return [*lines, *points]
+res_verl = solve_all_n(q0, q1, m, .05, STEPS, F_n)
+res_lf = solve_all_n_leapfrog(q0, p0, m, .05, STEPS, F_n)
+fig, (a1, a2) = plt.subplots(1, 2)
+[a1.plot(res_verl[i,0,:], res_verl[i,1,:]) for i in range(m.size)]
+[a2.plot(res_lf[i,0,:], res_lf[i,1,:]) for i in range(m.size)]
+a1.set_title('verlet')
+a2.set_title('leapfrog')
 
 
-anim = animation.FuncAnimation(fig, step, frames=STEPS, interval=20, blit=True,
-                               repeat=False, init_func=init)
+#  fig = plt.figure()
+#  ax = fig.add_subplot(111, xlim=(-5, 5), ylim=(-5, 5))
+#  lines = [ax.plot([], [], 'b--', zorder=1)[0] for _ in range(m.size)]
+#  points = [ax.plot([], [], 'ro', zorder=2)[0] for _ in range(m.size)]
 
-FFWriter = animation.FFMpegWriter(fps=60)
-anim.save('4_bodies.mp4', writer=FFWriter, dpi=300)
+#  def init():
+#      for i in range(m.size):
+#          lines[i].set_data([], [])
+#          points[i].set_data([], [])
+#      return [*lines, *points]
+#  
+#  def step(i):
+#      for j in range(m.size):
+#          lines[j].set_data(res[j,0,:i], res[j,1,:i])
+#          points[j].set_data(res[j,0,i], res[j,1,i])
+#      return [*lines, *points]
+
+
+#  anim = animation.FuncAnimation(fig, step, frames=STEPS, interval=20, blit=True,
+#                                 repeat=False, init_func=init)
+#  
+#  FFWriter = animation.FFMpegWriter(fps=60)
+#  anim.save('4_bodies.mp4', writer=FFWriter, dpi=300)

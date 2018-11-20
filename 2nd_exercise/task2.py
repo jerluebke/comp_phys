@@ -55,6 +55,49 @@ def verlet(x0, x1, F, t0, tmax, dt, *fargs, **fkwds):
         t += dt
         yield xn
 
+def leapfrog_1(x, v, F, t, tmax, dt, *fargs, **fkwds):
+    """
+    x_h = x_n + dt/2 * v_n
+    v_n+1 = v_n + dt * a_h, a_h = F(x_h)
+    x_n+1 = x_h + dt/2 * v_n+1
+    """
+    while t < tmax:
+        x_h = x + dt/2. * v
+        v = v + dt * F(x_h, t, *fargs, **fkwds)
+        x = x_h + dt/2. * v
+        t += dt
+        yield x
+
+def leapfrog_2(x, v, F, t, tmax, dt, *fargs, **fkwds):
+    """
+    v_h = v_n + dt/2 * a_n
+    x_n+1 = x_n + v_h * dt
+    v_n+1 = v_h + dt/2 * a_n+1
+    """
+    a = F(x, t, *fargs, **fkwds)
+    while t < tmax:
+        v_h = v + dt/2. * a
+        x = x + v_h * dt
+        a = F(x, t, *fargs, **fkwds)
+        v = v_h + dt/2. * a
+        t += dt
+        yield x
+
+def leapfrog_3(x, v, F, t, tmax, dt, *fargs, **fkwds):
+    """
+    x_n+1 = x_n + v_n * dt + dt**2/2 * a_n
+    v_n+1 = v_n + dt/2 * (a_n + a_n+1)
+    """
+    a = F(x, t, *fargs, **fkwds)
+    while t < tmax:
+        x = x + v * dt + dt**2/2. * a
+        a_n = F(x, t, *fargs, **fkwds)
+        v = v + dt/2. * (a + a_n)
+        a = a_n
+        t += dt
+        yield x
+
+
 def G(f, t, *args, **kwds):
     """
     f = [r, v]
@@ -105,14 +148,35 @@ def verlet_sample():
     axs[1].plot(res[:,0], res[:,1])
     axs[1].set_title('radius')
 
-def verlet_anim(steps=1000, dt=.05):
+
+def comparison_verlet_lf():
     x0 = np.array([1., 1.])
-    x1 = np.array([1.05, 1.])
-    res_gen = verlet(x0, x1, F, 0, steps, dt, μ=2)
+    v0 = np.array([1., 0.])
+    x1 = np.array([1.05, 1.])   # result of one euler step with x0, v0, dt = 0.05
+    lf = np.array([xn for xn in leapfrog_2(x0, v0, F, 0, 7, .05, μ=2)])
+    verl = np.array([xn for xn in verlet(x0, x1, F, 0, 7, .05, μ=2)])
+    fig, ax = plt.subplots()
+    ax.set_title('comparison of trajectories - verlet vs leapfrog, dt=0.05')
+    ax.plot(lf[:,0], lf[:,1], label='leapfrog')
+    ax.plot(verl[:,0], verl[:,1], label='verlet')
+    ax.legend()
+
+
+def anim(integrator, iv, steps=1000, dt=.05):
+    """
+    iv : initial value
+        verlet iv: x1 = [1.05, 1.]
+        leapfrpg iv: v0 = [1., 0.]
+    """
+    x0 = np.array([1., 1.])
+    res_gen = integrator(x0, iv, F, 0, steps, dt, μ=2)
 
     fa = plt.figure()
+    fa.suptitle('animation')
+    title = 'integrator: %s, steps: %d, dt: %04.2f' % (integrator.__name__.replace('_', '-'),
+                                                       steps, dt)
     ax = fa.add_subplot(111, xlim=(-2, 2), ylim=(-2, 2),
-                        title='verlet animation')
+                        title=title)
 
     c, = ax.plot([0], [0], 'ro', ms=6)
     s, = ax.plot([], [], 'ro', ms=6, zorder=2)
@@ -136,4 +200,22 @@ def verlet_anim(steps=1000, dt=.05):
 
     return fa, anim
 
-f, a = verlet_anim(50000)
+
+fv, av = anim(integrator=verlet, iv=np.array([1.05, 1.]), steps=10000)
+fl, al = anim(integrator=leapfrog_1, iv=np.array([1., 0.]), steps=5000)
+
+
+#  some comments:
+#      on my machine verlet is about 10ms faster than leapfrog (260ms vs 270ms)
+#      there is no noticable difference between lf_1 and lf_2, lf_2 runs with 295ms
+#
+#      leapfrog makes twice the amount of timesteps compared to verlet per
+#      iteration (makes sense considering the alogrithms themselves...)
+#
+#      trajectories of leapfrog and verlet show small deviation from one another
+#      the lf algos conform with each other, but it the different step sequence
+#      between lf_1 and the others is perceptible when looking closely
+#
+#  timeit code (ipython):
+#      >>> %timeit np.array([xn for xn in integrator(x, iv, F, 0, 1000, .05, μ=2)])
+
