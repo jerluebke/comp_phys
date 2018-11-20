@@ -10,14 +10,17 @@ from matplotlib import animation
 # TODO: why?
 
 def crank_nicolson(f, D, dt, steps):
+    # solve: B @ fn = A @ f (for fn)
+    # don't invert B! its not sparse anymore afterwards
     res = np.zeros((f.size, steps))
     res[:,0] = f
     # sparse.linalg.inv is more efficient with csc format
     I = sparse.identity(f.size, format='csc')
-    A = (I + dt * D)
-    B = linalg.inv(I - dt * D)
+    A = I + dt * D
+    B = I - dt * D
+    B_LU = linalg.splu(B)
     for i in range(1, steps):
-        res[:,i] = (B @ A) @ res[:,i-1]
+        res[:,i] = B_LU.solve(A.dot(res[:,i-1]))
     return res
 
 def fwd_euler(f, D, dt, steps):
@@ -49,17 +52,17 @@ def test(s=1., N=100, steps=200):
     #  f0 = get_f0(s)
     f0 = np.piecewise(x, [np.abs(x) < 1.], [1.])
 
-    fwd_euler_sol = fwd_euler(f0, k*L, dt/2, steps)
+    fwd_euler_sol = fwd_euler(f0, k*L, dt/2., steps)
 
-    fig, ax = plt.subplots(3, 1, sharex=True)
+    fig, ax = plt.subplots(2, 1, sharex=True)
     fig.suptitle('heat diffusion in 1D over time')
     ax[0].set(ylabel='x', title='crank-nicolson')
-    ax[1].set(ylabel='x', title='forward euler')
-    ax[2].set(xlabel='time', ylabel='x', title='leapfrog')
-    im0 = ax[0].imshow(crank_nicolson(f0, L*k/2., dt, steps))
+    ax[1].set(xlabel='time', ylabel='x', title='forward euler')
+    #  ax[2].set(xlabel='time', ylabel='x', title='leapfrog')
+    im0 = ax[0].imshow(crank_nicolson(f0, L*k/2., dt/2., steps))
     im1 = ax[1].imshow(fwd_euler_sol)
-    im2 = ax[2].imshow(leapfrog(f0, fwd_euler_sol[:,1], L*k/2., dt, steps))
-    return im0, im1, im2
+    #  im2 = ax[2].imshow(leapfrog(f0, fwd_euler_sol[:,1], L*k/2., dt, steps))
+    return im0, im1, # im2
 
 
 
