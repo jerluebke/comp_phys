@@ -37,8 +37,8 @@ def leapfrog(f, f1, D, dt, steps):
     res[:,1] = f1
     for i in range(2, steps):
         # TODO: why?
-        #  res[:,i] = res[:,i-2] + 1. * dt * D @ res[:,i-1]
-        res[:,i] = 2 * res[:,i-1] - res[:,i-2] + dt**2. * D @ res[:,i-1]
+        res[:,i] = res[:,i-2] + 2. * dt * D @ res[:,i-1]
+        #  res[:,i] = 2 * res[:,i-1] - res[:,i-2] + dt**2. * D @ res[:,i-1]
     return res
 
 
@@ -54,15 +54,15 @@ def test(s=1., N=100, steps=200):
 
     fwd_euler_sol = fwd_euler(f0, k*L, dt/2., steps)
 
-    fig, ax = plt.subplots(2, 1, sharex=True)
+    fig, ax = plt.subplots(3, 1, sharex=True)
     fig.suptitle('heat diffusion in 1D over time')
     ax[0].set(ylabel='x', title='crank-nicolson')
     ax[1].set(xlabel='time', ylabel='x', title='forward euler')
-    #  ax[2].set(xlabel='time', ylabel='x', title='leapfrog')
+    ax[2].set(xlabel='time', ylabel='x', title='leapfrog')
     im0 = ax[0].imshow(crank_nicolson(f0, L*k/2., dt/2., steps))
     im1 = ax[1].imshow(fwd_euler_sol)
-    #  im2 = ax[2].imshow(leapfrog(f0, fwd_euler_sol[:,1], L*k/2., dt, steps))
-    return im0, im1, # im2
+    im2 = ax[2].imshow(leapfrog(f0, fwd_euler_sol[:,1], L*k/2., dt, steps))
+    return im0, im1, im2
 
 
 

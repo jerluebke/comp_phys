@@ -90,6 +90,12 @@ frames = 500
 
 pde = PDE(p)
 
+def step():
+    pde.time_step(N_steps)
+    return np.array([pde.x, pde.u])
+
+res = np.array([step() for _ in range(frames)])
+
 ######################################################################
 # Set up plot
 fig = plt.figure()
@@ -111,12 +117,13 @@ def init():
     return (u_line, time_text,cfl_text)
 
 def integrate(i):
-    pde.time_step(N_steps)
-    u_line.set_data(pde.x, pde.u)
+    #  pde.time_step(N_steps)
+    u_line.set_data(res[i,0], res[i,1])
 
-    time_text.set_text('time = %.2f' % pde.t)
-    cfl_text.set_text('cfl = %.2f' % pde.cfl)
-    return (u_line, time_text,cfl_text)
+    #  time_text.set_text('time = %.2f' % pde.t)
+    #  cfl_text.set_text('cfl = %.2f' % pde.cfl)
+    #  return (u_line, time_text,cfl_text)
+    return u_line,
 
 anim = animation.FuncAnimation(fig, integrate, init_func=init, frames=frames,
                                interval=100, blit=True,repeat=False)
