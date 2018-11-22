@@ -20,7 +20,8 @@ class PDE:
         self.x = np.arange(self.xb, self.xe, self.dx)
         self.u = iv(self.x)
         self.û = rfft(self.u)
-        self.t = t0
+        #  self.t = t0
+        self.t = [t0]
         self.dt = dt
 
         #  self.cfl = 1
@@ -40,7 +41,7 @@ class PDE:
         #  self.cfl = np.max(self.u) * self.dt / self.dx
         self.cfl.append(np.max(self.u) * self.dt / self.dx)
 
-        self.t += self.dt * steps
+        self.t.append(self.t[-1] + self.dt * steps)
         return self.x, self.u
 
     def prop(self, delta=1.):
@@ -77,14 +78,13 @@ params = dict(xb=0, xe=2*np.pi, N=256, kappa=.02)
 p = PDE(params, f0, dt=.01)
 
 # params for plotting
-steps = 100
-time = 0
-tmax = 5000
+steps = 10
+tmax = 100
 frames = int(tmax // (steps * p.dt))
 
 # compute complete solution for smoother plotting
-res = np.array([p.time_step() for _ in range(frames)])
-plt.imshow(res[:500,1,:].T)     # x: time, y: x, color: u
+res = np.array([p.time_step(steps) for _ in range(frames)])
+#  plt.imshow(res[:500,1,:].T)     # x: time, y: x, color: u
 
 
 ###########################################################
@@ -108,12 +108,10 @@ def init():
     return line,
 
 def step(i):
-    global time
     line.set_data(res[i,0], res[i,1])
     #  ttext.set_text('time = %.2f' % time)
     #  ctext.set_text('cfl = %.2f' % p.cfl[i])
-    print('time = %.2f, cfl = %.2f\r' % (time, p.cfl[i]), end='')
-    time += p.dt * steps
+    print('time = %.2f, cfl = %.2f\r' % (p.t[i], p.cfl[i]), end='')
     return line, # ttext, ctext,
 
 def start_anim():
