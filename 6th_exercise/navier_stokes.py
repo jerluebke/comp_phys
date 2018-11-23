@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import time
 import numpy as np
 from numpy.fft import (rfft2,
                        irfft2,
@@ -119,23 +120,40 @@ class PDE:
 
 
 def four_vortices(x, y,
-                  x0=np.pi-2, x1=np.pi+2,
-                  y0=np.pi-.5, y1=np.pi+.5,
+                  x0=-.5, x1=.5,
+                  y0=-.5, y1=.5,
                   s_sq=4.):
     def _gaussian(xi, yj):
         return np.exp(-s_sq * ((x-xi)**2 + (y-yj)**2))
     return _gaussian(x0, y1) + _gaussian(x1, y0) \
             - _gaussian(x0, y0) - _gaussian(x1, y1)
 
-params = dict(xb=0, xe=2*np.pi,
-              yb=0, ye=2*np.pi,
-              Nx=64, Ny=64,
+def two_vortices(x, y,
+                 x0=-.5, x1=.5,
+                 ym=0, s_sq=4.):
+    def _gaussian(xi, yj):
+        return np.exp(-s_sq * ((x-xi)**2 + (y-yj)**2))
+    return _gaussian(x0, ym) - _gaussian(x1, ym)
+
+def one_vortex(x, y, x0=0, y0=0, s_sq=4.):
+    def _gaussian(xi, yj):
+        return np.exp( -s_sq * ((x-xi)**2 + (y-yj)**2))
+    return _gaussian(x0, y0)
+
+
+params = dict(xb=-2*np.pi, xe=2*np.pi,
+              yb=-2*np.pi, ye=2*np.pi,
+              Nx=1024, Ny=1024,
               dt=.05, kappa=.0001)
 params['kappa'] = 0
-p = PDE(params, four_vortices)
+p = PDE(params, lambda x, y: one_vortex(x, y, x0=-2., s_sq=1.)
+                             -1.768*one_vortex(x, y, x0=-2., s_sq=2.)
+                             +one_vortex(x, y, x0=2., s_sq=1.)
+                             -1.768*one_vortex(x, y, x0=2., s_sq=2.)
+       )
 
 steps = 10
-tmax = 10000
+tmax = 12000
 frames = int(tmax / (steps * p.dt))
 
 #  res = np.array([p.time_step(steps) for _ in range(frames)])
@@ -143,17 +161,19 @@ frames = int(tmax / (steps * p.dt))
 
 fig = plt.figure()
 ax = fig.add_subplot(111,
-                     title='four vortices with navier-stokes, friction $\kappa$ = %f' % params['kappa'],
+                     title='vortices with navier-stokes, without friction',
                      xticklabels=[], yticklabels=[])
 ax.grid(False)
 
 im = ax.imshow(p.ω, animated=True)
 
 def step(i):
+    if i % 100 == 0:
+        print('iteration: %d' % i)
     #  im.set_array(res[i])
     im.set_array(p.time_step(steps))
     #  print('time = %.2f, cfl = %.2f\r' % (p.t[i], p.cfl[i]), end='')
-    print('time = %.2f, cfl = %.2f\r' % (p.t, p.cfl), end='')
+    #  print('time = %.2f, cfl = %.2f\r' % (p.t, p.cfl), end='')
     return im,
 
 def start_anim(fig=fig):
@@ -161,3 +181,10 @@ def start_anim(fig=fig):
                                    blit=True, repeat=False)
 
 #  anim = start_anim()
+start = time.time()
+name = input('name: ')
+FFWriter = animation.FFMpegWriter(fps=60)
+start_anim().save('%s.mp4' % name, writer=FFWriter, dpi=300)
+np.save('%s_tmp' % name, p.ω)
+end = time.time()
+print('duration: %f' % end-start)

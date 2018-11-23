@@ -27,7 +27,7 @@ class PDE:
         #  self.cfl = 1
         self.cfl = []
 
-        self.scheme = self.heun
+        self.scheme = self.shu_osher
 
     def time_step(self, steps=1):
         # calculate timesteps
@@ -75,11 +75,12 @@ class PDE:
 #  f0 = lambda x: np.sin(x)**2
 f0 = np.sin
 params = dict(xb=0, xe=2*np.pi, N=256, kappa=.02)
+params['kappa'] = 0
 p = PDE(params, f0, dt=.01)
 
 # params for plotting
 steps = 10
-tmax = 100
+tmax = 1000
 frames = int(tmax // (steps * p.dt))
 
 # compute complete solution for smoother plotting
