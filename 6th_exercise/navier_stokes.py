@@ -9,15 +9,28 @@ import matplotlib.pyplot as plt
 from matplotlib import animation
 
 #  TODO, class PDE
-#  
+#
 #  __init__: why the choice of kx, ky?
 #  rhs: how does the aliasing work?
-#  
+#
 #  general: why the use of fftshift?
+
+#  consider the following
+#  >>> params['kappa'] = 0
+#  >>> p = PDE(params, four_vortices)
+#  >>> p.scheme = p.shu_osher
+#  >>> frames = 5000
+#  >>> res = np.array([p.time_step(steps) for _ in range(frames)])
+#  >>> a = start_anim()
+#  
+#  pay attention to times > 1000! What is happening there?
+#  
+#  it seems to be deterministic behaviour... how to verify?
+#  what causes the torus topology?
 
 
 class PDE:
-    def __init__(self, params, iv, dt, t0=0.):
+    def __init__(self, params, iv, t0=0.):
         self.__dict__.update(params)
 
         # k-space
@@ -37,12 +50,11 @@ class PDE:
         # initial value and its fourier transform
         self.ω = iv(X, Y)
         self.ω_hat = fftshift(rfft2(self.ω), axes=0)
-        #  self.t = t0
-        self.t = [t0]
-        self.dt = dt
+        self.t = t0
+        #  self.t = [t0]
 
-        #  self.cfl = 1
-        self.cfl = []
+        self.cfl = 1
+        #  self.cfl = []
 
         self.scheme = self.shu_osher
 
@@ -61,10 +73,11 @@ class PDE:
 
         # check cfl condition, should be < 1
         _cfl = lambda u, dx: np.max(np.abs(u)) * self.dt / dx
-        #  self.cfl = np.max(self.u) * self.dt / self.dx
-        self.cfl.append(max(_cfl(ux, self.dx), _cfl(uy, self.dy)))
+        self.cfl = max(_cfl(ux, self.dx), _cfl(uy, self.dy))
+        #  self.cfl.append(max(_cfl(ux, self.dx), _cfl(uy, self.dy)))
 
-        self.t.append(self.t[-1] + self.dt * steps)
+        self.t += self.dt * steps
+        #  self.t.append(self.t[-1] + self.dt * steps)
         return self.ω
 
 
@@ -107,7 +120,7 @@ class PDE:
 
 def four_vortices(x, y,
                   x0=np.pi-2, x1=np.pi+2,
-                  y0=np.pi-.5, y1=np.pi+.5, 
+                  y0=np.pi-.5, y1=np.pi+.5,
                   s_sq=4.):
     def _gaussian(xi, yj):
         return np.exp(-s_sq * ((x-xi)**2 + (y-yj)**2))
@@ -117,25 +130,30 @@ def four_vortices(x, y,
 params = dict(xb=0, xe=2*np.pi,
               yb=0, ye=2*np.pi,
               Nx=64, Ny=64,
-              kappa=.0001)
-p = PDE(params, four_vortices, dt=.05)
+              dt=.05, kappa=.0001)
+params['kappa'] = 0
+p = PDE(params, four_vortices)
 
 steps = 10
-time = 0
-tmax = 100
+tmax = 10000
 frames = int(tmax / (steps * p.dt))
 
-res = np.array([p.time_step(steps) for _ in range(frames)])
+#  res = np.array([p.time_step(steps) for _ in range(frames)])
 
 
 fig = plt.figure()
-ax = fig.add_subplot(111)
+ax = fig.add_subplot(111,
+                     title='four vortices with navier-stokes, friction $\kappa$ = %f' % params['kappa'],
+                     xticklabels=[], yticklabels=[])
+ax.grid(False)
 
 im = ax.imshow(p.ω, animated=True)
 
 def step(i):
-    im.set_array(res[i])
-    print('time = %.2f, cfl = %.2f\r' % (p.t[i], p.cfl[i]), end='')
+    #  im.set_array(res[i])
+    im.set_array(p.time_step(steps))
+    #  print('time = %.2f, cfl = %.2f\r' % (p.t[i], p.cfl[i]), end='')
+    print('time = %.2f, cfl = %.2f\r' % (p.t, p.cfl), end='')
     return im,
 
 def start_anim(fig=fig):
