@@ -23,9 +23,9 @@ from matplotlib import animation
 #  >>> frames = 5000
 #  >>> res = np.array([p.time_step(steps) for _ in range(frames)])
 #  >>> a = start_anim()
-#  
+#
 #  pay attention to times > 1000! What is happening there?
-#  
+#
 #  it seems to be deterministic behaviour... how to verify?
 #  what causes the torus topology?
 
@@ -120,7 +120,7 @@ class PDE:
 
 
 def four_vortices(x, y,
-                  x0=-.5, x1=.5,
+                  x0=-1.5, x1=1.5,
                   y0=-.5, y1=.5,
                   s_sq=4.):
     def _gaussian(xi, yj):
@@ -141,50 +141,61 @@ def one_vortex(x, y, x0=0, y0=0, s_sq=4.):
     return _gaussian(x0, y0)
 
 
-params = dict(xb=-2*np.pi, xe=2*np.pi,
-              yb=-2*np.pi, ye=2*np.pi,
-              Nx=1024, Ny=1024,
+#  params = dict(xb=-2*np.pi, xe=2*np.pi,
+#                yb=-2*np.pi, ye=2*np.pi,
+#                Nx=128, Ny=128,
+#                dt=.05, kappa=.0001)
+params = dict(xb=-np.pi, xe=np.pi,
+              yb=-np.pi, ye=np.pi,
+              Nx=128, Ny=128,
               dt=.05, kappa=.0001)
 params['kappa'] = 0
-p = PDE(params, lambda x, y: one_vortex(x, y, x0=-2., s_sq=1.)
-                             -1.768*one_vortex(x, y, x0=-2., s_sq=2.)
-                             +one_vortex(x, y, x0=2., s_sq=1.)
-                             -1.768*one_vortex(x, y, x0=2., s_sq=2.)
-       )
+# two times two vertices in each other
+#  p = PDE(params, lambda x, y: one_vortex(x, y, x0=-2., s_sq=1.)
+#                               -1.768*one_vortex(x, y, x0=-2., s_sq=2.)
+#                               +one_vortex(x, y, x0=2., s_sq=1.)
+#                               -1.768*one_vortex(x, y, x0=2., s_sq=2.)
+#         )
+
+p = PDE(params, four_vortices)
+
 
 steps = 10
-tmax = 12000
+tmax = 500
 frames = int(tmax / (steps * p.dt))
-
-#  res = np.array([p.time_step(steps) for _ in range(frames)])
 
 
 fig = plt.figure()
 ax = fig.add_subplot(111,
-                     title='vortices with navier-stokes, without friction',
-                     xticklabels=[], yticklabels=[])
+                     title='vortices with navier-stokes, without friction')
 ax.grid(False)
+ax.axis('off')
 
 im = ax.imshow(p.ω, animated=True)
 
 def step(i):
-    if i % 100 == 0:
-        print('iteration: %d' % i)
-    #  im.set_array(res[i])
+    #  if i % 10 == 0:
+    #      print('iteration: %d' % i)
     im.set_array(p.time_step(steps))
-    #  print('time = %.2f, cfl = %.2f\r' % (p.t[i], p.cfl[i]), end='')
-    #  print('time = %.2f, cfl = %.2f\r' % (p.t, p.cfl), end='')
+    print('time = %.2f, cfl = %.2f\r' % (p.t, p.cfl), end='')
     return im,
 
 def start_anim(fig=fig):
     return animation.FuncAnimation(fig, step, frames=frames, interval=10,
                                    blit=True, repeat=False)
 
-#  anim = start_anim()
-start = time.time()
-name = input('name: ')
-FFWriter = animation.FFMpegWriter(fps=60)
-start_anim().save('%s.mp4' % name, writer=FFWriter, dpi=300)
-np.save('%s_tmp' % name, p.ω)
-end = time.time()
-print('duration: %f' % end-start)
+anim = start_anim()
+
+
+def make_movie():
+    start = time.time()
+    name = input('name: ')
+    FFWriter = animation.FFMpegWriter(fps=60)
+    try:
+        start_anim().save('%s.mp4' % name, writer=FFWriter, dpi=300)
+    finally:
+        np.save('%s_tmp' % name, p.ω)
+        end = time.time()
+        print('duration: %f' % end-start)
+
+#  make_movie()
