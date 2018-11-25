@@ -1,55 +1,18 @@
 #include <stdlib.h>
 #include <math.h>
 #include <complex.h>
-#include <fftw3.h>
+#include "navier_stokes.h"
 
 
 #define CSQUARE(x) creal(x)*creal(x) + cimag(x)*cimag(x)
 
 
-typedef struct Params {
-    size_t Nx, Ny;
-    double dt, nu;
-} Params;
-
-typedef struct Workspace {
-    size_t Nx, Ny,          /* sizes of real and complex arrays */
-           Nkx, Nky,
-           Ntot, ktot;
-    double dt;              /* time step */
-    double nu;              /* viscosity parameter */
-    double *o,              /* omega */
-           *ksq,            /* k spared, i.e. |kx|^2 + |ky|^2 */
-           *utmp,           /* helper arrays for `double *rhs` */
-           *prop_full,      /* helper array for propagator */
-           *prop_pos_half,
-           *prop_neg_half;
-    double _Complex *kx, *ky,   /* wave numbers, k-space */
-                    *ohat,      /* fourier transform of omega */
-                    *uhat,      /* fourier transform of utmp */
-                    *res;       /* helper array for `double *rhs` */
-    unsigned char *mask;    /* mask array for anti-aliasing */
-
-    fftw_plan ohat_to_o,
-              uhat_to_u,
-              o_to_ohat,
-              u_to_uhat;
-
-} Workspace;
-
-
-Workspace *init(Params, double *);
-void cleanup(Workspace *);
-
-double *time_step(unsigned short, Workspace *);
 double _Complex *rhs(double _Complex *, Workspace *);
 void scheme(Workspace *);
 
 static inline void normalize(double *, size_t, size_t);
 static inline void rfftshift(double *, size_t, size_t, char);
 static inline void cfftshift(double _Complex *, size_t, size_t, char);
-static inline double _Complex *clinspace(double _Complex, double _Complex,
-                                       size_t, double _Complex *);
 
 
 /* set up workspace
@@ -320,7 +283,7 @@ void cfftshift(double _Complex *arr, size_t n0, size_t n1, char sign)
 }
 
 
-static inline
+inline
 double _Complex *clinspace(
         double _Complex start, double _Complex end,
         size_t np, double _Complex *dst)
@@ -334,6 +297,22 @@ double _Complex *clinspace(
 
     while (dst != endptr)
         *dst++ = z, z += dz;
+
+    return startptr;
+}
+
+inline
+double *rlinspace(double start, double end, size_t np, double *dst)
+{
+    double x, dx, *startptr, *endptr;
+
+    x = start;
+    dx = (end - start) / ((double) np);
+    startptr = dst;
+    endptr = dst + np;
+
+    while (dst != endptr)
+        *dst++ = x, x += dx;
 
     return startptr;
 }
