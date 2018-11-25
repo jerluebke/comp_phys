@@ -4,3 +4,5 @@ __pycache__
 *.mod
 *.gp
 *.mp4
+*.gch
+*.dll

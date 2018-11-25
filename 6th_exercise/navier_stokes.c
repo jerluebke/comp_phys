@@ -13,7 +13,9 @@ typedef struct Params {
 } Params;
 
 typedef struct Workspace {
-    size_t Nx, Ny, Nkx, Nky, ktot;  /* sizes of real and complex arrays */
+    size_t Nx, Ny,          /* sizes of real and complex arrays */
+           Nkx, Nky,
+           Ntot, ktot;
     double dt;              /* time step */
     double nu;              /* viscosity parameter */
     double *o,              /* omega */
@@ -43,10 +45,11 @@ double *time_step(unsigned short, Workspace *);
 double _Complex *rhs(double _Complex *, Workspace *);
 void scheme(Workspace *);
 
-void fftshift(double _Complex *);
-void ifftshift(double _Complex *);
-double _Complex *clinspace(double _Complex, double _Complex,
-                           size_t, double _Complex *);
+static inline void normalize(double *, size_t, size_t);
+static inline void rfftshift(double *, size_t, size_t, char);
+static inline void cfftshift(double _Complex *, size_t, size_t, char);
+static inline double _Complex *clinspace(double _Complex, double _Complex,
+                                       size_t, double _Complex *);
 
 
 /* set up workspace
@@ -68,55 +71,57 @@ Workspace *init(Params params, double *iv)
     ws->Ny   = params.Ny;
     ws->Nkx  = params.Nx / 2 + 1;
     ws->Nky  = params.Ny;
+    ws->Ntot = ws->Nx * ws->Ny;
     ws->ktot = ws->Nkx * ws->Nky;
     ws->dt   = params.dt;
     ws->nu   = params.nu;
 
     /* k-space: allocate and init as linspace */
-    ws->kx = fftw_malloc_complex(ws->Nkx);
-    ws->ky = fftw_malloc_complex(ws->Nky);
-    ws->kx = clinspace(0., (double _Complex) (ws->Nx/2),
+    ws->kx = fftw_alloc_complex(ws->Nkx);
+    ws->ky = fftw_alloc_complex(ws->Nky);
+    ws->kx = clinspace(0., 0.+I*(double) (ws->Nx/2),
                        ws->Nkx, ws->kx);
-    ws->ky = clinspace((double _Complex) (-ws->Nx/2),
-                       (double _Complex) (ws->Nx/2-1),
+    ws->ky = clinspace(0.-I*(double) (ws->Nx/2),
+                       0.+I*(double) (ws->Nx/2-1),
                        ws->Nky, ws->ky);
 
     /* compute k^2 */
-    ws->ksq = fftw_malloc_real(ws->ktot);
+    ws->ksq = fftw_alloc_real(ws->ktot);
     for (i = 0; i < ws->Nky; ++i)
         for (j = 0; j < ws->Nkx; ++j)
             /* ksq[x][y] = ksq[x + y*Nx] */
             ws->ksq[j+i*ws->Nkx] = CSQUARE(ws->kx[j]) + CSQUARE(ws->ky[i]);
 
     /* allocate omega and u and there transforms */
-    ws->o    = fftw_malloc_real(ws->Nx * ws->Ny);
-    ws->ohat = fftw_malloc_complex(ws->ktot);
-    ws->utmp = fftw_malloc_real(ws->Nx * ws->Ny);
-    ws->uhat = fftw_malloc_complex(ws->ktot);
+    ws->o    = fftw_alloc_real(ws->Ntot);
+    ws->ohat = fftw_alloc_complex(ws->ktot);
+    ws->utmp = fftw_alloc_real(ws->Ntot);
+    ws->uhat = fftw_alloc_complex(ws->ktot);
 
     /* set up fftw plan */
     ws->o_to_ohat = fftw_plan_dft_r2c_2d(ws->Nx, ws->Ny,
                                          ws->o, ws->ohat,
                                          FFTW_MEASURE);
-    ws->ohat_to_o = fftw_plan_dft_c2r_2d(ws->Nkx, ws->Nky,
+    ws->ohat_to_o = fftw_plan_dft_c2r_2d(ws->Nx, ws->Ny,
                                          ws->ohat, ws->o,
                                          FFTW_MEASURE);
     ws->u_to_uhat = fftw_plan_dft_r2c_2d(ws->Nx, ws->Ny,
                                          ws->utmp, ws->uhat,
                                          FFTW_MEASURE);
-    ws->uhat_to_u = fftw_plan_dft_c2r_2d(ws->Nkx, ws->Nky,
+    ws->uhat_to_u = fftw_plan_dft_c2r_2d(ws->Nx, ws->Ny,
                                          ws->uhat, ws->utmp,
                                          FFTW_MEASURE);
 
     /* set inital value and compute FT */
-    for (i = 0; i < ws->Nx * ws->Ny; ++i)
+    for (i = 0; i < ws->Ntot; ++i)
         ws->o[i] = iv[i];
+    rfftshift(ws->o, ws->Nx, ws->Ny, 1);
     fftw_execute(ws->o_to_ohat);
-    fftshift(ws->ohat);
+    rfftshift(ws->o, ws->Nx, ws->Ny, -1);
 
     /* allocate and init mask for anti-aliasing */
     ws->mask = malloc(sizeof(unsigned char) * ws->ktot);
-    double threshold = ws->Nx * ws->Ny / 9.;
+    double threshold = ws->Ntot / 9.;
     for (i = 0; i < ws->ktot; ++i)
         ws->mask[i] = ws->ksq[i] < threshold ? 1 : 0;
 
@@ -131,14 +136,15 @@ Workspace *init(Params params, double *iv)
     }
 
     /* allocate helper array for `double *rhs` (is initilized there) */
-    ws->res  = fftw_malloc_complex(ws->ktot);
+    ws->res  = fftw_alloc_complex(ws->ktot);
 
     /* done */
     return ws;
 }
 
 
-/* void  */
+/* free all allocated memory in a workspace struct
+ * the pointer is afterwards NULL */
 void cleanup(Workspace *ws)
 {
     fftw_free(ws->kx);
@@ -165,8 +171,10 @@ double *time_step(unsigned short steps, Workspace *ws)
     for (i = 0; i < steps; ++i)
         scheme(ws);
 
-    ifftshift(ws->ohat);
+    cfftshift(ws->ohat, ws->Nky, ws->Nkx, -1);
     fftw_execute(ws->ohat_to_o);
+    normalize(ws->o, ws->Ntot, ws->ktot);
+    cfftshift(ws->ohat, ws->Nky, ws->Nkx, 1);
 
     return ws->o;
 }
@@ -175,63 +183,76 @@ double *time_step(unsigned short steps, Workspace *ws)
 /* right hand side of equation */
 double _Complex *rhs(double _Complex *ohat, Workspace *ws)
 {
-    size_t i;
+    size_t i, j;
 
     /* anti aliasing */
     for (i = 0; i < ws->ktot; ++i)
         ohat[i] = ws->mask[i] ? ohat[i] : 0.;
 
     /* iFT of ohat, yielding o */
-    ifftshift(ws->ohat);
+    cfftshift(ws->ohat, ws->Nky, ws->Nkx, -1);
     fftw_execute(ws->ohat_to_o);
+    normalize(ws->o, ws->Ntot, ws->ktot);
+    cfftshift(ws->ohat, ws->Nky, ws->Nkx, 1);
 
 
     /********************/
     /* x component of u */
     /********************/
     /* uhat_x = I * ky * ohat / k^2 */
-    for (i = 0; i < ws->ktot; ++i)
-        ws->uhat[i] = I * ws->ky[i] * ws->ohat[i] / ws->ksq[i];
+    for (i = 0; i < ws->Nky; ++i)
+        for (j = 0; j < ws->Nkx; ++j)
+            ws->uhat[j+i*ws->Nkx] = \
+                I * ws->ky[i] * ws->ohat[j+i*ws->Nkx] / ws->ksq[j+i*ws->Nkx];
 
     /* compute iFT of uhat, yielding utmp */
-    ifftshift(ws->uhat);
+    cfftshift(ws->uhat, ws->Nky, ws->Nkx, -1);
     fftw_execute(ws->uhat_to_u);
+    normalize(ws->utmp, ws->Ntot, ws->ktot);
 
     /* u_x * o */
     for (i = 0; i < ws->ktot; ++i)
         ws->utmp[i] *= ws->o[i];
 
     /* compute FT of u * o, yielding uhat */
+    rfftshift(ws->utmp, ws->Nx, ws->Ny, 1);
     fftw_execute(ws->u_to_uhat);
-    fftshift(ws->uhat);
 
     /* write into result */
-    for (i = 0; i < ws->ktot; ++i)
-        ws->res[i] = ws->ohat - I * ws->kx[i] * ws->uhat[i] * ws->dt;
+    for (i = 0; i < ws->Nky; ++i)
+        for (j = 0; j < ws->Nkx; ++j)
+            ws->res[j+i*ws->Nkx] = ws->ohat[j+i*ws->Nkx] \
+                                   - I * ws->kx[j] * ws->uhat[j+i*ws->Nkx] \
+                                   * ws->dt;
 
 
     /********************/
     /* y component of u */
     /********************/
     /* uhat_y = I * kx * ohat / k^2 */
-    for (i = 0; i < ws->ktot; ++i)
-        ws->uhat[i] = I * ws->kx[i] * ws->ohat[i] / ws->ksq[i];
+    for (i = 0; i < ws->Nky; ++i)
+        for (j = 0; j < ws->Nkx; ++j)
+            ws->uhat[j+i*ws->Nkx] = \
+                I * ws->kx[j] * ws->ohat[j+i*ws->Nkx] / ws->ksq[j+i*ws->Nkx];
 
     /* compute iFT of uhat, yielding utmp */
-    ifftshift(ws->uhat);
+    cfftshift(ws->uhat, ws->Nky, ws->Nkx, -1);
     fftw_execute(ws->uhat_to_u);
+    normalize(ws->utmp, ws->Ntot, ws->ktot);
 
     /* u_y * o */
     for (i = 0; i < ws->ktot; ++i)
         ws->utmp[i] *= ws->o[i];
 
     /* compute FT of u * o, yielding uhat */
+    rfftshift(ws->utmp, ws->Nx, ws->Ny, 1);
     fftw_execute(ws->u_to_uhat);
-    fftshift(ws->uhat);
 
     /* write into result */
-    for (i = 0; i < ws->ktot; ++i)
-        ws->res[i] -= I * ws->ky[i] * ws->uhat[i] * ws->dt;
+    for (i = 0; i < ws->Nky; ++i)
+        for (j = 0; j < ws->Nkx; ++j)
+            ws->res[j+i*ws->Nkx] -= I * ws->ky[i] * ws->uhat[j+i*ws->Nkx] \
+                                    * ws->dt;
 
 
     return ws->res;
@@ -262,6 +283,44 @@ void scheme(Workspace *ws)
 }
 
 
+/* a = a / n, n: size of transform */
+static inline
+void normalize(double *arr, size_t size, size_t n)
+{
+    double *end;
+    end = arr+size;
+
+    while (arr != end)
+        *arr++ /= n;
+}
+
+
+static inline
+void rfftshift(double *arr, size_t n0, size_t n1, char sign)
+{
+    size_t i, j;
+    double dsign;
+    dsign = sign > 0 ? 1. : -1.;
+
+    for (i = 0; i < n0; ++i)
+        for (j = 0; j < n1; ++j)
+            arr[j+i*n1] *= dsign * ((i + j) % 2 == 0 ? 1 : -1);
+}
+
+static inline
+void cfftshift(double _Complex *arr, size_t n0, size_t n1, char sign)
+{
+    size_t i, j;
+    double _Complex csign;
+    csign = sign > 0 ? 1.+1.*I : -1.-1.*I;
+
+    for (i = 0; i < n0; ++i)
+        for (j = 0; j < n1; ++j)
+            arr[j+i*n1] *= csign * ((i + j) % 2 == 0 ? 1 : -1);
+}
+
+
+static inline
 double _Complex *clinspace(
         double _Complex start, double _Complex end,
         size_t np, double _Complex *dst)
