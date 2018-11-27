@@ -6,3 +6,5 @@ __pycache__
 *.mp4
 *.gch
 *.dll
+
+lib

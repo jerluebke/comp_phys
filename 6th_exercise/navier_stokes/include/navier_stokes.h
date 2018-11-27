@@ -2,6 +2,11 @@
 
 #include <fftw3.h>
 
+#define RSQUARE(x) (x)*(x)
+#define CSQUARE(x) (x)[0]*(x)[0] + (x)[1]*(x)[1]
+#define REAL 0
+#define IMAG 1
+
 
 typedef struct Params {
     size_t Nx, Ny;
@@ -20,10 +25,10 @@ typedef struct Workspace {
            *prop_full,      /* helper array for propagator */
            *prop_pos_half,
            *prop_neg_half;
-    double _Complex *kx, *ky,   /* wave numbers, k-space */
-                    *ohat,      /* fourier transform of omega */
-                    *uhat,      /* fourier transform of utmp */
-                    *res;       /* helper array for `double *rhs` */
+    fftw_complex *kx, *ky,   /* wave numbers, k-space */
+                 *ohat,      /* fourier transform of omega */
+                 *uhat,      /* fourier transform of utmp */
+                 *res;       /* helper array for `double *rhs` */
     unsigned char *mask;    /* mask array for anti-aliasing */
 
     fftw_plan ohat_to_o,
@@ -37,7 +42,7 @@ Workspace *init(Params, double *);
 void cleanup(Workspace *);
 double *time_step(unsigned short, Workspace *);
 
-inline double _Complex *clinspace(double _Complex, double _Complex,
-                                  size_t, double _Complex *);
+inline fftw_complex *clinspace(fftw_complex, fftw_complex,
+                               size_t, fftw_complex *);
 inline double *rlinspace(double, double,
                          size_t, double *);

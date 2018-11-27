@@ -1,18 +1,14 @@
 #include <stdlib.h>
 #include <math.h>
-#include <complex.h>
-#include "navier_stokes.h"
+#include "../include/navier_stokes.h"
 
 
-#define CSQUARE(x) creal(x)*creal(x) + cimag(x)*cimag(x)
-
-
-double _Complex *rhs(double _Complex *, Workspace *);
+fftw_complex *rhs(fftw_complex *, Workspace *);
 void scheme(Workspace *);
 
 static inline void normalize(double *, size_t, size_t);
 static inline void rfftshift(double *, size_t, size_t, char);
-static inline void cfftshift(double _Complex *, size_t, size_t, char);
+static inline void cfftshift(fftw_complex *, size_t, size_t, char);
 
 
 /* set up workspace
@@ -24,6 +20,7 @@ static inline void cfftshift(double _Complex *, size_t, size_t, char);
 Workspace *init(Params params, double *iv)
 {
     size_t i, j;
+    fftw_complex kxmin, kxmax, kymin, kymax;
     Workspace *ws;
 
     /* allocate Workspace struct */
@@ -42,11 +39,12 @@ Workspace *init(Params params, double *iv)
     /* k-space: allocate and init as linspace */
     ws->kx = fftw_alloc_complex(ws->Nkx);
     ws->ky = fftw_alloc_complex(ws->Nky);
-    ws->kx = clinspace(0., 0.+I*(double) (ws->Nx/2),
-                       ws->Nkx, ws->kx);
-    ws->ky = clinspace(0.-I*(double) (ws->Nx/2),
-                       0.+I*(double) (ws->Nx/2-1),
-                       ws->Nky, ws->ky);
+	kxmin[REAL] = 0.; kxmin[IMAG] = 0.;
+	kxmax[REAL] = 0.; kxmax[IMAG] = (double) (ws->Nx/2);
+	kymin[REAL] = 0.; kymin[IMAG] = -(double) (ws->Ny/2);
+	kymax[REAL] = 0.; kymax[IMAG] = (double) (ws->Ny/2-1);
+    ws->kx = clinspace(kxmin, kxmax, ws->Nkx, ws->kx);
+    ws->ky = clinspace(kymin, kymax, ws->Nky, ws->ky);
 
     /* compute k^2 */
     ws->ksq = fftw_alloc_real(ws->ktot);
@@ -118,6 +116,11 @@ void cleanup(Workspace *ws)
     fftw_free(ws->utmp);
     fftw_free(ws->uhat);
     fftw_free(ws->res);
+    fftw_destroy_plan(ws->o_to_ohat);
+    fftw_destroy_plan(ws->ohat_to_o);
+    fftw_destroy_plan(ws->u_to_uhat);
+    fftw_destroy_plan(ws->uhat_to_u);
+    fftw_cleanup();
     free(ws->mask);
     free(ws->prop_full);
     free(ws->prop_pos_half);
@@ -144,13 +147,16 @@ double *time_step(unsigned short steps, Workspace *ws)
 
 
 /* right hand side of equation */
-double _Complex *rhs(double _Complex *ohat, Workspace *ws)
+fftw_complex *rhs(fftw_complex *ohat, Workspace *ws)
 {
-    size_t i, j;
+    size_t i, j, idx;
 
     /* anti aliasing */
     for (i = 0; i < ws->ktot; ++i)
-        ohat[i] = ws->mask[i] ? ohat[i] : 0.;
+        if (! ws->mask[i]) {
+            ohat[i][REAL] = 0.;
+            ohat[i][IMAG] = 0.;
+        }
 
     /* iFT of ohat, yielding o */
     cfftshift(ws->ohat, ws->Nky, ws->Nkx, -1);
@@ -164,9 +170,16 @@ double _Complex *rhs(double _Complex *ohat, Workspace *ws)
     /********************/
     /* uhat_x = I * ky * ohat / k^2 */
     for (i = 0; i < ws->Nky; ++i)
-        for (j = 0; j < ws->Nkx; ++j)
-            ws->uhat[j+i*ws->Nkx] = \
-                I * ws->ky[i] * ws->ohat[j+i*ws->Nkx] / ws->ksq[j+i*ws->Nkx];
+        /* for (j = 0; j < ws->Nkx; ++j)
+         *     ws->uhat[j+i*ws->Nkx] = \
+         *         I * ws->ky[i] * ws->ohat[j+i*ws->Nkx] / ws->ksq[j+i*ws->Nkx]; */
+        for (j = 0; j < ws->Nkx; ++j) {
+            idx = j + i * ws->Nkx;
+            ws->uhat[idx][REAL] = \
+                ws->ky[i][IMAG] * ws->ohat[idx][IMAG] / ws->ksq[idx];
+            ws->uhat[idx][IMAG] = \
+                ws->ky[i][REAL] * ws->ohat[idx][REAL] / ws->ksq[idx];
+        }
 
     /* compute iFT of uhat, yielding utmp */
     cfftshift(ws->uhat, ws->Nky, ws->Nkx, -1);
@@ -183,10 +196,13 @@ double _Complex *rhs(double _Complex *ohat, Workspace *ws)
 
     /* write into result */
     for (i = 0; i < ws->Nky; ++i)
-        for (j = 0; j < ws->Nkx; ++j)
-            ws->res[j+i*ws->Nkx] = ws->ohat[j+i*ws->Nkx] \
-                                   - I * ws->kx[j] * ws->uhat[j+i*ws->Nkx] \
-                                   * ws->dt;
+        for (j = 0; j < ws->Nkx; ++j) {
+            idx = j + i * ws->Nkx;
+            ws->res[idx][REAL] = ws->ohat[idx][REAL] \
+                - ws->kx[j][IMAG] * ws->uhat[idx][IMAG] * ws->dt;
+            ws->res[idx][IMAG] = ws->ohat[idx][IMAG] \
+                - ws->kx[j][REAL] * ws->uhat[idx][REAL] * ws->dt;
+        }
 
 
     /********************/
@@ -194,9 +210,13 @@ double _Complex *rhs(double _Complex *ohat, Workspace *ws)
     /********************/
     /* uhat_y = I * kx * ohat / k^2 */
     for (i = 0; i < ws->Nky; ++i)
-        for (j = 0; j < ws->Nkx; ++j)
-            ws->uhat[j+i*ws->Nkx] = \
-                I * ws->kx[j] * ws->ohat[j+i*ws->Nkx] / ws->ksq[j+i*ws->Nkx];
+        for (j = 0; j < ws->Nkx; ++j) {
+            idx = j + i * ws->Nkx;
+            ws->uhat[idx][REAL] = \
+                ws->kx[j][IMAG] * ws->ohat[idx][IMAG] / ws->ksq[idx];
+            ws->uhat[idx][IMAG] = \
+                ws->kx[j][REAL] * ws->ohat[idx][REAL] / ws->ksq[idx];
+        }
 
     /* compute iFT of uhat, yielding utmp */
     cfftshift(ws->uhat, ws->Nky, ws->Nkx, -1);
@@ -213,9 +233,13 @@ double _Complex *rhs(double _Complex *ohat, Workspace *ws)
 
     /* write into result */
     for (i = 0; i < ws->Nky; ++i)
-        for (j = 0; j < ws->Nkx; ++j)
-            ws->res[j+i*ws->Nkx] -= I * ws->ky[i] * ws->uhat[j+i*ws->Nkx] \
-                                    * ws->dt;
+        for (j = 0; j < ws->Nkx; ++j) {
+            idx = j + i * ws->Nkx;
+            ws->res[idx][REAL] -= \
+                ws->ky[i][IMAG] * ws->uhat[idx][IMAG] * ws->dt;
+            ws->res[idx][IMAG] -= \
+                ws->ky[i][REAL] * ws->uhat[idx][REAL] * ws->dt;
+        }
 
 
     return ws->res;
@@ -226,23 +250,30 @@ double _Complex *rhs(double _Complex *ohat, Workspace *ws)
 void scheme(Workspace *ws)
 {
     size_t i;
-    double _Complex *otmp;
+    fftw_complex *otmp;
 
     /* step one */
     otmp = rhs(ws->ohat, ws);
-    for (i = 0; i < ws->ktot; ++i)
-        otmp[i] *= ws->prop_full[i];
+    for (i = 0; i < ws->ktot; ++i) {
+        otmp[i][REAL] *= ws->prop_full[i];
+        otmp[i][IMAG] *= ws->prop_full[i];
+    }
 
     /* step two */
     otmp = rhs(otmp, ws);
-    for (i = 0; i < ws->ktot; ++i)
-        otmp[i] *= .25 * ws->prop_neg_half[i];
+    for (i = 0; i < ws->ktot; ++i) {
+        otmp[i][REAL] *= .25 * ws->prop_neg_half[i];
+        otmp[i][IMAG] *= .25 * ws->prop_neg_half[i];
+    }
 
     /* step three */
     otmp = rhs(otmp, ws);
-    for (i = 0; i < ws->ktot; ++i)
-        ws->ohat[i] = 1./3. * (2. * otmp[i] * ws->prop_pos_half[i] \
-                               + ws->ohat[i] * ws->prop_pos_half[i]);
+    for (i = 0; i < ws->ktot; ++i) {
+        ws->ohat[i][REAL] = 1./3. * (2. * otmp[i][REAL] * ws->prop_pos_half[i] \
+                + ws->ohat[i][REAL] * ws->prop_pos_half[i]);
+        ws->ohat[i][IMAG] = 1./3. * (2. * otmp[i][IMAG] * ws->prop_pos_half[i] \
+                + ws->ohat[i][IMAG] * ws->prop_pos_half[i]);
+    }
 }
 
 
@@ -271,38 +302,44 @@ void rfftshift(double *arr, size_t n0, size_t n1, char sign)
 }
 
 static inline
-void cfftshift(double _Complex *arr, size_t n0, size_t n1, char sign)
+void cfftshift(fftw_complex *arr, size_t n0, size_t n1, char sign)
 {
     size_t i, j;
-    double _Complex csign;
-    csign = sign > 0 ? 1.+1.*I : -1.-1.*I;
+    double dsign;
+    dsign = sign > 0 ? 1. : -1.;
 
-    for (i = 0; i < n0; ++i)
-        for (j = 0; j < n1; ++j)
-            arr[j+i*n1] *= csign * ((i + j) % 2 == 0 ? 1 : -1);
+    for (i = 0; i < n0; ++i) {
+        for (j = 0; j < n1; ++j) {
+            arr[j+i*n1][REAL] *= dsign * ((i + j) % 2 == 0 ? 1 : -1);
+            arr[j+i*n1][IMAG] *= dsign * ((i + j) % 2 == 0 ? 1 : -1);
+        }
+    }
 }
 
 
-inline
-double _Complex *clinspace(
-        double _Complex start, double _Complex end,
-        size_t np, double _Complex *dst)
+inline fftw_complex *clinspace(fftw_complex start, fftw_complex end,
+                        size_t npoints, fftw_complex *dst)
 {
-    double _Complex z, dz, *startptr, *endptr;
+    size_t i;
+    fftw_complex z, dz;
 
-    z = start;
-    dz = (end - start) / ((double _Complex) np);
-    startptr = dst;
-    endptr = dst + np;
+    z[REAL] = start[REAL];
+    z[IMAG] = start[IMAG];
+    dz[REAL] = (end[REAL] - start[REAL]) / ((double) npoints);
+    dz[IMAG] = (end[IMAG] - start[IMAG]) / ((double) npoints);
 
-    while (dst != endptr)
-        *dst++ = z, z += dz;
+    for (i = 0; i < npoints; ++i) {
+        dst[i][REAL] = z[REAL];
+        dst[i][IMAG] = z[IMAG];
+        z[REAL] += dz[REAL];
+        z[IMAG] += dz[IMAG];
+    }
 
-    return startptr;
+    return dst;
 }
 
-inline
-double *rlinspace(double start, double end, size_t np, double *dst)
+
+inline double *rlinspace(double start, double end, size_t np, double *dst)
 {
     double x, dx, *startptr, *endptr;
 
