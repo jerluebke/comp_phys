@@ -27,6 +27,7 @@ typedef struct Workspace {
            *prop_neg_half;
     fftw_complex *kx, *ky,   /* wave numbers, k-space */
                  *ohat,      /* fourier transform of omega */
+                 *_ohat,
                  *uhat,      /* fourier transform of utmp */
                  *res;       /* helper array for `double *rhs` */
     unsigned char *mask;    /* mask array for anti-aliasing */
@@ -43,6 +44,5 @@ void cleanup(Workspace *);
 double *time_step(unsigned short, Workspace *);
 
 fftw_complex *clinspace(fftw_complex, fftw_complex,
-                               size_t, fftw_complex *);
-double *rlinspace(double, double,
-                         size_t, double *);
+                        size_t, fftw_complex *);
+double *rlinspace(double, double, size_t, double *);

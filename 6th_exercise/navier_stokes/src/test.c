@@ -69,6 +69,15 @@ void rfftshift(double *arr, size_t n0, size_t n1)
         }
 }
 
+void normalize(double *arr, size_t size, size_t n)
+{
+    double *end;
+    end = arr+size;
+
+    while (arr != end)
+        *arr++ /= n;
+}
+
 
 int main()
 {
@@ -85,13 +94,7 @@ int main()
 
     x = malloc(sizeof(*x) * Nx);
     y = malloc(sizeof(*y) * Ny);
-    z = fftw_alloc_real(Ntot);
-    z_bu = fftw_alloc_real(Ntot);
-    z_hat = fftw_alloc_complex(Nktot);
-    z_hat_bu = fftw_alloc_complex(Nktot);
-
-    fftw_plan rfft2 = fftw_plan_dft_r2c_2d(Nx, Ny, z, z_hat, FFTW_MEASURE);
-    fftw_plan irfft2 = fftw_plan_dft_c2r_2d(Nx, Ny, z_hat, z, FFTW_MEASURE);
+    z = malloc(sizeof(*z) * Ntot);
 
     rlinspace(xmin, xmax, Nx, x);
     rlinspace(ymin, ymax, Ny, y);
@@ -108,48 +111,23 @@ int main()
      * clock_gettime(0, &tp_b);
      * printf("time:\t%ld ns\n\n", tp_b.tv_nsec-tp_a.tv_nsec); */
 
-    /* print_real_array(z, Nx, Ny); */
 
-    /* Fourier Transform */
-    rfftshift(z, Nx, Ny);
-    fftw_execute(rfft2);
-    rfftshift(z, Nx, Ny);
+    Params p = {Nx, Ny, .05, .0};
+    Workspace *pde = init(p, z);
 
-
-    /* print_real_array(z, Nx, Ny); */
-    /* print_complex_array(z_hat, Nkx, Nky); */
-
-
-    /* inverse Fourier Transform */
-    memcpy((void *)z_hat_bu, (void *)z_hat, Nktot * sizeof(fftw_complex));
-    fftw_execute(irfft2);
-    rfftshift(z, Nx, Ny);
-
-    /* print_complex_array(z_hat_bu, Nkx, Nky); */
-    /* print_real_array(z, Nx, Ny); */
-
-
-    /* Params p = {Nx, Ny, .05, .0}; */
-    /* Workspace *pde = init(p, z); */
-
-    /* printf("t = 0\n"); */
-    /* print_real_array(pde->o, pde->Nx, pde->Ny); */
-    /* time_step(1, pde); */
-    /* printf("t = 0.05\n"); */
-    /* print_real_array(pde->o, pde->Nx, pde->Ny); */
+    printf("t = 0\n");
+    print_real_array(pde->o, pde->Nx, pde->Ny);
+    time_step(1, pde);
+    printf("t = 0.05\n");
+    print_real_array(pde->o, pde->Nx, pde->Ny);
     /* printf("o_hat = \n"); */
     /* print_complex_array(pde->ohat, pde->Nky, pde->Nkx); */
 
-    /* cleanup(pde); */
+    cleanup(pde);
 
     free(x);
     free(y);
-    fftw_free(z);
-    fftw_free(z_bu);
-    fftw_free(z_hat);
-    fftw_free(z_hat_bu);
-    fftw_destroy_plan(rfft2);
-    fftw_cleanup();
+    free(z);
 
     return 0;
 }
