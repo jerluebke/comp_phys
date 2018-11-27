@@ -317,7 +317,7 @@ void cfftshift(fftw_complex *arr, size_t n0, size_t n1, char sign)
 }
 
 
-inline fftw_complex *clinspace(fftw_complex start, fftw_complex end,
+fftw_complex *clinspace(fftw_complex start, fftw_complex end,
                         size_t npoints, fftw_complex *dst)
 {
     size_t i;
@@ -339,7 +339,7 @@ inline fftw_complex *clinspace(fftw_complex start, fftw_complex end,
 }
 
 
-inline double *rlinspace(double start, double end, size_t np, double *dst)
+double *rlinspace(double start, double end, size_t np, double *dst)
 {
     double x, dx, *startptr, *endptr;
 
