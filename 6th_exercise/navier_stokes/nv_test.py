@@ -8,12 +8,12 @@ def rhs(p, ohat):
     o = irfft2(ifftshift(ohat, axes=0))
 
     uhat = 1j * p.KY * p.ω_hat / p.K_sq
-    #  u = irfft2(ifftshift(uhat, axes=0))
-    #  u *= o
-    #  uhat = fftshift(rfft2(u), axes=0)
-    #  
-    #  res = ohat - 1j * p.KX * uhat * p.dt
-    #  
+    u = irfft2(ifftshift(uhat, axes=0))
+    u *= o
+    uhat = fftshift(rfft2(u), axes=0)
+    
+    res = ohat - 1j * p.KX * uhat * p.dt
+    
     #  uhat = -1j * p.KX * p.ω_hat / p.K_sq
     #  u = irfft2(ifftshift(uhat, axes=0))
     #  u *= o
@@ -22,4 +22,4 @@ def rhs(p, ohat):
     #  res -= 1j * p.KY * uhat * p.dt
 
     #  return res
-    return uhat
+    return res
