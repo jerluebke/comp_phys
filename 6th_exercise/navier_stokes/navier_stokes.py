@@ -39,6 +39,7 @@ class PDE:
         ky = np.linspace(-self.Ny//2, self.Ny//2-1, self.Ny)
         self.KX, self.KY = np.meshgrid(kx, ky)
         self.K_sq = np.square(self.KX) + np.square(self.KY)
+        #  fix: this value is zero, but shouldn't be
         self.K_sq[self.Nx//2,0] = 1
 
         # x-space

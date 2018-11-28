@@ -4,12 +4,12 @@
 #include "../include/navier_stokes.h"
 
 /* TODO
- * check declarations in header for nessecety
+ * check declarations in header for necessity
  * check function attributes (static, inline)
  * check parameter attributes (const) */
 
 
-fftw_complex *rhs(fftw_complex *, Workspace *);
+/* fftw_complex *rhs(fftw_complex *, Workspace *); */
 void scheme(Workspace *);
 
 void rfftshift(double *, size_t, size_t);
@@ -58,6 +58,7 @@ Workspace *init(Params params, double *iv)
         for (j = 0; j < ws->Nkx; ++j)
             /* ksq[x][y] = ksq[x + y*Nx] */
             ws->ksq[j+i*ws->Nkx] = CSQUARE(ws->kx[j]) + CSQUARE(ws->ky[i]);
+    ws->ksq[ws->Nkx*ws->Nky/2] = 1.;
 
     /* allocate omega and u and there transforms
      * include backup memory for inverse transforms */
@@ -150,18 +151,78 @@ double *time_step(unsigned short steps, Workspace *ws)
 }
 
 
+/*********************************************************************/
+/* TODO: remove later */
+static
+void print_complex_array(fftw_complex *arr, size_t x, size_t y)
+{
+    size_t i, j;
+
+    printf("real = \n");
+    for (i = 0; i < y; ++i)
+        for (j = 0; j < x; ++j)
+            printf("%s%s%e%s%s",
+                    (i == 0 && j == 0 ? "[\n" : ""),
+                    (j == 0 ? "[" : ""),
+                    arr[j+i*x][REAL],
+                    (j == x-1 ? "]\n" : ""),
+                    (i == y-1 && j == x-1 ? "]\n" : ","));
+    printf("imag = \n");
+    for (i = 0; i < y; ++i)
+        for (j = 0; j < x; ++j)
+            printf("%s%s%e%s%s",
+                    (i == 0 && j == 0 ? "[\n" : ""),
+                    (j == 0 ? "[" : ""),
+                    arr[j+i*x][IMAG],
+                    (j == x-1 ? "]\n" : ""),
+                    (i == y-1 && j == x-1 ? "]\n" : ","));
+    puts("\n");
+    puts("\n");
+}
+
+
+static
+void print_real_array(double *arr, size_t x, size_t y)
+{
+    size_t i, j;
+
+    for (i = 0; i < y; ++i)
+        for(j = 0; j < x; ++j)
+            printf("%s%s%f%s%s",
+                    (i == 0 && j == 0 ? "[\n" : ""),
+                    (j == 0 ? "[" : ""),
+                    arr[j+i*x],
+                    (j == x-1 ? "]\n" : ""),
+                    (i == y-1 && j == x-1 ? "]\n" : ","));
+    puts("\n");
+}
+
+
+/*********************************************************************/
+
+
 /* right hand side of equation */
 fftw_complex *rhs(fftw_complex *ohat, Workspace *ws)
 {
     size_t i, j, idx;
+    fftw_complex *tmp;
 
     /* anti aliasing */
     for (i = 0; i < ws->ktot; ++i)
         if (! ws->mask[i])
             ohat[i][IMAG] = 0.;
 
+
+    /* TODO: do switching outside of irfft */
     /* iFT of ohat, yielding o */
     irfft2(&ws->ohat_to_o, ws->ohat, ws->_ohat, ws->o, ws);
+    tmp = ws->ohat;
+    ws->ohat = ws->_ohat;
+    ws->_ohat = tmp;
+
+
+    /* TODO:
+     * make linspace include max value */
 
 
     /********************/
@@ -172,13 +233,19 @@ fftw_complex *rhs(fftw_complex *ohat, Workspace *ws)
         for (j = 0; j < ws->Nkx; ++j) {
             idx = j + i * ws->Nkx;
             /* ws->uhat[idx][REAL] = \ */
-            /*     ws->ky[i][IMAG] * ws->ohat[idx][IMAG] / ws->ksq[idx]; */
-            /* ws->uhat[idx][IMAG] = \ */
-            /*     ws->ky[i][REAL] * ws->ohat[idx][REAL] / ws->ksq[idx]; */
-            /* FIXME */
+            /*     - ws->ky[i][IMAG] * ws->ohat[idx][IMAG] / ws->ksq[idx]; */
             ws->uhat[idx][IMAG] = \
-                ws->ky[i][IMAG] * ws->ohat[i][IMAG] / ws->ksq[idx];
+                ws->ky[i][IMAG] * ws->ohat[idx][REAL] / ws->ksq[idx];
+            /* FIXME */
+            /* ws->uhat[idx][IMAG] = \
+             *     ws->ky[i][IMAG] * ws->ohat[i][IMAG] / ws->ksq[idx]; */
         }
+
+    /**************************/
+    /* TODO: work in progress */
+    /**************************/
+
+
 
     /* compute iFT of uhat, yielding utmp */
     irfft2(&ws->uhat_to_u, ws->uhat, ws->uhat, ws->utmp, ws);
@@ -194,13 +261,13 @@ fftw_complex *rhs(fftw_complex *ohat, Workspace *ws)
     for (i = 0; i < ws->Nky; ++i)
         for (j = 0; j < ws->Nkx; ++j) {
             idx = j + i * ws->Nkx;
-            /* ws->res[idx][REAL] = ws->ohat[idx][REAL] \ */
-            /*     - ws->kx[j][IMAG] * ws->uhat[idx][IMAG] * ws->dt; */
-            /* ws->res[idx][IMAG] = ws->ohat[idx][IMAG] \ */
-            /*     - ws->kx[j][REAL] * ws->uhat[idx][REAL] * ws->dt; */
-            /* FIXME: + or - ? */
+            ws->res[idx][REAL] = ws->ohat[idx][REAL] \
+                + ws->kx[j][IMAG] * ws->uhat[idx][IMAG] * ws->dt;
             ws->res[idx][IMAG] = ws->ohat[idx][IMAG] \
-                + ws->kx[j][IMAG] * ws->uhat[i][IMAG] * ws->dt;
+                - ws->kx[j][IMAG] * ws->uhat[idx][REAL] * ws->dt;
+            /* FIXME: + or - ? */
+            /* ws->res[idx][IMAG] = ws->ohat[idx][IMAG] \ */
+            /*     + ws->kx[j][IMAG] * ws->uhat[i][IMAG] * ws->dt; */
         }
 
 
@@ -211,12 +278,12 @@ fftw_complex *rhs(fftw_complex *ohat, Workspace *ws)
     for (i = 0; i < ws->Nky; ++i)
         for (j = 0; j < ws->Nkx; ++j) {
             idx = j + i * ws->Nkx;
-            /* ws->uhat[idx][REAL] = \ */
-            /*     ws->kx[j][IMAG] * ws->ohat[idx][IMAG] / ws->ksq[idx]; */
-            /* ws->uhat[idx][IMAG] = \ */
-            /*     ws->kx[j][REAL] * ws->ohat[idx][REAL] / ws->ksq[idx]; */
-            ws->uhat[idx][IMAG] = \
+            ws->uhat[idx][REAL] = \
                 ws->kx[j][IMAG] * ws->ohat[idx][IMAG] / ws->ksq[idx];
+            ws->uhat[idx][IMAG] = \
+                - ws->kx[j][IMAG] * ws->ohat[idx][REAL] / ws->ksq[idx];
+            /* ws->uhat[idx][IMAG] = \ */
+            /*     ws->kx[j][IMAG] * ws->ohat[idx][IMAG] / ws->ksq[idx]; */
         }
 
     /* compute iFT of uhat, yielding utmp */
@@ -233,12 +300,12 @@ fftw_complex *rhs(fftw_complex *ohat, Workspace *ws)
     for (i = 0; i < ws->Nky; ++i)
         for (j = 0; j < ws->Nkx; ++j) {
             idx = j + i * ws->Nkx;
-            /* ws->res[idx][REAL] -= \ */
-            /*     ws->ky[i][IMAG] * ws->uhat[idx][IMAG] * ws->dt; */
-            /* ws->res[idx][IMAG] -= \ */
-            /*     ws->ky[i][REAL] * ws->uhat[idx][REAL] * ws->dt; */
-            ws->res[idx][IMAG] -= \
+            ws->res[idx][REAL] += \
                 ws->ky[i][IMAG] * ws->uhat[idx][IMAG] * ws->dt;
+            ws->res[idx][IMAG] -= \
+                ws->ky[i][IMAG] * ws->uhat[idx][REAL] * ws->dt;
+            /* ws->res[idx][IMAG] -= \ */
+            /*     ws->ky[i][IMAG] * ws->uhat[idx][IMAG] * ws->dt; */
         }
 
 
@@ -272,7 +339,7 @@ void scheme(Workspace *ws)
 
 
 /* perform real DFT
- * 
+ *
  * Params
  * ======
  * plan    :   pointer to fftw_plan to execute
@@ -291,7 +358,7 @@ void rfft2(fftw_plan *plan, double *orig, Workspace *ws)
 
 
 /* perform inverse DFT and normalize result
- * 
+ *
  * Params
  * ======
  * plan    :   pointer to fftw_plan to execute
@@ -307,7 +374,8 @@ void irfft2(fftw_plan *plan, fftw_complex *orig, fftw_complex *backup,
     fftw_complex *tmp;
 
     /* write backup of input, since c2r dft doesn't preserve input ... */
-    memcpy((void *)backup, (void *)orig, sizeof(fftw_complex) * ws->ktot);
+    if (orig != backup)
+        memcpy((void *)backup, (void *)orig, sizeof(fftw_complex) * ws->ktot);
 
     /* do dft and center result */
     fftw_execute(*plan);
@@ -326,26 +394,23 @@ void irfft2(fftw_plan *plan, fftw_complex *orig, fftw_complex *backup,
 
 
 /* prepare input such that its DFT will have the origin frequence in the center
- * 
+ *
  * Params
  * ======
  * arr     :   double array, input
- * nx, ny  :   int, dimension sizes 
+ * nx, ny  :   int, dimension sizes
  *  */
 void rfftshift(double *arr, size_t nx, size_t ny)
 {
-    size_t i, j, k;
+    size_t i, j;
 
-    for (i = 0, k = 0; i < ny; ++i)
-        for (j = 0; j < nx; ++j, ++k) {
-            /* center zero-mode in the middle and flip along x-axis */
-            arr[j+i*nx] *= (i+j) % 2 == 0 ? -1 : 1;
-            /* revert x-axis flip */
-            arr[k] *= k % 2 == 0 ? -1 : 1;
-        }
+    for (i = 0; i < ny; ++i)
+        for (j = 0; j < nx; ++j)
+            arr[j+i*nx] *= i % 2 == 0 ? 1. : -1.;
 }
 
 
+/* TODO: remove */
 inline
 fftw_complex *clinspace(fftw_complex start, fftw_complex end,
                         size_t npoints, fftw_complex *dst)
@@ -356,7 +421,7 @@ fftw_complex *clinspace(fftw_complex start, fftw_complex end,
     z[REAL] = start[REAL];
     z[IMAG] = start[IMAG];
     dz[REAL] = (end[REAL] - start[REAL]) / ((double) npoints);
-    dz[IMAG] = (end[IMAG] - start[IMAG]) / ((double) npoints);
+    dz[IMAG] = (end[IMAG] - start[IMAG]+1.) / ((double) npoints);
 
     for (i = 0; i < npoints; ++i) {
         dst[i][REAL] = z[REAL];
@@ -369,6 +434,7 @@ fftw_complex *clinspace(fftw_complex start, fftw_complex end,
 }
 
 
+/* TODO: include end */
 inline
 double *rlinspace(double start, double end, size_t np, double *dst)
 {

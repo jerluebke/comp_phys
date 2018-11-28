@@ -43,6 +43,8 @@ Workspace *init(Params, double *);
 void cleanup(Workspace *);
 double *time_step(unsigned short, Workspace *);
 
+fftw_complex *rhs(fftw_complex *, Workspace *);
+
 fftw_complex *clinspace(fftw_complex, fftw_complex,
                         size_t, fftw_complex *);
 double *rlinspace(double, double, size_t, double *);
