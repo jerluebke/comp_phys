@@ -117,7 +117,7 @@ int main()
 
     res = rhs(z_hat, pde);
     
-    /* print_complex_array(res, Nkx, Nky); */
+    print_complex_array(res, Nkx, Nky);
 
     /* printf("t = 0\n"); */
     /* print_real_array(pde->o, pde->Nx, pde->Ny); */
@@ -131,7 +131,7 @@ int main()
     free(y);
     /* free(z); */
     fftw_free(z);
-    /* fftw_free(z_hat); */
+    fftw_free(z_hat);
     fftw_destroy_plan(rfft);
     /* fftw_cleanup(); */
 
