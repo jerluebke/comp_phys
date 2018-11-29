@@ -190,7 +190,7 @@ void print_real_array(double *arr, size_t x, size_t y)
 
     for (i = 0; i < y; ++i)
         for(j = 0; j < x; ++j)
-            printf("%s%s%f%s%s",
+            printf("%s%s%e%s%s",
                     (i == 0 && j == 0 ? "[\n" : ""),
                     (j == 0 ? "[" : ""),
                     arr[j+i*x],
@@ -219,8 +219,10 @@ fftw_complex *rhs(fftw_complex *ohat, Workspace *ws)
     irfft2(&ws->ohat_to_o, ws->o, ws);
 
 
+    print_real_array(ws->ky, 1, ws->Nky);
+    print_real_array(ws->ksq, ws->Nkx, ws->Nky);
     /* print_real_array(ws->o, ws->Nx, ws->Ny); */
-    /* print_complex_array(ws->ohat, ws->Nkx, ws->Nky); */
+    print_complex_array(ws->ohat, ws->Nkx, ws->Nky);
 
 
     /********************/
@@ -238,15 +240,18 @@ fftw_complex *rhs(fftw_complex *ohat, Workspace *ws)
                 ws->ky[i] * ws->ohat[idx][REAL] / ws->ksq[idx];
         }
 
+    /* CHECK: uhat is correct */
 
-    /* print_complex_array(ws->uhat, ws->Nkx, ws->Nky); */
+    print_complex_array(ws->uhat, ws->Nkx, ws->Nky);
 
 
     /* compute iFT of uhat, yielding utmp */
     irfft2(&ws->uhat_to_u, ws->utmp, ws);
 
+    /* print_real_array(ws->utmp, ws->Nx, ws->Ny); */
+
     /* u_x * o */
-    for (i = 0; i < ws->ktot; ++i)
+    for (i = 0; i < ws->Ntot; ++i)
         ws->utmp[i] *= ws->o[i];
 
     /* compute FT of u * o, yielding uhat */
@@ -264,7 +269,7 @@ fftw_complex *rhs(fftw_complex *ohat, Workspace *ws)
         }
 
 
-    /* TODO: works up to this point, test the rest */
+    /* TODO: there are a few values which devate too far */
     /* print_complex_array(ws->res, ws->Nkx, ws->Nky); */
 
 
@@ -283,7 +288,7 @@ fftw_complex *rhs(fftw_complex *ohat, Workspace *ws)
     irfft2(&ws->uhat_to_u, ws->utmp, ws);
 
     /* u_y * o */
-    for (i = 0; i < ws->ktot; ++i)
+    for (i = 0; i < ws->Ntot; ++i)
         ws->utmp[i] *= ws->o[i];
 
     /* compute FT of u * o, yielding uhat */
@@ -314,11 +319,15 @@ void scheme(Workspace *ws)
     for (i = 0; i < ws->ktot; ++i)
         otmp[i][IMAG] *= ws->prop_full[i];
 
+    /* CHECK: good until here */
+
     /* step two */
     otmp = rhs(otmp, ws);
     for (i = 0; i < ws->ktot; ++i)
         otmp[i][IMAG] = .25 * otmp[i][IMAG] * ws->prop_neg_half[i] \
-                         + 3. * ws->ohat[i][IMAG] * ws->prop_pos_half[i];
+                        + 3. * ws->ohat[i][IMAG] * ws->prop_pos_half[i];
+
+    /* print_complex_array(otmp, ws->Nkx, ws->Nky); */
 
     /* step three */
     otmp = rhs(otmp, ws);

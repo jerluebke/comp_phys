@@ -107,7 +107,7 @@ int main()
 
     rfftshift(z, Nx, Ny);
     fftw_execute(rfft);
-    rfftshift(z, Nx, Ny);  
+    rfftshift(z, Nx, Ny);
 
     /* print_real_array(z, Nx, Ny); */
     /* print_complex_array(z_hat, Nkx, Nky); */
@@ -116,8 +116,9 @@ int main()
     Workspace *pde = init(p, z);
 
     res = rhs(z_hat, pde);
-    
-    print_complex_array(res, Nkx, Nky);
+    /* res = rhs(res, pde); */
+
+    /* print_complex_array(res, Nkx, Nky); */
 
     /* printf("t = 0\n"); */
     /* print_real_array(pde->o, pde->Nx, pde->Ny); */
