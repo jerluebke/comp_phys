@@ -65,7 +65,8 @@ Workspace *init(Params params, double *iv)
      * include backup memory for inverse transforms */
     ws->o    = fftw_alloc_real(ws->Ntot);
     ws->ohat = fftw_alloc_complex(ws->ktot);
-    ws->_ohat= fftw_alloc_complex(ws->ktot);
+    ws->_ohat_0 = fftw_alloc_complex(ws->ktot);
+    ws->_ohat_1 = fftw_alloc_complex(ws->ktot);
     ws->utmp = fftw_alloc_real(ws->Ntot);
     ws->uhat = fftw_alloc_complex(ws->ktot);
 
@@ -74,7 +75,7 @@ Workspace *init(Params params, double *iv)
                                          ws->o, ws->ohat,
                                          FFTW_MEASURE);
     ws->ohat_to_o = fftw_plan_dft_c2r_2d(ws->Nx, ws->Ny,
-                                         ws->ohat, ws->o,
+                                         ws->_ohat_0, ws->o,
                                          FFTW_MEASURE);
     ws->u_to_uhat = fftw_plan_dft_r2c_2d(ws->Nx, ws->Ny,
                                          ws->utmp, ws->uhat,
@@ -84,7 +85,7 @@ Workspace *init(Params params, double *iv)
                                          FFTW_MEASURE);
 
     /* set inital value and compute FT */
-    memcpy((void *)ws->o, (void *)iv, ws->Ntot);
+    memcpy((void *)ws->o, (void *)iv, sizeof(double) * ws->Ntot);
     /* for (i = 0; i < ws->Ntot; ++i) */
     /*     ws->o[i] = iv[i]; */
     rfft2(&ws->o_to_ohat, ws->o, ws);
@@ -122,7 +123,8 @@ void cleanup(Workspace *ws)
     fftw_free(ws->ksq);
     fftw_free(ws->o);
     fftw_free(ws->ohat);
-    fftw_free(ws->_ohat);
+    fftw_free(ws->_ohat_0);
+    fftw_free(ws->_ohat_1);
     fftw_free(ws->utmp);
     fftw_free(ws->uhat);
     fftw_free(ws->res);
@@ -147,7 +149,8 @@ double *time_step(unsigned short steps, Workspace *ws)
     for (i = 0; i < steps; ++i)
         scheme(ws);
 
-    irfft2(&ws->ohat_to_o, &ws->ohat, &ws->_ohat, ws->o, ws);
+    /* FIXME */
+    irfft2(&ws->ohat_to_o, &ws->ohat, &ws->_ohat_1, ws->o, ws);
 
     return ws->o;
 }
@@ -207,20 +210,23 @@ void print_real_array(double *arr, size_t x, size_t y)
 fftw_complex *rhs(fftw_complex *ohat, Workspace *ws)
 {
     size_t i, j, idx;
-    fftw_complex *tmp;
+
+    /* if ohat == ws->ohat */
+    memcpy((void *)ws->_ohat_0, (void *)ohat, sizeof(fftw_complex) * ws->ktot);
 
     /* anti aliasing */
     for (i = 0; i < ws->ktot; ++i)
         if (! ws->mask[i])
-            ohat[i][IMAG] = 0.;
+            ws->_ohat_0[i][IMAG] = 0.;
+
+    irfft2(&ws->ohat_to_o, &ws->_ohat_0, &ws->_ohat_1, ws->o, ws);
 
     /* iFT of ohat, yielding o */
     /* switch ws->ohat and ohat, so the fftw_plan for ws->ohat can be used
      * for ohat */
-    tmp = ws->ohat;
-    ws->ohat = ohat;
-    irfft2(&ws->ohat_to_o, &ws->ohat, &ws->_ohat, ws->o, ws);
-    ws->ohat = tmp;
+    
+    /* print_real_array(ws->o, ws->Nx, ws->Ny); */
+    /* print_complex_array(ws->ohat, ws->Nkx, ws->Nky); */
 
 
     /********************/
@@ -237,6 +243,10 @@ fftw_complex *rhs(fftw_complex *ohat, Workspace *ws)
             ws->uhat[idx][IMAG] = \
                 ws->ky[i] * ws->ohat[idx][REAL] / ws->ksq[idx];
         }
+
+
+    /* print_complex_array(ws->uhat, ws->Nkx, ws->Nky); */
+
 
     /* compute iFT of uhat, yielding utmp */
     irfft2(&ws->uhat_to_u, &ws->uhat, &ws->uhat, ws->utmp, ws);
@@ -255,10 +265,12 @@ fftw_complex *rhs(fftw_complex *ohat, Workspace *ws)
             idx = j + i * ws->Nkx;
             /* multiplying by I switches real and imag in uhat
              * again, only the imag part is relevant */
-            ws->res[idx][IMAG] = ohat[idx][IMAG] \
+            ws->res[idx][IMAG] = ws->_ohat_0[idx][IMAG] \
                 - ws->kx[j] * ws->uhat[idx][REAL] * ws->dt;
         }
 
+
+    /* TODO: works up to this point, test the rest */
     print_complex_array(ws->res, ws->Nkx, ws->Nky);
 
 
@@ -356,7 +368,7 @@ void irfft2(fftw_plan *plan, fftw_complex **orig, fftw_complex **backup,
             double *res, Workspace *ws)
 {
     double *end;
-    fftw_complex **tmp;
+    fftw_complex *tmp;
 
     /* write backup of input, since c2r dft doesn't preserve input ... */
     if (*orig != *backup)
@@ -373,9 +385,9 @@ void irfft2(fftw_plan *plan, fftw_complex **orig, fftw_complex **backup,
         *res++ /= ws->Ntot;
 
     /* set backup as original */
-    tmp = orig;
-    orig = backup;
-    backup = tmp;
+    tmp = *orig;
+    *orig = *backup;
+    *backup = tmp;
 }
 
 

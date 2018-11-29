@@ -21,5 +21,5 @@ def rhs(p, ohat):
     #  
     #  res -= 1j * p.KY * uhat * p.dt
 
-    #  return res
     return res
+    #  return uhat

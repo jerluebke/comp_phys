@@ -91,7 +91,6 @@ int main()
 
     x = malloc(sizeof(*x) * Nx);
     y = malloc(sizeof(*y) * Ny);
-    /* z = malloc(sizeof(*z) * Ntot); */
     z = fftw_alloc_real(Ntot);
     z_hat = fftw_alloc_complex(Nktot);
 
@@ -106,9 +105,9 @@ int main()
             z[j+i*Nx] = -inital_func(x[j], y[i]);
 
 
-    /* rfftshift(z, Nx, Ny);
-     * fftw_execute(rfft);
-     * rfftshift(z, Nx, Ny);  */
+    rfftshift(z, Nx, Ny);
+    fftw_execute(rfft);
+    rfftshift(z, Nx, Ny);  
 
     /* print_real_array(z, Nx, Ny); */
     /* print_complex_array(z_hat, Nkx, Nky); */
@@ -118,7 +117,7 @@ int main()
 
     res = rhs(z_hat, pde);
     
-    print_complex_array(res, Nkx, Nky);
+    /* print_complex_array(res, Nkx, Nky); */
 
     /* printf("t = 0\n"); */
     /* print_real_array(pde->o, pde->Nx, pde->Ny); */
@@ -132,7 +131,7 @@ int main()
     free(y);
     /* free(z); */
     fftw_free(z);
-    fftw_free(z_hat);
+    /* fftw_free(z_hat); */
     fftw_destroy_plan(rfft);
     /* fftw_cleanup(); */
 

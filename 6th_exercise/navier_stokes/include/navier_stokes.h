@@ -26,7 +26,8 @@ typedef struct Workspace {
            *prop_pos_half,
            *prop_neg_half;
     fftw_complex *ohat,     /* fourier transform of omega */
-                 *_ohat,    /* backup of ohat, since reverse dft doesn't preserve input */
+                 *_ohat_0,  /* backup of ohat, since reverse dft doesn't preserve input */
+                 *_ohat_1,
                  *uhat,     /* fourier transform of utmp */
                  *res;      /* helper array for `double *rhs` */
     unsigned char *mask;    /* mask array for anti-aliasing */
