@@ -97,8 +97,8 @@ int main()
     fftw_plan rfft = fftw_plan_dft_r2c_2d(Nx, Ny, z, z_hat, FFTW_MEASURE);
 
 
-    x = linspace(xmin, xmax, Nx, x);
-    y = linspace(ymin, ymax, Ny, y);
+    x = linspace(xmin, xmax-1., Nx, x);
+    y = linspace(ymin, ymax-1., Ny, y);
 
     for (i = 0; i < Ny; ++i)
         for (j = 0; j < Nx; ++j)
@@ -107,7 +107,7 @@ int main()
 
     rfftshift(z, Nx, Ny);
     fftw_execute(rfft);
-    rfftshift(z, Nx, Ny);
+    rfftshift(z, Nx, Ny); 
 
     /* print_real_array(z, Nx, Ny); */
     /* print_complex_array(z_hat, Nkx, Nky); */
@@ -115,13 +115,15 @@ int main()
     Params p = {Nx, Ny, .05, .0};
     Workspace *pde = init(p, z);
 
-    res = rhs(z_hat, pde);
+
+    time_step(10, pde);
+    /* res = rhs(pde->ohat, pde); */
     /* res = rhs(res, pde); */
 
     /* print_complex_array(res, Nkx, Nky); */
 
     /* printf("t = 0\n"); */
-    /* print_real_array(pde->o, pde->Nx, pde->Ny); */
+    print_real_array(pde->o, pde->Nx, pde->Ny);
     /* time_step(1, pde); */
     /* printf("t = 0.05\n"); */
     /* print_real_array(pde->o, pde->Nx, pde->Ny); */

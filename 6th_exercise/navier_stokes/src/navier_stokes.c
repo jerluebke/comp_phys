@@ -61,7 +61,7 @@ Workspace *init(Params params, double *iv)
     /* FIX: this value is zero and would yield NaNs in division */
     ws->ksq[ws->Nkx*ws->Nky/2] = 1.;
 
-    /* allocate omega and u and there transforms
+    /* allocate omega and u and their transforms
      * include backup memory for inverse transforms */
     ws->o    = fftw_alloc_real(ws->Ntot);
     ws->ohat = fftw_alloc_complex(ws->ktot);
@@ -103,7 +103,7 @@ Workspace *init(Params params, double *iv)
         ws->prop_neg_half[i] = exp(.5 * ws->nu * ws->ksq[i] * ws->dt);
     }
 
-    /* allocate helper array for `double *rhs` (is initilized there) */
+    /* allocate helper array for `double *rhs` (is initialized there) */
     ws->res  = fftw_alloc_complex(ws->ktot);
 
     /* done */
@@ -156,20 +156,22 @@ double *time_step(unsigned short steps, Workspace *ws)
 /*********************************************************************/
 /* TODO: remove later */
 static
-void print_complex_array(fftw_complex *arr, size_t x, size_t y)
+void print_complex_array(fftw_complex *arr, size_t x, size_t y,
+        char *name)
 {
     size_t i, j;
 
-    printf("real = \n");
-    for (i = 0; i < y; ++i)
-        for (j = 0; j < x; ++j)
-            printf("%s%s%e%s%s",
-                    (i == 0 && j == 0 ? "[\n" : ""),
-                    (j == 0 ? "[" : ""),
-                    arr[j+i*x][REAL],
-                    (j == x-1 ? "]\n" : ""),
-                    (i == y-1 && j == x-1 ? "]\n" : ","));
-    printf("imag = \n");
+    /* printf("real = \n");
+     * for (i = 0; i < y; ++i)
+     *     for (j = 0; j < x; ++j)
+     *         printf("%s%s%e%s%s",
+     *                 (i == 0 && j == 0 ? "[\n" : ""),
+     *                 (j == 0 ? "[" : ""),
+     *                 arr[j+i*x][REAL],
+     *                 (j == x-1 ? "]\n" : ""),
+     *                 (i == y-1 && j == x-1 ? "]\n" : ",")); */
+    /* printf("imag = \n"); */
+    printf("%s = np.array(\n", name);
     for (i = 0; i < y; ++i)
         for (j = 0; j < x; ++j)
             printf("%s%s%e%s%s",
@@ -178,16 +180,17 @@ void print_complex_array(fftw_complex *arr, size_t x, size_t y)
                     arr[j+i*x][IMAG],
                     (j == x-1 ? "]\n" : ""),
                     (i == y-1 && j == x-1 ? "]\n" : ","));
-    puts("\n");
-    puts("\n");
+    puts(")\n\n");
 }
 
 
 static
-void print_real_array(double *arr, size_t x, size_t y)
+void print_real_array(double *arr, size_t x, size_t y,
+        char *name)
 {
     size_t i, j;
 
+    printf("%s = np.array(\n", name);
     for (i = 0; i < y; ++i)
         for(j = 0; j < x; ++j)
             printf("%s%s%e%s%s",
@@ -196,7 +199,7 @@ void print_real_array(double *arr, size_t x, size_t y)
                     arr[j+i*x],
                     (j == x-1 ? "]\n" : ""),
                     (i == y-1 && j == x-1 ? "]\n" : ","));
-    puts("\n");
+    puts(")\n\n");
 }
 
 
@@ -213,16 +216,29 @@ fftw_complex *rhs(fftw_complex *ohat, Workspace *ws)
         if (! ws->mask[i])
             ohat[i][IMAG] = 0.;
 
+    /* print_complex_array(ohat, ws->Nkx, ws->Nky); */
+
     /* iFT of ohat, yielding o */
     memcpy((void *)ws->_ohat, (void *)ohat,
             sizeof(fftw_complex) * ws->ktot);
     irfft2(&ws->ohat_to_o, ws->o, ws);
 
 
-    print_real_array(ws->ky, 1, ws->Nky);
-    print_real_array(ws->ksq, ws->Nkx, ws->Nky);
-    /* print_real_array(ws->o, ws->Nx, ws->Ny); */
-    print_complex_array(ws->ohat, ws->Nkx, ws->Nky);
+    /* print_real_array(ws->kx, ws->Nkx, 1, "kx"); */
+    /* print_real_array(ws->ky, 1, ws->Nky, "ky"); */
+    /* print_real_array(ws->ksq, ws->Nkx, ws->Nky, "ksq"); */
+    /* puts("# input ohat, after anti aliasing"); */
+    /* print_complex_array(ohat, ws->Nkx, ws->Nky, */
+    /*         "ohat_c"); */
+    /* puts("# original ohat"); */
+    /* print_complex_array(ws->ohat, ws->Nkx, ws->Nky, */
+    /*         "pde_ohat_c"); */
+    /* puts("# irfft(ohat)"); */
+    /* print_real_array(ws->o, ws->Nx, ws->Ny, */
+    /*         "o_c"); */
+
+
+    printf("# *ohat_c = %p, *pde_ohat_c = %p\n", ohat, ws->ohat);
 
 
     /********************/
@@ -240,22 +256,34 @@ fftw_complex *rhs(fftw_complex *ohat, Workspace *ws)
                 ws->ky[i] * ws->ohat[idx][REAL] / ws->ksq[idx];
         }
 
-    /* CHECK: uhat is correct */
 
-    print_complex_array(ws->uhat, ws->Nkx, ws->Nky);
+    /* CORRECT */
+    /* puts("# uhat = I * ky * ohat / k^2"); */
+    /* print_complex_array(ws->uhat, ws->Nkx, ws->Nky, */
+    /*         "uhat_c"); */
 
 
     /* compute iFT of uhat, yielding utmp */
     irfft2(&ws->uhat_to_u, ws->utmp, ws);
 
-    /* print_real_array(ws->utmp, ws->Nx, ws->Ny); */
+    /* puts("# irfft(uhat)"); */
+    /* print_real_array(ws->utmp, ws->Nx, ws->Ny, */
+    /*         "u_c"); */
 
     /* u_x * o */
     for (i = 0; i < ws->Ntot; ++i)
         ws->utmp[i] *= ws->o[i];
 
+    /* puts("# u * o"); */
+    /* print_real_array(ws->utmp, ws->Nx, ws->Ny, */
+    /*         "u_o_c"); */
+
     /* compute FT of u * o, yielding uhat */
     rfft2(&ws->u_to_uhat, ws->utmp, ws);
+
+    /* puts("# rfft(u*o)"); */
+    /* print_complex_array(ws->uhat, ws->Nkx, ws->Nky, */
+    /*         "uo_hat_c"); */
 
     /* write into result */
     /* res = ohat - I * kx * uhat * dt */
@@ -270,7 +298,12 @@ fftw_complex *rhs(fftw_complex *ohat, Workspace *ws)
 
 
     /* TODO: there are a few values which devate too far */
-    /* print_complex_array(ws->res, ws->Nkx, ws->Nky); */
+    /* puts("# res = ohat - I * kx * uhat * dt"); */
+    /* print_complex_array(ws->res, ws->Nkx, ws->Nky, */
+    /*         "res_c"); */
+
+
+    /* exit(-1); */
 
 
     /********************/
@@ -316,24 +349,37 @@ void scheme(Workspace *ws)
 
     /* step one */
     otmp = rhs(ws->ohat, ws);
+
+    /* print_complex_array(otmp, ws->Nkx, ws->Nky, "o1"); */
+
     for (i = 0; i < ws->ktot; ++i)
         otmp[i][IMAG] *= ws->prop_full[i];
 
-    /* CHECK: good until here */
+    /* print_complex_array(otmp, ws->Nkx, ws->Nky, "o1_"); */
 
     /* step two */
     otmp = rhs(otmp, ws);
-    for (i = 0; i < ws->ktot; ++i)
-        otmp[i][IMAG] = .25 * otmp[i][IMAG] * ws->prop_neg_half[i] \
-                        + 3. * ws->ohat[i][IMAG] * ws->prop_pos_half[i];
 
-    /* print_complex_array(otmp, ws->Nkx, ws->Nky); */
+    /* print_complex_array(otmp, ws->Nkx, ws->Nky, "o2"); */
+    /* print_complex_array(ws->ohat, ws->Nkx, ws->Nky, "ohat_"); */
+
+    for (i = 0; i < ws->ktot; ++i)
+        otmp[i][IMAG] = .25 * (otmp[i][IMAG] * ws->prop_neg_half[i] \
+                        + 3. * ws->ohat[i][IMAG] * ws->prop_pos_half[i]);
+
+    /* print_complex_array(otmp, ws->Nkx, ws->Nky, "o2_"); */
+
 
     /* step three */
     otmp = rhs(otmp, ws);
+
+    /* print_complex_array(otmp, ws->Nkx, ws->Nky, "o3"); */
+
     for (i = 0; i < ws->ktot; ++i)
         ws->ohat[i][IMAG] = 1./3. * (2. * otmp[i][IMAG] * ws->prop_pos_half[i] \
                             + ws->ohat[i][IMAG] * ws->prop_pos_half[i]);
+
+    /* print_complex_array(ws->ohat, ws->Nkx, ws->Nky, "ohat"); */
 }
 
 
@@ -402,7 +448,7 @@ inline double *linspace(double start, double end, size_t np, double *dst)
     double x, dx, *startptr, *endptr;
 
     x = start;
-    dx = (end - start) / ((double) np);
+    dx = (end - start + 1) / ((double) np);
     startptr = dst;
     endptr = dst + np;
 
