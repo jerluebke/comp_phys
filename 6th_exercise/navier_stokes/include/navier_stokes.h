@@ -8,11 +8,11 @@
 
 
 typedef struct Params {
-    size_t Nx, Ny;
-    double dt, nu;
+    const size_t Nx, Ny;
+    const double dt, nu;
 } Params;
 
-typedef struct Workspace {
+typedef struct PDE {
     size_t Nx, Ny,          /* sizes of real and complex arrays */
            Nkx, Nky,
            Ntot, ktot;
@@ -36,12 +36,9 @@ typedef struct Workspace {
               o_to_ohat,
               u_to_uhat;
 
-} Workspace;
+} PDE;
 
-Workspace *init(Params, double *);
-void cleanup(Workspace *);
-double *time_step(int, Workspace *);
-
-fftw_complex *rhs(fftw_complex *, Workspace *);
-
+PDE *init(const Params, const double *);
+void cleanup(PDE *);
+double *time_step(unsigned int, PDE *);
 double *linspace(double, double, size_t, double *);

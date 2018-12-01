@@ -7,7 +7,7 @@
 #include "../include/navier_stokes.h"
 
 
-void print_real_array(double *arr, size_t x, size_t y, char *name)
+void print_real_array(const double *arr, size_t x, size_t y, const char *name)
 {
     size_t i, j;
 
@@ -24,7 +24,7 @@ void print_real_array(double *arr, size_t x, size_t y, char *name)
 }
 
 
-void print_complex_array(fftw_complex *arr, size_t x, size_t y)
+void print_complex_array(const fftw_complex *arr, size_t x, size_t y)
 {
     size_t i, j;
 
@@ -80,7 +80,7 @@ int main()
     size_t i, j, Nx, Ny, Nkx, Nky, Ntot, Nktot;
     double xmin, xmax, ymin, ymax;
     double *x, *y, *z;
-    fftw_complex *z_hat, *res;
+    /* fftw_complex *z_hat, *res; */
 
     Nx = 16, Ny = 16;
     Nkx = Nx / 2 + 1, Nky = Ny;
@@ -93,10 +93,9 @@ int main()
     x = malloc(sizeof(*x) * Nx);
     y = malloc(sizeof(*y) * Ny);
     z = fftw_alloc_real(Ntot);
-    z_hat = fftw_alloc_complex(Nktot);
+    /* z_hat = fftw_alloc_complex(Nktot); */
 
-    fftw_plan rfft = fftw_plan_dft_r2c_2d(Nx, Ny, z, z_hat, FFTW_MEASURE);
-
+    /* fftw_plan rfft = fftw_plan_dft_r2c_2d(Nx, Ny, z, z_hat, FFTW_MEASURE); */
 
     x = linspace(xmin, xmax-1., Nx, x);
     y = linspace(ymin, ymax-1., Ny, y);
@@ -106,43 +105,22 @@ int main()
             z[j+i*Nx] = -inital_func(x[j], y[i]);
 
 
-    rfftshift(z, Nx, Ny);
-    fftw_execute(rfft);
-    rfftshift(z, Nx, Ny); 
-
-    /* print_real_array(z, Nx, Ny); */
-    /* print_complex_array(z_hat, Nkx, Nky); */
+    /* rfftshift(z, Nx, Ny); */
+    /* fftw_execute(rfft); */
+    /* rfftshift(z, Nx, Ny);  */
 
     Params p = {.Nx=Nx, .Ny=Ny, .dt=.05, .nu=.0};
-    Workspace *pde = init(p, z);
+    PDE *pde = init(p, z);
 
-    time_step(100, pde);
-
-    /* char name[4];
-     * for (i = 0; i < 10; ++i) {
-     *     time_step(10, pde);
-     *     sprintf(name, "o%zu", i);
-     *     print_real_array(pde->o, Nx, Ny, name);
-     * }  */
-    /* res = rhs(pde->ohat, pde); */
-    /* res = rhs(res, pde); */
-
-    /* print_complex_array(res, Nkx, Nky); */
-
-    /* printf("t = 0\n"); */
+    time_step(1000, pde);
     print_real_array(pde->o, pde->Nx, pde->Ny, "o");
-    /* time_step(10, pde); */
-    /* printf("t = 0.05\n"); */
-    /* print_real_array(pde->o, pde->Nx, pde->Ny, "res"); */
-    /* printf("o_hat = \n"); */
-    /* print_complex_array(pde->ohat, pde->Nky, pde->Nkx); */
 
     free(x);
     free(y);
     /* free(z); */
     fftw_free(z);
-    fftw_free(z_hat);
-    fftw_destroy_plan(rfft);
+    /* fftw_free(z_hat); */
+    /* fftw_destroy_plan(rfft); */
     /* fftw_cleanup(); */
 
     cleanup(pde);
