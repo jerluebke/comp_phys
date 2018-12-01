@@ -40,7 +40,7 @@ typedef struct Workspace {
 
 Workspace *init(Params, double *);
 void cleanup(Workspace *);
-double *time_step(unsigned short, Workspace *);
+double *time_step(int, Workspace *);
 
 fftw_complex *rhs(fftw_complex *, Workspace *);
 

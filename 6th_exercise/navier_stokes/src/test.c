@@ -7,19 +7,20 @@
 #include "../include/navier_stokes.h"
 
 
-void print_real_array(double *arr, size_t x, size_t y)
+void print_real_array(double *arr, size_t x, size_t y, char *name)
 {
     size_t i, j;
 
+    printf("%s = np.array(", name);
     for (i = 0; i < y; ++i)
         for(j = 0; j < x; ++j)
-            printf("%s%s%f%s%s",
+            printf("%s%s%e%s%s",
                     (i == 0 && j == 0 ? "[\n" : ""),
                     (j == 0 ? "[" : ""),
                     arr[j+i*x],
                     (j == x-1 ? "]\n" : ""),
-                    (i == y-1 && j == x-1 ? "]\n" : ","));
-    puts("\n");
+                    (i == y-1 && j == x-1 ? "]" : ","));
+    puts(")\n\n");
 }
 
 
@@ -112,21 +113,27 @@ int main()
     /* print_real_array(z, Nx, Ny); */
     /* print_complex_array(z_hat, Nkx, Nky); */
 
-    Params p = {Nx, Ny, .05, .0};
+    Params p = {.Nx=Nx, .Ny=Ny, .dt=.05, .nu=.0};
     Workspace *pde = init(p, z);
 
+    time_step(100, pde);
 
-    time_step(10, pde);
+    /* char name[4];
+     * for (i = 0; i < 10; ++i) {
+     *     time_step(10, pde);
+     *     sprintf(name, "o%zu", i);
+     *     print_real_array(pde->o, Nx, Ny, name);
+     * }  */
     /* res = rhs(pde->ohat, pde); */
     /* res = rhs(res, pde); */
 
     /* print_complex_array(res, Nkx, Nky); */
 
     /* printf("t = 0\n"); */
-    print_real_array(pde->o, pde->Nx, pde->Ny);
-    /* time_step(1, pde); */
+    print_real_array(pde->o, pde->Nx, pde->Ny, "o");
+    /* time_step(10, pde); */
     /* printf("t = 0.05\n"); */
-    /* print_real_array(pde->o, pde->Nx, pde->Ny); */
+    /* print_real_array(pde->o, pde->Nx, pde->Ny, "res"); */
     /* printf("o_hat = \n"); */
     /* print_complex_array(pde->ohat, pde->Nky, pde->Nkx); */
 

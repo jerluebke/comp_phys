@@ -151,6 +151,8 @@ params = dict(xb=-np.pi, xe=np.pi,
               Nx=128, Ny=128,
               dt=.05, kappa=.0001)
 params['kappa'] = 0
+params['Nx'] = 16
+params['Ny'] = 16
 # two times two vertices in each other
 #  p = PDE(params, lambda x, y: one_vortex(x, y, x0=-2., s_sq=1.)
 #                               -1.768*one_vortex(x, y, x0=-2., s_sq=2.)
@@ -158,7 +160,10 @@ params['kappa'] = 0
 #                               -1.768*one_vortex(x, y, x0=2., s_sq=2.)
 #         )
 
-p = PDE(params, four_vortices)
+#  p = PDE(params, four_vortices)
+
+p = PDE(params, lambda x, y: two_vortices(x, y, x0=-1., x1=1.))
+p.scheme = p.euler
 
 
 steps = 10
