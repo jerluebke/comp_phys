@@ -3,9 +3,15 @@ __pycache__
 *.o
 *.mod
 *.gp
-*.mp4
 *.gch
 *.dll
 
+*.avi
+*.mp4
+*.png
+*.jpg
+
+build
 lib
 ns
+

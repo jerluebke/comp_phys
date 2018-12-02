@@ -1,6 +1,6 @@
 #pragma once
 
-#include <fftw3.h>
+#include "fftw3.h"
 
 #define SQUARE(x) (x)*(x)
 #define REAL 0
