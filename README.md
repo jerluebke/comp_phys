@@ -18,6 +18,10 @@ conjugate gradient
 ## 5th Exercise
 Fast Fourier Transform
 
+## 6th Exercise
+Schrödingers equation with Crank-Nicolson, Burgers equation in 1D,
+Navier-Stokes in python and C (using VTK)  
+
 ---
 
 ## misc

@@ -1,7 +1,9 @@
 #define _USE_MATH_DEFINES
 #include <cmath>
+#include <cstdint>
 #include <algorithm>
-#include <iostream>
+#include <cstdio>
+#include <windows.h>
 
 #include <vtkSmartPointer.h>
 #include <vtkPlaneSource.h>
@@ -24,21 +26,32 @@ extern "C" {
 #include "..\include\navier_stokes.h"
 }
 
+/* TODO: write array to file, read initial condition from file
+ *     use meta files (including target file name, resolution) */
+
 
 #define VIDEO   1
 #define PNG     0
+#define STAT    1
+#define PRINT_PROGRESS      1
+#define PROGRESS_FREQUENCY  100
+#define FRAMERATE   60
 
 
-const size_t Nx = 1024;
-const size_t Ny = 1024;
+const size_t Nx = 2048;
+const size_t Ny = 2048;
 const size_t Ntot = Nx * Ny;
-const size_t frames = 3600;
+const size_t frames = 5400;
 const unsigned int steps = 10;
 const double dt = .05;
 const double nu = .0;
+const double xmin = -M_PI, xmax = M_PI,
+             ymin = -M_PI, ymax = M_PI;
 
 
 double initial_func(double x, double y);
+
+void mean_std_ul(uint64_t *arr, size_t size, uint64_t *mean, double *std);
 
 template<typename vtkSmartPointerT>
 void set_colors(double *data, size_t npoints,
@@ -50,22 +63,41 @@ void set_colors(double *data, size_t npoints,
 int main(int argc, char **argv)
 {
     size_t i, j;
-    double xmin, xmax, ymin, ymax;
     double zmin, zmax;
     double *x, *y, *z;
+    char filename[256];
+#if STAT
+    uint64_t t0_all, t1_all, t0_ts, t_m, t1_write,
+             ts_max, ts_min, write_max, write_min,
+             ts_mean, write_mean;
+    double ts_std, write_std;
+    uint64_t *ts_ts, *ts_write;
+    ts_ts       = (uint64_t *)malloc(sizeof(*ts_ts) * frames);
+    ts_write    = (uint64_t *)malloc(sizeof(*ts_write) * frames);
+#endif
 
     x = (double *)malloc(sizeof(*x) * Nx);
     y = (double *)malloc(sizeof(*y) * Ny);
     z = (double *)malloc(sizeof(*z) * Ntot);
 
 
+#if VIDEO || PNG
+    printf("Enter filename (251 chars, without file ending): ");
+    scanf_s("%s", filename, 251);
+    printf("\n");
+#if VIDEO
+    sprintf(filename, "%s.avi", filename);
+#elif PNG
+    sprintf(filename, "%s.png", filename);
+#endif
+#endif
+
+
     //***************************************************************
     // set up values
     //***************************************************************
-    xmin = -2*M_PI; xmax = 2*M_PI;
-    ymin = -2*M_PI; ymax = 2*M_PI;
-	linspace(xmin, xmax, Nx, x);
-	linspace(ymin, ymax, Ny, y);
+	linspace(xmin-1., xmax, Nx, x);
+	linspace(ymin-1., ymax, Ny, y);
     for (i = 0; i < Ny; ++i)
         for (j = 0; j < Nx; ++j)
             z[j+i*Nx] = initial_func(x[j], y[i]);
@@ -128,40 +160,71 @@ int main(int argc, char **argv)
     //     vtkSmartPointer<vtkAVIWriter>::New();
     writer->SetInputConnection(source->GetOutputPort());
     writer->SetQuality(2);
-    writer->SetRate(60);
-    writer->SetFileName("turbolence.avi");
+    writer->SetRate(FRAMERATE);
+    writer->SetFileName(filename);
     writer->Start();
 
 
     //***************************************************************
     // mainloop
     //***************************************************************
+#if STAT
+    t0_all = GetTickCount64();
+#endif
     set_colors<vtkSmartPointer<vtkImageCanvasSource2D>>(
             pde->o, Ntot, lut, colors, source);
     source->Update();
 	writer->Write();
 
     for (i = 0; i < frames; ++i) {
+#if STAT
+        t0_ts = GetTickCount64();
+#endif
         time_step(steps, pde);
+#if STAT
+        t_m = GetTickCount64();
+#endif
         set_colors<vtkSmartPointer<vtkImageCanvasSource2D>>(
                 pde->o, Ntot, lut, colors, source);
         source->Update();
         writer->Write();
-        if (i % 100 == 0)
+#if STAT
+        t1_write = GetTickCount64();
+        ts_ts[i] = t_m - t0_ts;
+        ts_write[i] = t1_write - t_m;
+#endif
+#if PRINT_PROGRESS
+        if (i % PROGRESS_FREQUENCY == 0)
             printf("frame %zu\n", i);
+#endif
     }
 
-    //***************************************************************
-    // cleanup
-    //***************************************************************
-    writer->End();
+#if STAT
+    t1_all = GetTickCount64();
+    ts_max = *std::max_element(ts_ts, ts_ts + frames);
+    ts_min = *std::min_element(ts_ts, ts_ts + frames);
+    write_max = *std::max_element(ts_write, ts_write + frames);
+    write_min = *std::min_element(ts_write, ts_write + frames);
+    mean_std_ul(ts_ts, frames, &ts_mean, &ts_std);
+    mean_std_ul(ts_write, frames, &write_mean, &write_std);
+
+    printf("\n\nSUMMARY:\n"\
+           "time step of PDE    : %llu +- %lf ns\n"     \
+           "    max / min       : %llu / %llu\n"        \
+           "writing per frame   : %llu +- %lf ns\n"     \
+           "    max / min       : %llu / %llu\n\n"      \
+           "total time          : %llu s\n\n",
+            ts_mean, ts_std, ts_max, ts_min,
+            write_mean, write_std, write_max, write_min,
+            (t1_all - t0_all) / 1000lu);
+#endif
 
 
 #elif PNG
 
     vtkSmartPointer<vtkPNGWriter> writer =
         vtkSmartPointer<vtkPNGWriter>::New();
-    writer->SetFileName("test.png");
+    writer->SetFileName(filename);
     writer->SetInputConnection(source->GetOutputPort());
 
     time_step(steps, pde);
@@ -217,6 +280,13 @@ int main(int argc, char **argv)
 #endif  /* VIDEO || PNG */
 
 
+    //***************************************************************
+    // cleanup
+    //***************************************************************
+#if VIDEO
+    writer->End();
+#endif
+
     cleanup(pde);
 
 
@@ -226,10 +296,29 @@ int main(int argc, char **argv)
 
 double initial_func(double x, double y)
 {
-    return exp(-4 * (SQUARE(x-1.5) + SQUARE(y))) \
-           +exp(-4 * (SQUARE(x+1.5) + SQUARE(y)));
-           // -exp(-4 * (SQUARE(x-1.5) + SQUARE(y+.75)))
-           // +exp(-4 * (SQUARE(x+1.5) + SQUARE(y-.75)));
+    return  exp(-4 * (SQUARE(x-1.) + SQUARE(y-.5))) \
+           +exp(-4 * (SQUARE(x+1.) + SQUARE(y+.5))) \
+           -exp(-4 * (SQUARE(x-1.) + SQUARE(y+.5))) \
+           -exp(-4 * (SQUARE(x+1.) + SQUARE(y-.5)));
+}
+
+
+void mean_std_ul(uint64_t *arr, size_t size, uint64_t *mean, double *std)
+{
+    uint64_t sum, sum_var, *ptr, *end;
+    sum = sum_var = 0;
+
+    ptr = arr, end = arr + size;
+    while (ptr != end)
+        sum += *ptr++;
+    *mean = sum / size;
+
+    ptr = arr;
+    while (ptr != end) {
+        sum_var += SQUARE(*ptr - *mean);
+        ++ptr;
+    }
+    *std = std::sqrt((double) sum_var / ((double) size-1));
 }
 
 
