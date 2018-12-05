@@ -38,13 +38,13 @@ extern "C" {
 #define FRAMERATE   60
 
 
-const size_t Nx = 2048;
-const size_t Ny = 2048;
+const size_t Nx = 1024;
+const size_t Ny = 1024;
 const size_t Ntot = Nx * Ny;
-const size_t frames = 5400;
-const unsigned int steps = 10;
-const double dt = .05;
-const double nu = .0;
+const size_t frames = 3600;
+const unsigned int steps = 20;
+const double dt = .025;
+const double nu = .0001;
 const double xmin = -M_PI, xmax = M_PI,
              ymin = -M_PI, ymax = M_PI;
 
@@ -161,6 +161,7 @@ int main(int argc, char **argv)
     writer->SetInputConnection(source->GetOutputPort());
     writer->SetQuality(2);
     writer->SetRate(FRAMERATE);
+    writer->SubsamplingOn();
     writer->SetFileName(filename);
     writer->Start();
 
@@ -207,6 +208,9 @@ int main(int argc, char **argv)
     write_min = *std::min_element(ts_write, ts_write + frames);
     mean_std_ul(ts_ts, frames, &ts_mean, &ts_std);
     mean_std_ul(ts_write, frames, &write_mean, &write_std);
+
+	free(ts_ts);
+	free(ts_write);
 
     printf("\n\nSUMMARY:\n"\
            "time step of PDE    : %llu +- %lf ns\n"     \
@@ -296,10 +300,10 @@ int main(int argc, char **argv)
 
 double initial_func(double x, double y)
 {
-    return  exp(-4 * (SQUARE(x-1.) + SQUARE(y-.5))) \
-           +exp(-4 * (SQUARE(x+1.) + SQUARE(y+.5))) \
-           -exp(-4 * (SQUARE(x-1.) + SQUARE(y+.5))) \
-           -exp(-4 * (SQUARE(x+1.) + SQUARE(y-.5)));
+	return  exp(-4 * (SQUARE(x - 1.2) + SQUARE(y))) \
+		  + exp(-4 * (SQUARE(x + 1.2) + SQUARE(y)));
+           // -exp(-4 * (SQUARE(x - 1.5) + SQUARE(y + .5))) \
+           // -exp(-4 * (SQUARE(x + 1.5) + SQUARE(y - .5)));
 }
 
 
