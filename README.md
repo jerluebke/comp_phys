@@ -24,12 +24,16 @@ Navier-Stokes in python and C (using VTK)
 
 ## 7th and 8th Exercise  
 Stochastic (Ito) calculus (Integration, differential equations)  
+I was using [this](https://www.caam.rice.edu/~cox/stoch/dhigham.pdf) paper as
+an Introduction to Stochastical Differential Equations
 
 ---
 
 ## misc
 plotting with fortran, dense diag matrix from stencil (fortran), movements of
 charged particles in em fields (boris algorithm),  
-Particle-in-Cell (pic) simulation using matlab for visualisation (all credit to Dr. Jürgen Dreher, [link](https://www.tp1.ruhr-uni-bochum.de/mitarbeiter/12-mitarbeiter/person/27-dr-juergen-dreher))  
+particle-in-cell (pic) simulation using matlab for visualisation (all credit to
+dr. jürgen dreher,
+[link](https://www.tp1.ruhr-uni-bochum.de/mitarbeiter/12-mitarbeiter/person/27-dr-juergen-dreher))  
 _TODO_: add visualisation in python  
 
