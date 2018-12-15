@@ -4,10 +4,6 @@
 
 #define FACTOR 2ul
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 
 #define DARRAY(TYPE, NAME)  \
 DARRAY_STRUCT(TYPE, NAME)   \
@@ -103,7 +99,3 @@ void DArray_##NAME##_free(DArray_##NAME *da)                                \
     da->_used = da->_size = 0;                                              \
 }
 
-
-#ifdef __cpluplus
-}
-#endif

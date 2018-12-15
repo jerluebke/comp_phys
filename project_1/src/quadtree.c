@@ -1,4 +1,5 @@
 #include "../include/quadtree.h"
+#include "../include/morton.h"
 
 
 /* lookup table for msb */
@@ -61,9 +62,57 @@ static inline key_t bap( key_t key, lvl_t j )
 }
 
 
-static void build_branch(Node *head, lvl_t nl)
+/* build_branch
+ * build whole branch until the node specified by key is reached, starting
+ * at head with a depth of nl
+ *
+ * Params
+ * ======
+ * head, Node *    :   node at which to start building the branch
+ * nl, lvl_t       :   number of new levels
+ * key, key_t      :   key of final node of new branch
+ * val, Value *    :   content of final node
+ *  */
+static void build_branch( const Node *head, lvl_t nl, key_t key, Value *val )
 {
+    lvl_t i, j;
+    Node *nn;           /* new nodes */
+    DArray_Value *va;   /* value array for new node */
 
+    nn = xmalloc(sizeof(Node) * nl);
+
+    /* set children references between new Nodes */
+    head = nn;
+    for ( i = 0; i < nl-1; ++i ) {
+        /* allocate and init children */
+        nn[i].c = xmalloc(sizeof(Node *) * NOC);
+        for ( j = 0; j < NOC; ++j ) nn[i].c[j] = NULL;
+
+        /* which direction is the next Node? -> look at x_j, y_j of key,
+         * where j = head->lvl + i + 1;
+         * head->lvl + i: level of current Node (i is 0-indexed)
+         * +1 gives next level */
+        nn[i].c[bap(key, head->lvl+i+1)] = &nn[i+1];
+    }
+    nn[nl-1].c = NULL;
+
+    /* init remaining attributes */
+    for ( i = 0; i < nl; ++i ) {
+        nn[i].val_arr   = NULL;
+        nn[i].n_arr     = NULL;
+        nn[i].lvl       = head->lvl + i + 1;
+        nn[i].key       = key >> DIM * (maxlvl - nn[i].lvl);
+        nn[i].allocated = 0;
+    }
+
+    /* set value to last of the new Nodes */
+    va = xmalloc(sizeof(DArray_Value));
+    DArray_Value_init(va, 1);
+    DArray_Value_insert(va, val);
+    nn[nl-1].val_arr = va;
+
+    /* mark nn[0] as beginning of allocated Nodes for cleanup */
+    nn[0].allocated = 1;
 }
 
 
@@ -75,11 +124,9 @@ static void build_branch(Node *head, lvl_t nl)
  * keys, key_t *   :   array of keys of which the first one is to be inserted,
  *                     its last element should be NULL
  *  */
-void insert( Node *head, key_t *keys, Value *val )
+void insert( const Node *head, const key_t *keys, Value *val )
 {
-    Node *nn;           /* new Nodes */
-    DArray_Value *va;
-    lvl_t i, j, nl;     /* indices; number of new levels */
+    lvl_t nl;           /* number of new levels */
     key_t sb, lcl;      /* significant bits x_i, y_i; lowest common level */
     sb = bap(*keys, head->lvl+1);
 
@@ -103,43 +150,9 @@ void insert( Node *head, key_t *keys, Value *val )
             /* lowest common level of current and next key */
             lcl = maxlvl - msb(keys[0] ^ keys[1]) / 2;
         }
-
         /* number of new levels */
         nl = (lcl - head->lvl > 0) ? lcl - head->lvl : 1;
-        nn = xmalloc(sizeof(Node) * nl);
-
-        /* set children references between new Nodes */
-        head->c[sb] = nn;
-        for ( i = 0; i < nl-1; ++i ) {
-            /* allocate and init children */
-            nn[i].c = xmalloc(sizeof(Node *) * NOC);
-            for ( j = 0; j < NOC; ++j ) nn[i].c[j] = NULL;
-
-            /* which direction is the next Node? -> look at x_j, y_j of key,
-             * where j = head->lvl + i + 2;
-             * head->lvl + i + 1 : level of current Node (i is 0-indexed)
-             * +1 gives next level */
-            nn[i].c[bap(*keys, head->lvl+i+2)] = &nn[i+1];
-        }
-        nn[nl-1].c = NULL;
-
-        /* init remaining attributes */
-        for ( i = 0; i < nl; ++i ) {
-            nn[i].val_arr   = NULL;
-            nn[i].n_arr     = NULL;
-            nn[i].lvl       = head->lvl + i + 1;
-            nn[i].key       = *keys >> DIM * (maxlvl - nn[i].lvl);
-            nn[i].allocated = 0;
-        }
-
-        /* set value to last of the new Nodes */
-        va = xmalloc(sizeof(DArray_Value));
-        DArray_Value_init(va, 1);
-        DArray_Value_insert(va, val);
-        nn[nl-1].val_arr = va;
-
-        /* mark nn[0] as beginning of allocated Nodes for cleanup */
-        nn[0].allocated = 1;
+        build_branch( head->c[sb], nl, *keys, val );
     }
 }
 
@@ -176,6 +189,17 @@ void delete( Node *head )
 }
 
 
+/* search - traverse tree until node without children or with given key is found
+ *
+ * Params
+ * ======
+ * head, Node *    :   node at which to start searching
+ * key, key_t      :   key to look for
+ *
+ * Returns
+ * =======
+ * Node * with the desired key or its deepest existing anchestor
+ *  */
 Node *search( Node *head, key_t key )
 {
     if ( key == head->key || !head->c )
@@ -185,19 +209,41 @@ Node *search( Node *head, key_t key )
 }
 
 
-static void search_recursive(Node *head, key_t *suffixes, DArray_Node *res)
+/* scr - search children recursivly
+ *
+ * Params
+ * ======
+ * head, Node*         :   node at which to start searching
+ * suffixes, key_t *   :   relevant search directions, terminated by 0xffff
+ * res, DArray_Node *  :   Array in which to write result
+ *  */
+static void scr( Node *head, const key_t *suffixes, DArray_Node *res )
 {
     if ( !head->c )
         DArray_Node_insert(res, head);
 
     while ( *suffixes != 0xffff ) {
-        search_recursive( head->c[*suffixes], suffixes, res );
+        scr( head->c[*suffixes], suffixes, res );
         ++suffixes;
     }
 }
 
 
-DArray_Node *search_children( Node *head, Node *ref, DArray_Node *res )
+/* search_children
+ * search for children of head, which are facing ref (i.e. its possible neighbours)
+ * calculates search directions and calls `scr`
+ *
+ * Params
+ * ======
+ * head, Node *        :   node at which to start searching
+ * ref, Node *         :   node into whichs direction to go
+ * res, DArray_Node *  :   Array in which to write result
+ *
+ * Returns
+ * =======
+ * pointer to res, where the result was written
+ *  */
+DArray_Node *search_children( Node *head, const Node *ref, DArray_Node *res )
 {
     key_t suffixes[3];
     suffixes[1] = suffixes[2] = 0xffff;
@@ -224,7 +270,7 @@ DArray_Node *search_children( Node *head, Node *ref, DArray_Node *res )
         suffixes[0] = 0x0;
     }
 
-    search_recursive(head, suffixes, res);
+    scr( head, suffixes, res );
 
     return res;
 }
