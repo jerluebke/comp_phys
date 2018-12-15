@@ -9,7 +9,9 @@
 /* significant bits */
 #define MASK 0x3
 
-void insert( const Node *, const key_t *, Value * );
+/* TODO: print function for nodes */
+
+void insert( const Node *, const key_t *, const Value * );
 void delete( Node * );
-Node *search( Node *head, key_t key );
-DArray_Node *search_children( Node *head, const Node *ref, DArray_Node *res );
+Node *search( Node *, key_t );
+DArray_Node *search_children( const Node *, const Node *, DArray_Node *);

@@ -11,16 +11,11 @@ static const lvl_t log_table[256] = {
 };
 
 
-struct Value {
-    /* TODO */
-};
-
 struct Node {
     key_t key;
     DArray_Value *val_arr;
     lvl_t lvl;
     Node **c;           /* children */
-    DArray_Node *n_arr; /* neighbours */
     uint8_t allocated;
 };
 
@@ -37,6 +32,9 @@ struct Node {
  * Returns
  * =======
  * msb of k, i.e. log_2( floor(k) )
+ *
+ * TODO: expand to 32- and 64-bit interger
+ *
  *  */
 static inline lvl_t msb( key_t k )
 {
@@ -49,16 +47,16 @@ static inline lvl_t msb( key_t k )
  *
  * Params
  * ======
- * key, key_t  :   key of which to read the bits
+ * k, key_t    :   key of which to read the bits
  * j, lvl_t    :   position in key at which to read the bits
  *
  * Returns
  * =======
  * bits x_j, y_j at position j in key
  *  */
-static inline key_t bap( key_t key, lvl_t j )
+static inline key_t bap( key_t k, lvl_t j )
 {
-    return ( key >> DIM * (maxlvl - j) ) & MASK;
+    return ( k >> DIM * (maxlvl - j) ) & MASK;
 }
 
 
@@ -73,7 +71,7 @@ static inline key_t bap( key_t key, lvl_t j )
  * key, key_t      :   key of final node of new branch
  * val, Value *    :   content of final node
  *  */
-static void build_branch( const Node *head, lvl_t nl, key_t key, Value *val )
+static void build_branch( const Node *head, lvl_t nl, key_t key, const Value *val )
 {
     lvl_t i, j;
     Node *nn;           /* new nodes */
@@ -99,7 +97,6 @@ static void build_branch( const Node *head, lvl_t nl, key_t key, Value *val )
     /* init remaining attributes */
     for ( i = 0; i < nl; ++i ) {
         nn[i].val_arr   = NULL;
-        nn[i].n_arr     = NULL;
         nn[i].lvl       = head->lvl + i + 1;
         nn[i].key       = key >> DIM * (maxlvl - nn[i].lvl);
         nn[i].allocated = 0;
@@ -108,7 +105,7 @@ static void build_branch( const Node *head, lvl_t nl, key_t key, Value *val )
     /* set value to last of the new Nodes */
     va = xmalloc(sizeof(DArray_Value));
     DArray_Value_init(va, 1);
-    DArray_Value_insert(va, val);
+    DArray_Value_append(va, val);
     nn[nl-1].val_arr = va;
 
     /* mark nn[0] as beginning of allocated Nodes for cleanup */
@@ -124,7 +121,7 @@ static void build_branch( const Node *head, lvl_t nl, key_t key, Value *val )
  * keys, key_t *   :   array of keys of which the first one is to be inserted,
  *                     its last element should be NULL
  *  */
-void insert( const Node *head, const key_t *keys, Value *val )
+void insert( const Node *head, const key_t *keys, const Value *val )
 {
     lvl_t nl;           /* number of new levels */
     key_t sb, lcl;      /* significant bits x_i, y_i; lowest common level */
@@ -133,7 +130,7 @@ void insert( const Node *head, const key_t *keys, Value *val )
     /* reached lowest level, Node already exists and is occupied:
      *     repeating keys, save in same Node */
     if ( head->lvl == maxlvl ) {
-        DArray_Value_insert(head->val_arr, val);
+        DArray_Value_append(head->val_arr, val);
     }
 
     /* Node exists, insert in its child */
@@ -174,10 +171,6 @@ void delete( Node *head )
                 delete(head->c[i]);
         free(head->c);
     }
-    if ( head->n_arr ) {
-        DArray_Node_free(head->n_arr);
-        free(head->n_arr);
-    }
     if ( head->val_arr ) {
         DArray_Value_free(head->val_arr);
         free(head->val_arr);
@@ -198,14 +191,13 @@ void delete( Node *head )
  *
  * Returns
  * =======
- * Node * with the desired key or its deepest existing anchestor
+ * Node pointer with the desired key or its deepest existing anchestor
  *  */
 Node *search( Node *head, key_t key )
 {
-    if ( key == head->key || !head->c )
-        return head;
-    else
-        return search( head->c[bap(key, head->lvl+1)], key );
+    while ( head->c && key != head->key )
+        head = head->c[bap(key, head->lvl+1)];
+    return head;
 }
 
 
@@ -217,15 +209,15 @@ Node *search( Node *head, key_t key )
  * suffixes, key_t *   :   relevant search directions, terminated by 0xffff
  * res, DArray_Node *  :   Array in which to write result
  *  */
-static void scr( Node *head, const key_t *suffixes, DArray_Node *res )
+static void scr( const Node *head, const key_t *suffixes, DArray_Node *res )
 {
     if ( !head->c )
-        DArray_Node_insert(res, head);
-
-    while ( *suffixes != 0xffff ) {
-        scr( head->c[*suffixes], suffixes, res );
-        ++suffixes;
-    }
+        DArray_Node_append(res, head);
+    else
+        while ( *suffixes != 0xffff ) {
+            scr( head->c[*suffixes], suffixes, res );
+            ++suffixes;
+        }
 }
 
 
@@ -243,7 +235,7 @@ static void scr( Node *head, const key_t *suffixes, DArray_Node *res )
  * =======
  * pointer to res, where the result was written
  *  */
-DArray_Node *search_children( Node *head, const Node *ref, DArray_Node *res )
+DArray_Node *search_children( const Node *head, const Node *ref, DArray_Node *res )
 {
     key_t suffixes[3];
     suffixes[1] = suffixes[2] = 0xffff;
