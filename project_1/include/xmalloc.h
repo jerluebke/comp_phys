@@ -3,7 +3,7 @@
  * It is checked, whether malloc/realloc returns NULL, meaning failure to
  * perform the requested operation; the file and line in which the incident
  * occured are then printed and the program is aborted
- * 
+ *
  * Taken from "Programming Projects in C" by Rouben Rostamian
  * ISBN 978-1-611973-49-5
  *  */

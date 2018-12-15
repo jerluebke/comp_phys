@@ -1,4 +1,4 @@
-#include "quadtree.h"
+#include "../include/quadtree.h"
 
 
 /* lookup table for msb */
@@ -18,8 +18,8 @@ struct Node {
     key_t key;
     DArray_Value *val_arr;
     lvl_t lvl;
-    Node **c;       /* children */
-    Node **n;       /* neighbours */
+    Node **c;           /* children */
+    DArray_Node *n_arr; /* neighbours */
     uint8_t allocated;
 };
 
@@ -37,7 +37,7 @@ struct Node {
  * =======
  * msb of k, i.e. log_2( floor(k) )
  *  */
-static inline lvl_t msb(key_t k)
+static inline lvl_t msb( key_t k )
 {
     key_t t;    /* temporaries */
     return (t = k >> 8) ? 8 + log_table[t] : log_table[k];
@@ -55,9 +55,15 @@ static inline lvl_t msb(key_t k)
  * =======
  * bits x_j, y_j at position j in key
  *  */
-static inline key_t bap(key_t key, lvl_t j)
+static inline key_t bap( key_t key, lvl_t j )
 {
-    return ( key >> 2*(maxlvl - j) ) & 0x3;
+    return ( key >> DIM * (maxlvl - j) ) & MASK;
+}
+
+
+static void build_branch(Node *head, lvl_t nl)
+{
+
 }
 
 
@@ -69,7 +75,7 @@ static inline key_t bap(key_t key, lvl_t j)
  * keys, key_t *   :   array of keys of which the first one is to be inserted,
  *                     its last element should be NULL
  *  */
-void insert(Node *head, key_t *keys, Value *val)
+void insert( Node *head, key_t *keys, Value *val )
 {
     Node *nn;           /* new Nodes */
     DArray_Value *va;
@@ -118,11 +124,11 @@ void insert(Node *head, key_t *keys, Value *val)
         nn[nl-1].c = NULL;
 
         /* init remaining attributes */
-        for ( i = 0; i < nl; ++i) {
+        for ( i = 0; i < nl; ++i ) {
             nn[i].val_arr   = NULL;
-            nn[i].n         = NULL;
+            nn[i].n_arr     = NULL;
             nn[i].lvl       = head->lvl + i + 1;
-            nn[i].key       = *keys >> (maxlvl - nn[i].lvl);
+            nn[i].key       = *keys >> DIM * (maxlvl - nn[i].lvl);
             nn[i].allocated = 0;
         }
 
@@ -145,21 +151,21 @@ void insert(Node *head, key_t *keys, Value *val)
  * head, Node *    :   Node, whichs subtree to delete;
  *                     is set to NULL afterwards
  *  */
-void delete(Node *head)
+void delete( Node *head )
 {
     uint8_t i;
 
     if ( head->c ) {
-        for (i = 0; i < NOC; ++i)
+        for ( i = 0; i < NOC; ++i )
             if ( head->c[i] )
                 delete(head->c[i]);
         free(head->c);
     }
-    if ( head->n ) {
-        /* TODO */
-        /* free(head->n); */
+    if ( head->n_arr ) {
+        DArray_Node_free(head->n_arr);
+        free(head->n_arr);
     }
-    if (head->val_arr ) {
+    if ( head->val_arr ) {
         DArray_Value_free(head->val_arr);
         free(head->val_arr);
     }
@@ -170,15 +176,56 @@ void delete(Node *head)
 }
 
 
-DArray_Node *search(Node *head, key_t key, key_t own_key, DArray_Node *res)
+Node *search( Node *head, key_t key )
 {
-    if ( !head->c ) {
+    if ( key == head->key || !head->c )
+        return head;
+    else
+        return search( head->c[bap(key, head->lvl+1)], key );
+}
+
+
+static void search_recursive(Node *head, key_t *suffixes, DArray_Node *res)
+{
+    if ( !head->c )
         DArray_Node_insert(res, head);
-        return res;
+
+    while ( *suffixes != 0xffff ) {
+        search_recursive( head->c[*suffixes], suffixes, res );
+        ++suffixes;
     }
-    else if ( msb(key) < head->lvl ) {
-        return search(head->c[bap(key, head->lvl+1)], key, own_key, res);
+}
+
+
+DArray_Node *search_children( Node *head, Node *ref, DArray_Node *res )
+{
+    key_t suffixes[3];
+    suffixes[1] = suffixes[2] = 0xffff;
+
+    if ( head->key == left(ref->key) ) {
+        suffixes[0] = 0x1;
+        suffixes[1] = 0x3;
+    } else if ( head->key == right(ref->key) ) {
+        suffixes[0] = 0x0;
+        suffixes[1] = 0x2;
+    } else if ( head->key == top(ref->key) ) {
+        suffixes[0] = 0x2;
+        suffixes[1] = 0x3;
+    } else if ( head->key == bot(ref->key) ) {
+        suffixes[0] = 0x0;
+        suffixes[1] = 0x1;
+    } else if ( head->key == top(left(ref->key)) ) {
+        suffixes[0] = 0x3;
+    } else if ( head->key == top(right(ref->key)) ) {
+        suffixes[0] = 0x2;
+    } else if ( head->key == bot(left(ref->key)) ) {
+        suffixes[0] = 0x1;
+    } else if ( head->key == bot(right(ref->key)) ) {
+        suffixes[0] = 0x0;
     }
-    /* TODO */
+
+    search_recursive(head, suffixes, res);
+
+    return res;
 }
 

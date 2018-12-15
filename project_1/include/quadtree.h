@@ -3,8 +3,12 @@
 #include <stdint.h>
 #include "dynamic_array.h"
 
+/* dimensions */
+#define DIM 2
 /* number of children */
 #define NOC 4
+/* significant bits */
+#define MASK 0x3
 
 /* for 256x256 Resolution */
 typedef uint16_t key_t;
