@@ -11,7 +11,11 @@
 
 /* TODO: print function for nodes */
 
-void insert( const Node *, const key_t *, const Value * );
+Node *build_tree( const Item * );
+DArray_Value *find_neighbours( key_t , DArray_Value * );
+
+void insert( const Node *, const Item * );
 void delete( Node * );
 Node *search( Node *, key_t );
-DArray_Node *search_children( const Node *, const Node *, DArray_Node *);
+void search_children( const Node *, const Node *, DArray_Node * );
+void print_node( Node * );

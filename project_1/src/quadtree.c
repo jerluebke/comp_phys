@@ -11,15 +11,6 @@ static const lvl_t log_table[256] = {
 };
 
 
-struct Node {
-    key_t key;
-    DArray_Value *val_arr;
-    lvl_t lvl;
-    Node **c;           /* children */
-    uint8_t allocated;
-};
-
-
 /* msb - most significant bit
  *
  * lookup table method, see:
@@ -71,7 +62,7 @@ static inline key_t bap( key_t k, lvl_t j )
  * key, key_t      :   key of final node of new branch
  * val, Value *    :   content of final node
  *  */
-static void build_branch( const Node *head, lvl_t nl, key_t key, const Value *val )
+static void build_branch( Node *head, lvl_t nl, key_t key, const Value *val )
 {
     lvl_t i, j;
     Node *nn;           /* new nodes */
@@ -115,41 +106,46 @@ static void build_branch( const Node *head, lvl_t nl, key_t key, const Value *va
 
 /* insert
  *
+ * NOTICE: for fast tree building, the key following the currently considered
+ * one is examined; the key past the end of the array should therefor be NULL
+ * to indicate the end and prevent memory corruption
+ *
  * Params
  * ======
  * head, Node *    :   starting Node of tree, in which to insert key
  * keys, key_t *   :   array of keys of which the first one is to be inserted,
  *                     its last element should be NULL
  *  */
-void insert( const Node *head, const key_t *keys, const Value *val )
+void insert( const Node *head, const Item *items )
 {
     lvl_t nl;           /* number of new levels */
     key_t sb, lcl;      /* significant bits x_i, y_i; lowest common level */
-    sb = bap(*keys, head->lvl+1);
+    sb = bap(items->key, head->lvl+1);
 
     /* reached lowest level, Node already exists and is occupied:
      *     repeating keys, save in same Node */
     if ( head->lvl == maxlvl ) {
-        DArray_Value_append(head->val_arr, val);
+        DArray_Value_append(head->val_arr, items->val);
     }
 
     /* Node exists, insert in its child */
     else if ( head->c[sb] != NULL ) {
-        insert(head->c[sb], keys, val);
+        insert(head->c[sb], items);
     }
 
     /* Node does not exist, create whole branch until lowest requiered level */
     else {  /* head->c[sb] == NULL */
-        if ( (keys+1) == NULL ) {   /* current key is last */
+        /* LOOK-AHEAD */
+        if ( (items+1) == NULL ) {   /* current item is last */
             lcl = 0;
         } else {
             /* `keys[0] XOR keys[1]` sets to one the bits which differ between current and next key */
             /* lowest common level of current and next key */
-            lcl = maxlvl - msb(keys[0] ^ keys[1]) / 2;
+            lcl = maxlvl - msb(items[0].key ^ items[1].key) / 2;
         }
         /* number of new levels */
         nl = (lcl - head->lvl > 0) ? lcl - head->lvl : 1;
-        build_branch( head->c[sb], nl, *keys, val );
+        build_branch( head->c[sb], nl, items->key, items->val );
     }
 }
 
@@ -231,11 +227,8 @@ static void scr( const Node *head, const key_t *suffixes, DArray_Node *res )
  * ref, Node *         :   node into whichs direction to go
  * res, DArray_Node *  :   Array in which to write result
  *
- * Returns
- * =======
- * pointer to res, where the result was written
  *  */
-DArray_Node *search_children( const Node *head, const Node *ref, DArray_Node *res )
+void search_children( const Node *head, const Node *ref, DArray_Node *res )
 {
     key_t suffixes[3];
     suffixes[1] = suffixes[2] = 0xffff;
@@ -263,7 +256,60 @@ DArray_Node *search_children( const Node *head, const Node *ref, DArray_Node *re
     }
 
     scr( head, suffixes, res );
-
-    return res;
 }
 
+
+/* build_tree
+ * convenience function: creates root node and inserts each element from given
+ * items-array
+ *
+ * Params
+ * ======
+ * items, Item*    :   array for items to insert in tree
+ *
+ * Returns
+ * =======
+ * Node pointer to root node of newly created tree (don't forget to free after
+ *     usage!)
+ *  */
+Node *build_tree( const Item *items )
+{
+    int i;
+    Node *head;
+
+    head            = xmalloc(sizeof(Node));
+    head->key       = 0;
+    head->lvl       = 0;
+    head->val_arr   = NULL;
+    head->allocated = 1;
+    head->c         = xmalloc(sizeof(Node *) * NOC);
+    for ( i = 0; i < NOC; ++i ) head->c[i] = NULL;
+
+    while ( items != NULL ) {
+        insert( head, items );
+        ++items;
+    }
+
+    return head;
+}
+
+
+/* res needs not to be initialized! */
+DArray_Value *find_neighbours( key_t key, DArray_Value *res )
+{
+    Node *cand;         /* candidate */
+    DArray_Node *tmp;   /* temporarily store found nodes here */
+
+    DArray_Value_init(res, 8);
+    DArray_Node_init(tmp, 8);
+
+    /* TODO */
+}
+
+
+/* function to print node in convenient format
+ * (e.g. as JSON-readable list, dict, etc.) */
+void print_node( Node *node )
+{
+    /* TODO */
+}

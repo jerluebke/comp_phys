@@ -1,17 +1,4 @@
-#include <stdint.h>
-#include <stdlib.h>
 #include "morton.h"
-
-
-struct Value {
-    uint8_t x, y;
-};
-
-struct Key {
-    uint16_t key;
-    const Value *val;
-};
-
 
 /* lookup tables for `split2` */
 static const uint16_t B[] = {0x5555, 0x3333, 0x0F0F};
@@ -58,13 +45,13 @@ static inline uint16_t interleave8( uint8_t x, uint8_t y )
 
 
 /* cmp_keys
- * compare two pointers to Key structs by comparing their interger-keys
+ * compare two pointers to Item structs by comparing their interger-keys
  *
  * passed to `qsort`
  *
  * Params
  * ======
- * a, b (const void *) :   casted to `const Key *` and compared
+ * a, b (const void *) :   casted to `const Item *` and compared
  *
  * Returns
  * =======
@@ -74,9 +61,9 @@ static inline uint16_t interleave8( uint8_t x, uint8_t y )
  *  */
 static inline int cmp_keys( const void *a, const void *b )
 {
-    const Key *arg1, *arg2;
-    arg1 = (const Key *)a;
-    arg2 = (const Key *)b;
+    const Item *arg1, *arg2;
+    arg1 = (const Item *)a;
+    arg2 = (const Item *)b;
 
     return (arg1->key > arg2->key) - (arg1->key < arg2->key);
 }
@@ -87,27 +74,34 @@ static inline int cmp_keys( const void *a, const void *b )
  *
  * Params
  * ======
- * vals, Value *   :   values to hash
- * keys, Key *     :   array to write result
- * size, size_t    :   size of vals and keys (they need to have the same size
- *                     obviously)
+ * vals, Value *   :   values to hash with `size` elements
+ * keys, Item *     :   array to write result with `size+1` elements
+ * size, size_t    :   size of `vals`, `keys` needs to have size+1 (for
+ *                      terminating character, for look-ahead during tree
+ *                      building)
  *
  * Returns
  * =======
  * sorted array of keys
  *  */
-Key *build_morton( const Value *vals, Key *keys, size_t size )
+Item *build_morton( const Value *vals, Item *items, size_t size )
 {
     size_t i;
+    Item *end;
 
+    /* calculate keys from coordinates and set reference to corresp. value */
     for ( i = 0; i < size; ++i ) {
-        keys[i].key = interleave8(vals[i].x, vals[i].y);
-        keys[i].val = &vals[i];
+        items[i].key = interleave8(vals[i].x, vals[i].y);
+        items[i].val = &vals[i];
     }
 
-    qsort(keys, size, sizeof(Key), cmp_keys);
+    qsort(items, size, sizeof(Item), cmp_keys);
 
-    return keys;
+    /* set last element to NULL (terminating character) */
+    end = items + size;
+    end = NULL;
+
+    return items;
 }
 
 

@@ -4,7 +4,7 @@
 
 /* TODO: allow 32- and 64-bit integers as keys */
 
-Key *build_morton( const Value *, Key *, size_t );
+Item *build_morton( const Value *, Item *, size_t );
 inline key_t left( key_t );
 inline key_t right( key_t );
 inline key_t top( key_t );
