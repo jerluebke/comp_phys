@@ -11,6 +11,43 @@ static const lvl_t log_table[256] = {
 };
 
 
+/* lookup tables for searching neighbours
+ *
+ *     index   |   direction
+ *     --------+---------------
+ *         0   |   left
+ *         1   |   right
+ *         2   |   top
+ *         3   |   bottom
+ *         4   |   top-left
+ *         5   |   top-right
+ *         6   |   bottom-left
+ *         7   |   bottom-right
+ *
+ * bnds: boundaries
+ * suffixes: in which direction to go when searching children of neighbours
+ *
+ * 0xDEAD is terminator
+ *
+ *  */
+
+/* check bounds with `(key & bnds[i][0]) == bnds[i][1]` */
+static const key_t bnds[8][2] = {
+    { 0x5555, 0x0 },    { 0x5555, 0x5555 },
+    { 0xAAAA, 0x0 },    { 0xAAAA, 0xAAAA },
+    { 0xFFFF, 0x0 },    { 0xFFFF, 0x5555 },
+    { 0xFFFF, 0xAAAA }, { 0xFFFF, 0xFFFF}
+};
+
+static const key_t suffixes[8][3] = {
+    { 0x1, 0x3, 0xDEAD },   { 0x0, 0x2, 0xDEAD },
+    { 0x2, 0x3, 0xDEAD },   { 0x0, 0x1, 0xDEAD },
+    { 0x3, 0xDEAD },        { 0x2, 0xDEAD },
+    { 0x1, 0xDEAD },        { 0x0, 0xDEAD }
+};
+
+
+
 /* msb - most significant bit
  *
  * lookup table method, see:
@@ -40,14 +77,16 @@ static inline lvl_t msb( key_t k )
  * ======
  * k, key_t    :   key of which to read the bits
  * j, lvl_t    :   position in key at which to read the bits
+ * l, lvl_t    :   length of key / DIM, i.e. maxlevel (might differ when
+ *                 considering incomplete branches)
  *
  * Returns
  * =======
  * bits x_j, y_j at position j in key
  *  */
-static inline key_t bap( key_t k, lvl_t j )
+static inline key_t bap( key_t k, lvl_t j, lvl_t l )
 {
-    return ( k >> DIM * (maxlvl - j) ) & MASK;
+    return ( k >> DIM * (l - j) ) & MASK;
 }
 
 
@@ -81,7 +120,7 @@ static void build_branch( Node *head, lvl_t nl, key_t key, const Value *val )
          * where j = head->lvl + i + 1;
          * head->lvl + i: level of current Node (i is 0-indexed)
          * +1 gives next level */
-        nn[i].c[bap(key, head->lvl+i+1)] = &nn[i+1];
+        nn[i].c[bap(key, head->lvl+i+1, maxlvl)] = &nn[i+1];
     }
     nn[nl-1].c = NULL;
 
@@ -120,7 +159,7 @@ void insert( const Node *head, const Item *items )
 {
     lvl_t nl;           /* number of new levels */
     key_t sb, lcl;      /* significant bits x_i, y_i; lowest common level */
-    sb = bap(items->key, head->lvl+1);
+    sb = bap(items->key, head->lvl+1, maxlvl);
 
     /* reached lowest level, Node already exists and is occupied:
      *     repeating keys, save in same Node */
@@ -184,15 +223,16 @@ void delete( Node *head )
  * ======
  * head, Node *    :   node at which to start searching
  * key, key_t      :   key to look for
+ * lvl, lvl_t      :   level of searched node, i.e. 2*(length of key)
  *
  * Returns
  * =======
  * Node pointer with the desired key or its deepest existing anchestor
  *  */
-Node *search( Node *head, key_t key )
+Node *search( Node *head, key_t key, lvl_t lvl )
 {
-    while ( head->c && key != head->key )
-        head = head->c[bap(key, head->lvl+1)];
+    while ( head->c && lvl != head->lvl )
+        head = head->c[bap(key, head->lvl+1, lvl)];
     return head;
 }
 
@@ -202,22 +242,24 @@ Node *search( Node *head, key_t key )
  * Params
  * ======
  * head, Node*         :   node at which to start searching
- * suffixes, key_t *   :   relevant search directions, terminated by 0xffff
- * res, DArray_Node *  :   Array in which to write result
+ * suffixes, key_t *   :   relevant search directions, terminated by 0xDEAD
+ * res, DArray_Value * :   Array in which to write result
  *  */
-static void scr( const Node *head, const key_t *suffixes, DArray_Node *res )
+static void scr( const Node *head, const key_t *suffixes, DArray_Value *res )
 {
     if ( !head->c )
-        DArray_Node_append(res, head);
+        DArray_Value_extend(res, head->val_arr);
     else
-        while ( *suffixes != 0xffff ) {
+        while ( *suffixes != 0xDEAD ) {
             scr( head->c[*suffixes], suffixes, res );
             ++suffixes;
         }
 }
 
 
-/* search_children
+/* TODO: REMOVE
+ *
+ * search_children
  * search for children of head, which are facing ref (i.e. its possible neighbours)
  * calculates search directions and calls `scr`
  *
@@ -231,7 +273,7 @@ static void scr( const Node *head, const key_t *suffixes, DArray_Node *res )
 void search_children( const Node *head, const Node *ref, DArray_Node *res )
 {
     key_t suffixes[3];
-    suffixes[1] = suffixes[2] = 0xffff;
+    suffixes[1] = suffixes[2] = 0xDEAD;
 
     if ( head->key == left(ref->key) ) {
         suffixes[0] = 0x1;
@@ -294,16 +336,62 @@ Node *build_tree( const Item *items )
 }
 
 
-/* res needs not to be initialized! */
-DArray_Value *find_neighbours( key_t key, DArray_Value *res )
+/* find_neighbours
+ * to given key, compute keys of potential neighbours.
+ * search quadtree for those candidates to see if they exists, otherwise take
+ *     their deepest existing ancestor.
+ * if the candidates itself has children, search for their end nodes facing into
+ *     the direction of the current node (i.e. its neighbours).
+ *
+ * Params
+ * ======
+ * key, key_t          :   key of node, whichs neighbours to search for
+ * head, Node *        :   head of quadtree to search in
+ * res, DArray_Value * :   Value array to write results into
+ *                         Its first value is the Node of the given key (i.e. the
+ *                             reference node), its neighbours start at index 1
+ *
+ * NOTICE: You get the Values of neighbouring nodes. Depending on the actual shape
+ *     of the quadtree, the distances between the reference and its neighbours might
+ *     vary significantly (i.e. values in opposite corners of large nodes).
+ *     Perhaps you want to filter out those values which are too far away
+ *
+ *  */
+void find_neighbours( key_t key, Node *head, DArray_Value *res )
 {
-    Node *cand;         /* candidate */
-    DArray_Node *tmp;   /* temporarily store found nodes here */
+    Node *c, *tmp;      /* current, temporary */
+    int i;
 
-    DArray_Value_init(res, 8);
-    DArray_Node_init(tmp, 8);
+    /* find current node given by key, actual existing key is c->key */
+    c = search( head, key, maxlvl );
 
-    /* TODO */
+    /* candidate keys */
+    key_t cand_keys[8] = {
+        left(c->key),       right(c->key),
+        top(c->key),        bot(c->key),
+        top(left(c->key)),  top(right(c->key)),
+        bot(left(c->key)),  bot(right(c->key))
+    };
+
+    /* overwrite res */
+    res->_used = 0;
+
+    /* iterate over directions */
+    for ( i = 0; i < 8; ++i ) {
+        /* if node is on boundary: skip */
+        if ( (c->key & bnds[i][0]) == bnds[i][1] )
+            continue;
+
+        /* find neighbour candidate node */
+        tmp = search( head, cand_keys[i], c->lvl );
+        /* if it has further children: search them (findings will be written in
+         *     res);
+         * else: write tmp into res */
+        if ( tmp->c )
+            scr( tmp, suffixes[i], res );
+        else
+            DArray_Value_extend(res, tmp->val_arr);
+    }
 }
 
 
@@ -313,3 +401,5 @@ void print_node( Node *node )
 {
     /* TODO */
 }
+
+/* vim: set ff=unix tw=79 sw=4 ts=4 et ic ai : */

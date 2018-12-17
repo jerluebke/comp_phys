@@ -97,3 +97,4 @@ void DArray_##NAME##_free(DArray_##NAME *da)                                \
     da->_used = da->_size = 0;                                              \
 }
 
+/* vim: set ff=unix tw=79 sw=4 ts=4 et ic ai : */

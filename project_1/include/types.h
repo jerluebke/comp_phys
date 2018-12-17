@@ -34,3 +34,5 @@ struct Node {
     Node **c;   /* children */
     uint8_t allocated;
 };
+
+/* vim: set ff=unix tw=79 sw=4 ts=4 et ic ai : */

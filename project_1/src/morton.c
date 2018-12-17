@@ -1,4 +1,12 @@
-#include "morton.h"
+/* for the splitting and interleaving, see:
+ *     http://www-graphics.stanford.edu/~seander/bithacks.html#InterleaveBMN
+ *     https://www.forceflow.be/2013/10/07/morton-encodingdecoding-through-bit-interleaving-implementations/
+ *
+ * for calculating left, right, top, bottom and for more information regarding
+ * morton keys, see:
+ *     https://en.wikipedia.org/wiki/Z-order_curve#Coordinate_values
+ *  */
+#include "../include/morton.h"
 
 /* lookup tables for `split2` */
 static const uint16_t B[] = {0x5555, 0x3333, 0x0F0F};
@@ -128,3 +136,5 @@ inline uint16_t bot( uint16_t key )
 {
     return ((key | 0x5555) + 1 & 0xAAAA) | (key & 0x5555);
 }
+
+/* vim: set ff=unix tw=79 sw=4 ts=4 et ic ai : */

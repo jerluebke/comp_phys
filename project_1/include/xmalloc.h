@@ -44,3 +44,4 @@ void *realloc_or_exit(void *ptr, size_t nbytes, const char *file, int line)
 #define xrealloc(ptr, nbytes)   realloc_or_exit((ptr), (nbytes),    \
                                                 __FILE__, __LINE__)
 
+/* vim: set ff=unix tw=79 sw=4 ts=4 et ic ai : */

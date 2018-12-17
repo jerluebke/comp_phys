@@ -9,13 +9,13 @@
 /* significant bits */
 #define MASK 0x3
 
-/* TODO: print function for nodes */
 
 Node *build_tree( const Item * );
-DArray_Value *find_neighbours( key_t , DArray_Value * );
+void find_neighbours( key_t , Node *, DArray_Value * );
 
 void insert( const Node *, const Item * );
 void delete( Node * );
-Node *search( Node *, key_t );
-void search_children( const Node *, const Node *, DArray_Node * );
+Node *search( Node *, key_t , lvl_t );
 void print_node( Node * );
+
+/* vim: set ff=unix tw=79 sw=4 ts=4 et ic ai : */
