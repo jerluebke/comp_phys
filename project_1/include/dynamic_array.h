@@ -8,6 +8,7 @@ DARRAY_STRUCT(TYPE, NAME)           \
 DARRAY_GET(TYPE, NAME)              \
 DARRAY_INIT(TYPE, NAME)             \
 DARRAY_APPEND(TYPE, NAME)           \
+DARRAY_EXTEND(TYPE, NAME)           \
 DARRAY_FREE(NAME)
 
 
@@ -78,6 +79,28 @@ void DArray_##NAME##_append(DArray_##NAME *da, TYPE elem)                   \
         da->p = xrealloc(da->p, sizeof(TYPE) * da->_size);                  \
     }                                                                       \
     da->p[da->_used++] = elem;  /* set elem and increment da->_used */      \
+}
+
+
+/* DArray_extend
+ * append values from other DArray at end of given DArray
+ * realloc if necessary
+ * 
+ * Params
+ * ======
+ * da, DArray *    :   DArray onto which to extend
+ * in, DArray *    :   DArray to extend onto da
+ *  */
+#define DARRAY_EXTEND(TYPE, NAME)                                           \
+void DArray_##NAME##_extend(DArray_##NAME *da, DArray_##NAME *in)           \
+{                                                                           \
+    size_t new_size = da->_used + in->_used, i = 0;                         \
+    if ( new_size >= da->_size ) {                                          \
+        da->_size = new_size;                                               \
+        da->p = xrealloc(da->p, sizeof(TYPE) * da->_size);                  \
+    }                                                                       \
+    while ( da->_used < da->_size )                                         \
+        da->p[da->used++] = in->p[i++];                                     \
 }
 
 

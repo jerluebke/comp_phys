@@ -242,62 +242,20 @@ Node *search( Node *head, key_t key, lvl_t lvl )
  * Params
  * ======
  * head, Node*         :   node at which to start searching
- * suffixes, key_t *   :   relevant search directions, terminated by 0xDEAD
+ * suffix, key_t *     :   relevant search directions, terminated by 0xDEAD
  * res, DArray_Value * :   Array in which to write result
  *  */
-static void scr( const Node *head, const key_t *suffixes, DArray_Value *res )
+static void scr( const Node *head, const key_t *suffix, DArray_Value *res )
 {
+    const key_t *suffix_orig = suffix;
+
     if ( !head->c )
         DArray_Value_extend(res, head->val_arr);
     else
-        while ( *suffixes != 0xDEAD ) {
-            scr( head->c[*suffixes], suffixes, res );
-            ++suffixes;
+        while ( *suffix != 0xDEAD ) {
+            scr( head->c[*suffix], suffix_orig, res );
+            ++suffix;
         }
-}
-
-
-/* TODO: REMOVE
- *
- * search_children
- * search for children of head, which are facing ref (i.e. its possible neighbours)
- * calculates search directions and calls `scr`
- *
- * Params
- * ======
- * head, Node *        :   node at which to start searching
- * ref, Node *         :   node into whichs direction to go
- * res, DArray_Node *  :   Array in which to write result
- *
- *  */
-void search_children( const Node *head, const Node *ref, DArray_Node *res )
-{
-    key_t suffixes[3];
-    suffixes[1] = suffixes[2] = 0xDEAD;
-
-    if ( head->key == left(ref->key) ) {
-        suffixes[0] = 0x1;
-        suffixes[1] = 0x3;
-    } else if ( head->key == right(ref->key) ) {
-        suffixes[0] = 0x0;
-        suffixes[1] = 0x2;
-    } else if ( head->key == top(ref->key) ) {
-        suffixes[0] = 0x2;
-        suffixes[1] = 0x3;
-    } else if ( head->key == bot(ref->key) ) {
-        suffixes[0] = 0x0;
-        suffixes[1] = 0x1;
-    } else if ( head->key == top(left(ref->key)) ) {
-        suffixes[0] = 0x3;
-    } else if ( head->key == top(right(ref->key)) ) {
-        suffixes[0] = 0x2;
-    } else if ( head->key == bot(left(ref->key)) ) {
-        suffixes[0] = 0x1;
-    } else if ( head->key == bot(right(ref->key)) ) {
-        suffixes[0] = 0x0;
-    }
-
-    scr( head, suffixes, res );
 }
 
 
