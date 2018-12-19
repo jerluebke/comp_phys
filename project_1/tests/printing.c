@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include "itoa.h"
-#include "../include/types.h"
-#include "../include/quadtree.h"
+#include "test.h"
 
 void print_node(Node *head, FILE *fp)
 {
