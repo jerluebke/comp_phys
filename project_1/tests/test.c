@@ -1,8 +1,13 @@
 #include "test_data.h"
 #include "test.h"
 
+typedef struct {
+    Item *i; key_t *k; DArray_Node *da; size_t s;
+} data_struct;
+
 
 /*********************************************************************/
+
 
 /********************/
 /*      MORTON      */
@@ -55,6 +60,7 @@ TEST_MORTON_DIRECTION(bot)
 
 /*********************************************************************/
 
+
 /********************/
 /*      QUADTREE    */
 /********************/
@@ -67,6 +73,9 @@ quadtree_setup(const MunitParameter params[], void *data)
     Value *vals;
     size_t size;
     Item *items;
+    key_t *res;
+    DArray_Node *neighbours;
+    data_struct *data_ptr;
 
     vals = (Value *)munit_parameters_get(params, "values");
     size = *(size_t *)munit_parameters_get(params, "size");
@@ -74,15 +83,34 @@ quadtree_setup(const MunitParameter params[], void *data)
     items = xmalloc(sizeof(Item) * (size+1));
     items = build_morton(vals, items, size);
 
-    return (void *)items;
+    res = xmalloc(sizeof(key_t));
+
+    neighbours = xmalloc(sizeof(DArray_Node));
+    DArray_Node_init(neighbours, 8);
+
+    data_ptr = xmalloc(sizeof(data_struct));
+    data_ptr->i = items;
+    data_ptr->k = res;
+    data_ptr->da = neighbours;
+    data_ptr->s = size;
+
+    return (void *)data_ptr;
 }
 
 static void
 quadtree_teardown(void *data)
 {
-    Item *items;
-    items = (Item *)data;
-    free(items);
+    DArray_Node *ns;
+    data_struct *dp;
+
+    dp = (data_struct *)data;
+    ns = dp->da;
+
+    free(dp->i);
+    free(dp->k);
+    DArray_Node_free(ns);
+    free(ns);
+    free(dp);
 }
 
 static MunitResult
@@ -92,11 +120,13 @@ test_quadtree_build(const MunitParameter params[], void *data)
     key_t *exp;
     Item *items;
     Node *head, *tmp;
+    data_struct *dp;
 
-    size = *(size_t *)munit_parameters_get(params, "size");
     exp = (key_t *)munit_parameters_get(params, "expected");
 
-    items = (Item *)data;
+    dp = (data_struct *)data;
+    size = dp->s;
+    items = dp->i;
     head = build_tree(items);
 
     key_t leaf_keys[size];
@@ -120,29 +150,28 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
     key_t refk, *exp, *res;
     Item *items;
     Node *head, *refn;
+    DArray_Node *neighbours;
+    data_struct *dp;
 
-    DArray_Node neighbours = { NULL, 0, 0 };
-    DArray_Node_init(&neighbours, 8);
-
-    number = *(size_t *)munit_parameters_get(params, "number");
     refk = *(key_t *)munit_parameters_get(params, "reference");
     exp = (key_t *)munit_parameters_get(params, "expected");
 
-    items = (Item *)data;
+    dp = (data_struct *)data;
+    number = dp->s;     /* number of neighbours */
+    neighbours = dp->da;
+    res = dp->k;
+    items = dp->i;
     head = build_tree(items);
     refn = search(refk, head, maxlvl);
 
-    find_neighbours(refn->key, head, &neighbours);
-    res = xmalloc(sizeof(key_t) * neighbours._used);
-    for (i = 0; i < neighbours._used; ++i)
-        res[i] = DArray_Node_get(&neighbours, i)->key;
+    find_neighbours(refn->key, head, neighbours);
+    res = xrealloc(res, sizeof(key_t) * neighbours->_used);
+    for (i = 0; i < neighbours->_used; ++i)
+        res[i] = DArray_Node_get(neighbours, i)->key;
 
     cleanup(head);
 
-    assert_memory_equal(sizeof(key_t)*neighbours._used, (void *)res, (void *)exp);
-
-    DArray_Node_free(&neighbours);
-    free(res);
+    assert_memory_equal(sizeof(key_t)*neighbours->_used, (void *)res, (void *)exp);
 
     return MUNIT_OK;
 }
@@ -151,9 +180,39 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
 /*********************************************************************/
 
 
+/****************************/
+/*      MAIN and SUITES     */
+/****************************/
+
+#define TEST_MORTON_DIRECTION_CONFIG(DIR) \
+    { "/test_morton_##DIR", test_morton_##DIR, NULL, NULL, \
+        MUNIT_TEST_OPTION_NONE, morton_##DIR##_params }
+
+MunitTest tests[] = {
+    { "/test_morton_build", test_morton_build, NULL, NULL,
+        MUNIT_TEST_OPTION_NONE, morton_build_params},
+    TEST_MORTON_DIRECTION_CONFIG(left),
+    TEST_MORTON_DIRECTION_CONFIG(right),
+    TEST_MORTON_DIRECTION_CONFIG(top),
+    TEST_MORTON_DIRECTION_CONFIG(bot),
+
+    { "/test_quadtree_build", test_quadtree_build, quadtree_setup,
+        quadtree_teardown, MUNIT_TEST_OPTION_NONE, quadtree_build_params },
+    { "/test_quadtree_neighbours", test_quadtree_neighbours, quadtree_setup,
+        quadtree_teardown, MUNIT_TEST_OPTION_NONE, quadtree_neighbours_params },
+
+    { NULL, NULL, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL }
+};
+
+
+static const MunitSuite test_suite = {
+    "/quadtree and morton tests", tests, NULL, 10, MUNIT_SUITE_OPTION_NONE
+};
+
+
 int main(int argc, char *argv[MUNIT_ARRAY_PARAM(argc+1)])
 {
-    return munit_suite_main(&test_suite, (void *)"user_data", argc, argv);
+    return munit_suite_main(&test_suite, NULL, argc, argv);
 }
 
 /* vim: set ff=unix tw=79 sw=4 ts=4 et ic ai : */
