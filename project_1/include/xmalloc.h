@@ -6,7 +6,8 @@
  *
  * Taken from "Programming Projects in C" by Rouben Rostamian
  * ISBN 978-1-611973-49-5
- *  */
+ *
+ */
 #pragma once
 
 #include <stdlib.h>
@@ -39,7 +40,7 @@ void *realloc_or_exit(void *ptr, size_t nbytes, const char *file, int line)
 }
 
 
-// convenience makros
+/* convenience makros */
 #define xmalloc(nbytes) malloc_or_exit((nbytes), __FILE__, __LINE__)
 #define xrealloc(ptr, nbytes)   realloc_or_exit((ptr), (nbytes),    \
                                                 __FILE__, __LINE__)

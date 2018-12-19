@@ -29,7 +29,7 @@ static const lvl_t log_table[256] = {
  *
  * 0xDEAD is terminator
  *
- *  */
+ */
 
 /* check bounds with `(key & bnds[i][0]) == bnds[i][1]` */
 static const key_t bnds[8][2] = {
@@ -61,9 +61,7 @@ static const key_t suffixes[8][3] = {
  * =======
  * msb of k, i.e. log_2( floor(k) )
  *
- * TODO: expand to 32- and 64-bit interger
- *
- *  */
+ */
 static inline lvl_t msb( key_t k )
 {
     key_t t;    /* temporaries */
@@ -83,7 +81,8 @@ static inline lvl_t msb( key_t k )
  * Returns
  * =======
  * bits x_j, y_j at position j in key
- *  */
+ *
+ */
 static inline key_t bap( key_t k, lvl_t j, lvl_t l )
 {
     return ( k >> DIM * (l - j) ) & MASK;
@@ -100,7 +99,8 @@ static inline key_t bap( key_t k, lvl_t j, lvl_t l )
  * nl, lvl_t       :   number of new levels
  * key, key_t      :   key of final node of new branch
  * val, Value *    :   content of final node
- *  */
+ *
+ */
 static void build_branch( Node *head, lvl_t nl, key_t key, const Value *val )
 {
     lvl_t i, j;
@@ -143,6 +143,102 @@ static void build_branch( Node *head, lvl_t nl, key_t key, const Value *val )
 }
 
 
+/* scr - search children recursivly
+ *
+ * Params
+ * ======
+ * head, Node*         :   node at which to start searching
+ * suffix, key_t *     :   relevant search directions, terminated by 0xDEAD
+ * res, DArray_Value * :   Array in which to write result
+ *
+ */
+#if FIND_NEIGHBOURS_RETURN_NODE
+static void scr( const Node *head, const key_t *suffix, DArray_Node *res )
+#else
+static void scr( const Node *head, const key_t *suffix, DArray_Value *res )
+#endif
+{
+    const key_t *suffix_orig = suffix;
+
+    if ( !head->c )
+#if FIND_NEIGHBOURS_RETURN_NODE
+        DArray_Node_append(res, head);
+#else
+        DArray_Value_extend(res, head->val_arr);
+#endif
+    else
+        while ( *suffix != 0xDEAD ) {
+            scr( head->c[*suffix], suffix_orig, res );
+            ++suffix;
+        }
+}
+
+
+/* build_tree
+ * convenience function: creates root node and inserts each element from given
+ * items-array
+ *
+ * Params
+ * ======
+ * items, Item*    :   array for items to insert in tree
+ *
+ * Returns
+ * =======
+ * Node pointer to root node of newly created tree (don't forget to free after
+ *     usage!)
+ *
+ */
+Node *build_tree( const Item *items )
+{
+    int i;
+    Node *head;
+
+    head            = xmalloc(sizeof(Node));
+    head->key       = 0;
+    head->lvl       = 0;
+    head->val_arr   = NULL;
+    head->allocated = 1;
+    head->c         = xmalloc(sizeof(Node *) * NOC);
+    for ( i = 0; i < NOC; ++i ) head->c[i] = NULL;
+
+    while ( items != NULL ) {
+        insert( head, items );
+        ++items;
+    }
+
+    return head;
+}
+
+
+/* cleanup
+ *
+ * Params
+ * ======
+ * head, Node *    :   Node, whichs subtree to delete;
+ *                     is set to NULL afterwards
+ *
+ */
+void cleanup( Node *head )
+{
+    uint8_t i;
+
+    if ( head->c ) {
+        for ( i = 0; i < NOC; ++i )
+            if ( head->c[i] )
+                cleanup(head->c[i]);
+        free(head->c);
+    }
+    if ( head->val_arr ) {
+        DArray_Value_free(head->val_arr);
+        free(head->val_arr);
+    }
+    if ( head->allocated ) {
+        free(head);
+    }
+    head = NULL;
+}
+
+
 /* insert
  *
  * NOTICE: for fast tree building, the key following the currently considered
@@ -154,7 +250,8 @@ static void build_branch( Node *head, lvl_t nl, key_t key, const Value *val )
  * head, Node *    :   starting Node of tree, in which to insert key
  * keys, key_t *   :   array of keys of which the first one is to be inserted,
  *                     its last element should be NULL
- *  */
+ *
+ */
 void insert( const Node *head, const Item *items )
 {
     lvl_t nl;           /* number of new levels */
@@ -189,34 +286,6 @@ void insert( const Node *head, const Item *items )
 }
 
 
-/* delete
- *
- * Params
- * ======
- * head, Node *    :   Node, whichs subtree to delete;
- *                     is set to NULL afterwards
- *  */
-void delete( Node *head )
-{
-    uint8_t i;
-
-    if ( head->c ) {
-        for ( i = 0; i < NOC; ++i )
-            if ( head->c[i] )
-                delete(head->c[i]);
-        free(head->c);
-    }
-    if ( head->val_arr ) {
-        DArray_Value_free(head->val_arr);
-        free(head->val_arr);
-    }
-    if ( head->allocated ) {
-        free(head);
-    }
-    head = NULL;
-}
-
-
 /* search - traverse tree until node without children or with given key is found
  *
  * Params
@@ -228,68 +297,12 @@ void delete( Node *head )
  * Returns
  * =======
  * Node pointer with the desired key or its deepest existing anchestor
- *  */
-Node *search( Node *head, key_t key, lvl_t lvl )
+ *
+ */
+Node *search( key_t key, Node *head, lvl_t lvl )
 {
     while ( head->c && lvl != head->lvl )
         head = head->c[bap(key, head->lvl+1, lvl)];
-    return head;
-}
-
-
-/* scr - search children recursivly
- *
- * Params
- * ======
- * head, Node*         :   node at which to start searching
- * suffix, key_t *     :   relevant search directions, terminated by 0xDEAD
- * res, DArray_Value * :   Array in which to write result
- *  */
-static void scr( const Node *head, const key_t *suffix, DArray_Value *res )
-{
-    const key_t *suffix_orig = suffix;
-
-    if ( !head->c )
-        DArray_Value_extend(res, head->val_arr);
-    else
-        while ( *suffix != 0xDEAD ) {
-            scr( head->c[*suffix], suffix_orig, res );
-            ++suffix;
-        }
-}
-
-
-/* build_tree
- * convenience function: creates root node and inserts each element from given
- * items-array
- *
- * Params
- * ======
- * items, Item*    :   array for items to insert in tree
- *
- * Returns
- * =======
- * Node pointer to root node of newly created tree (don't forget to free after
- *     usage!)
- *  */
-Node *build_tree( const Item *items )
-{
-    int i;
-    Node *head;
-
-    head            = xmalloc(sizeof(Node));
-    head->key       = 0;
-    head->lvl       = 0;
-    head->val_arr   = NULL;
-    head->allocated = 1;
-    head->c         = xmalloc(sizeof(Node *) * NOC);
-    for ( i = 0; i < NOC; ++i ) head->c[i] = NULL;
-
-    while ( items != NULL ) {
-        insert( head, items );
-        ++items;
-    }
-
     return head;
 }
 
@@ -314,14 +327,18 @@ Node *build_tree( const Item *items )
  *     vary significantly (i.e. values in opposite corners of large nodes).
  *     Perhaps you want to filter out those values which are too far away
  *
- *  */
+ */
+#if FIND_NEIGHBOURS_RETURN_NODE
+void find_neighbours( key_t key, Node *head, DArray_Node *res )
+#else
 void find_neighbours( key_t key, Node *head, DArray_Value *res )
+#endif
 {
     Node *c, *tmp;      /* current, temporary */
     int i;
 
     /* find current node given by key, actual existing key is c->key */
-    c = search( head, key, maxlvl );
+    c = search( key, head, maxlvl );
 
     /* candidate keys */
     key_t cand_keys[8] = {
@@ -341,23 +358,19 @@ void find_neighbours( key_t key, Node *head, DArray_Value *res )
             continue;
 
         /* find neighbour candidate node */
-        tmp = search( head, cand_keys[i], c->lvl );
+        tmp = search( cand_keys[i], head, c->lvl );
         /* if it has further children: search them (findings will be written in
          *     res);
          * else: write tmp into res */
         if ( tmp->c )
             scr( tmp, suffixes[i], res );
         else
+#if FIND_NEIGHBOURS_RETURN_NODE
+            DArray_Node_append(res, tmp);
+#else
             DArray_Value_extend(res, tmp->val_arr);
+#endif
     }
-}
-
-
-/* function to print node in convenient format
- * (e.g. as JSON-readable list, dict, etc.) */
-void print_node( Node *node )
-{
-    /* TODO */
 }
 
 /* vim: set ff=unix tw=79 sw=4 ts=4 et ic ai : */

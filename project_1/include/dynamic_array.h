@@ -21,7 +21,8 @@ DARRAY_FREE(NAME)
  * p, TYPE *   :   array of data
  * _used, size_t   :   space in use
  * _size, size_t   :   space available
- *  */
+ *
+ */
 #define DARRAY_STRUCT(TYPE, NAME)                                           \
 typedef struct {                                                            \
     TYPE *p;                                                                \
@@ -37,7 +38,8 @@ typedef struct {                                                            \
  * ======
  * da, DArray *    :   DArray whichs p to access
  * i, size_t       :   index to access
- *  */
+ *
+ */
 #define DARRAY_GET(TYPE, NAME)                                              \
 TYPE DArray_##NAME##_get (DArray_##NAME *da, size_t i)                      \
 {                                                                           \
@@ -52,7 +54,8 @@ TYPE DArray_##NAME##_get (DArray_##NAME *da, size_t i)                      \
  * ======
  * da, DArray *    :   DArray to initialize
  * initial, size_t :   its initial size
- *  */
+ *
+ */
 #define DARRAY_INIT(TYPE, NAME)                                             \
 void DArray_##NAME##_init(DArray_##NAME *da, size_t initial)                \
 {                                                                           \
@@ -70,7 +73,8 @@ void DArray_##NAME##_init(DArray_##NAME *da, size_t initial)                \
  * ======
  * da, DArray *    :   DArray in which to insert
  * elem, TYPE      :   value to insert
- *  */
+ *
+ */
 #define DARRAY_APPEND(TYPE, NAME)                                           \
 void DArray_##NAME##_append(DArray_##NAME *da, TYPE elem)                   \
 {                                                                           \
@@ -85,12 +89,13 @@ void DArray_##NAME##_append(DArray_##NAME *da, TYPE elem)                   \
 /* DArray_extend
  * append values from other DArray at end of given DArray
  * realloc if necessary
- * 
+ *
  * Params
  * ======
  * da, DArray *    :   DArray onto which to extend
  * in, DArray *    :   DArray to extend onto da
- *  */
+ *
+ */
 #define DARRAY_EXTEND(TYPE, NAME)                                           \
 void DArray_##NAME##_extend(DArray_##NAME *da, DArray_##NAME *in)           \
 {                                                                           \
@@ -100,7 +105,7 @@ void DArray_##NAME##_extend(DArray_##NAME *da, DArray_##NAME *in)           \
         da->p = xrealloc(da->p, sizeof(TYPE) * da->_size);                  \
     }                                                                       \
     while ( da->_used < da->_size )                                         \
-        da->p[da->used++] = in->p[i++];                                     \
+        da->p[da->_used++] = in->p[i++];                                     \
 }
 
 
@@ -111,7 +116,8 @@ void DArray_##NAME##_extend(DArray_##NAME *da, DArray_##NAME *in)           \
  * Params
  * ======
  * da, DArray *    :   DArray to free
- *  */
+ *
+ */
 #define DARRAY_FREE(NAME)                                                   \
 void DArray_##NAME##_free(DArray_##NAME *da)                                \
 {                                                                           \

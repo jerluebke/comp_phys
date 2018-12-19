@@ -5,7 +5,8 @@
  * for calculating left, right, top, bottom and for more information regarding
  * morton keys, see:
  *     https://en.wikipedia.org/wiki/Z-order_curve#Coordinate_values
- *  */
+ *
+ */
 #include "../include/morton.h"
 
 /* lookup tables for `split2` */
@@ -24,7 +25,8 @@ static const uint16_t S[] = {1, 2, 4};
  * Returns
  * =======
  * uint16_t
- *  */
+ *
+ */
 static inline uint16_t split2( uint16_t x )
 {
     x = (x | (x << S[2])) & B[2];
@@ -45,7 +47,8 @@ static inline uint16_t split2( uint16_t x )
  * Returns
  * =======
  * uint16_t
- *  */
+ *
+ */
 static inline uint16_t interleave8( uint8_t x, uint8_t y )
 {
     return split2(x) | (split2(y) << 1);
@@ -66,7 +69,8 @@ static inline uint16_t interleave8( uint8_t x, uint8_t y )
  *  1, if a > b
  * -1, if a < b
  *  0, if a == b
- *  */
+ *
+ */
 static inline int cmp_keys( const void *a, const void *b )
 {
     const Item *arg1, *arg2;
@@ -83,7 +87,7 @@ static inline int cmp_keys( const void *a, const void *b )
  * Params
  * ======
  * vals, Value *   :   values to hash with `size` elements
- * keys, Item *     :   array to write result with `size+1` elements
+ * keys, Item *    :   array to write result with `size+1` elements
  * size, size_t    :   size of `vals`, `keys` needs to have size+1 (for
  *                      terminating character, for look-ahead during tree
  *                      building)
@@ -91,7 +95,8 @@ static inline int cmp_keys( const void *a, const void *b )
  * Returns
  * =======
  * sorted array of keys
- *  */
+ *
+ */
 Item *build_morton( const Value *vals, Item *items, size_t size )
 {
     size_t i;
@@ -115,7 +120,7 @@ Item *build_morton( const Value *vals, Item *items, size_t size )
 
 /*
  * convenience functions to retreive adjacent keys
- *  */
+ */
 
 inline uint16_t left( uint16_t key )
 {
