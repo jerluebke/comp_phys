@@ -1,9 +1,10 @@
 #pragma once
 
 #include <stdint.h>
-#define key_t __key_t
 #include "dynamic_array.h"
+#ifdef key_t
 #undef key_t
+#endif
 
 /* for 256x256 Resolution */
 typedef uint16_t key_t;

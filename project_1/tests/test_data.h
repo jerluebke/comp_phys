@@ -1,6 +1,8 @@
 #include "test.h"
 
-/* TODO: fill test values */
+/* TODO:
+ *     fill test values
+ *     consider order in memory */
 
 static const size_t __any_values_1_size = 10;
 static Value __any_values_1[] = {
@@ -45,7 +47,6 @@ static MunitParameterEnum morton_build_params[] = {
 
 static const key_t __morton_any_key_1 = 0x1;
 
-/* only one value per array! */
 static key_t __morton_left_val_1[] = {
 
 };

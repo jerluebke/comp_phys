@@ -10,38 +10,40 @@ test_morton_build(const MunitParameter params[], void *data)
 {
    (void ) data;
 
-   size_t i;
+    size_t i;
 
-    TreeInput *in = (TreeInput *)munit_parameters_get(params, "input");
-    Value *vals = in->vals;
-    size_t size = in->size;
-    key_t *exp = in->exp;
+    TreeInput *in   = (TreeInput *)munit_parameters_get(params, "input");
+    Value *vals     = in->vals;
+    size_t size     = in->size;
+    key_t *exp      = in->exp;
 
     Item items[size+1], *res;
     key_t keys[size];
 
-    res = build_morton(vals, items, size);
+    res = build_morton( vals, items, size );
     for ( i = 0; i < size; ++i)
         keys[i] = res[i].key;
 
-    assert_memory_equal(sizeof(key_t)*size, (void *)keys, (void *)exp);
+    assert_memory_equal( sizeof(key_t)*size,
+                         (void *)keys, (void *)exp );
 
     return MUNIT_OK;
 }
 
 
-#define TEST_MORTON_DIRECTION(DIR) \
-static MunitResult \
-test_morton_##DIR(const MunitParameter params[], void *data) \
-{ \
-    (void) data; \
-    key_t given, out, exp; \
-    KeyValueInput *inp = (KeyValueInput *)munit_parameters_get(params, "input"); \
-    given = inp->key; \
-    exp = *(inp->val); \
-    out = DIR(given); \
-    assert_ullong(out, ==, exp); \
-    return MUNIT_OK; \
+#define TEST_MORTON_DIRECTION(DIR)                                          \
+static MunitResult                                                          \
+test_morton_##DIR(const MunitParameter params[], void *data)                \
+{                                                                           \
+    (void) data;                                                            \
+    key_t given, out, exp;                                                  \
+    KeyValueInput                                                           \
+        *inp    = (KeyValueInput *)munit_parameters_get(params, "input");   \
+    given       = inp->key;                                                 \
+    exp         = *(inp->val);                                              \
+    out         = DIR(given);                                               \
+    assert_ullong(out, ==, exp);                                            \
+    return MUNIT_OK;                                                        \
 }
 
 TEST_MORTON_DIRECTION(left)
@@ -62,23 +64,25 @@ quadtree_setup(const MunitParameter params[], void *data)
 {
     (void) data;
 
-    TreeInput *in = (TreeInput *)munit_parameters_get(params, "setup");
-    Value *vals = in->vals;
-    size_t size = in->size;
+    TreeInput *in   = (TreeInput *)munit_parameters_get(params, "setup");
+    Value *vals     = in->vals;
+    size_t size     = in->size;
 
-    Item *items = xmalloc(sizeof(Item) * (size+1));
-    items = build_morton(vals, items, size);
+    Item *items     = xmalloc( sizeof(Item) * (size+1) );
+    items           = build_morton( vals, items, size );
 
-    key_t *res = xmalloc(sizeof(key_t));
+    key_t *res      = xmalloc( sizeof(key_t) );
 
-    DArray_Node *neighbours = xmalloc(sizeof(DArray_Node));
+    DArray_Node
+        *neighbours = xmalloc( sizeof(DArray_Node) );
     DArray_Node_init(neighbours, 8);
 
-    DataStruct *data_ptr = xmalloc(sizeof(DataStruct));
-    data_ptr->i = items;
-    data_ptr->k = res;
-    data_ptr->da = neighbours;
-    data_ptr->s = size;
+    DataStruct
+        *data_ptr   = xmalloc( sizeof(DataStruct) );
+    data_ptr->i     = items;
+    data_ptr->k     = res;
+    data_ptr->da    = neighbours;
+    data_ptr->s     = size;
 
     return (void *)data_ptr;
 }
@@ -86,7 +90,7 @@ quadtree_setup(const MunitParameter params[], void *data)
 static void
 quadtree_teardown(void *data)
 {
-    DataStruct *dp = (DataStruct *)data;
+    DataStruct *dp  = (DataStruct *)data;
     DArray_Node *ns = dp->da;
 
     free(dp->i);
@@ -99,25 +103,26 @@ quadtree_teardown(void *data)
 static MunitResult
 test_quadtree_build(const MunitParameter params[], void *data)
 {
-    TreeInput *in = (TreeInput *)munit_parameters_get(params, "setup");
-    key_t *exp = in->exp;
+    TreeInput *in   = (TreeInput *)munit_parameters_get(params, "setup");
+    key_t *exp      = in->exp;
 
-    DataStruct *dp = (DataStruct *)data;
-    size_t size = dp->s;
-    Item *items = dp->i;
-    Node *head = build_tree(items);
+    DataStruct *dp  = (DataStruct *)data;
+    size_t size     = dp->s;
+    Item *items     = dp->i;
+    Node *head      = build_tree(items);
 
     key_t leaf_keys[size];
     Node *tmp;
     size_t i = 0;
     while ( items != NULL ) {
-        tmp = search(items->key, head, maxlvl);
+        tmp = search( items->key, head, maxlvl );
         leaf_keys[i++] = tmp->key;
     }
 
     cleanup(head);
 
-    assert_memory_equal(sizeof(key_t)*size, (void *)leaf_keys, (void *)exp);
+    assert_memory_equal( sizeof(key_t)*size,
+                         (void *)leaf_keys, (void *)exp );
 
     return MUNIT_OK;
 }
@@ -128,25 +133,28 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
 {
     size_t i;
 
-    KeyValueInput *in = (KeyValueInput *)munit_parameters_get(params, "input");
-    key_t refk = in->key;
-    key_t *exp = in->val;
+    KeyValueInput *in   = (KeyValueInput *)munit_parameters_get(params,
+                                                                "input");
+    key_t refk          = in->key;
+    key_t *exp          = in->val;
 
-    DataStruct *dp = (DataStruct *)data;
-    DArray_Node *neighbours = dp->da;
-    key_t *res = dp->k;
-    Item *items = dp->i;
-    Node *head = build_tree(items);
-    Node *refn = search(refk, head, maxlvl);
+    DataStruct *dp      = (DataStruct *)data;
+    DArray_Node
+        *neighbours     = dp->da;
+    key_t *res          = dp->k;
+    Item *items         = dp->i;
+    Node *head          = build_tree(items);
+    Node *refn          = search(refk, head, maxlvl);
 
-    find_neighbours(refn->key, head, neighbours);
-    res = xrealloc(res, sizeof(key_t) * neighbours->_used);
-    for (i = 0; i < neighbours->_used; ++i)
-        res[i] = DArray_Node_get(neighbours, i)->key;
+    find_neighbours( refn->key, head, neighbours );
+    res = xrealloc( res, sizeof(key_t) * neighbours->_used );
+    for ( i = 0; i < neighbours->_used; ++i )
+        res[i] = neighbours->p[i]->key;
 
     cleanup(head);
 
-    assert_memory_equal(sizeof(key_t)*neighbours->_used, (void *)res, (void *)exp);
+    assert_memory_equal( sizeof(key_t)*neighbours->_used,
+                         (void *)res, (void *)exp );
 
     return MUNIT_OK;
 }
