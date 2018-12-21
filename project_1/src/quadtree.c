@@ -168,7 +168,8 @@ static void scr( const Node *head, const key_t *suffix, DArray_Value *res )
 #endif
     else
         while ( *suffix != 0xDEAD ) {
-            scr( head->c[*suffix], suffix_orig, res );
+            if ( head->c[*suffix] )
+                scr( head->c[*suffix], suffix_orig, res );
             ++suffix;
         }
 }

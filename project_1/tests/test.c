@@ -117,6 +117,7 @@ test_quadtree_build(const MunitParameter params[], void *data)
     while ( items != NULL ) {
         tmp = search( items->key, head, maxlvl );
         leaf_keys[i++] = tmp->key;
+        ++items;
     }
 
     cleanup(head);
