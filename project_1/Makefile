@@ -1,27 +1,32 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -std=c99 -I./include
+CFLAGS = -Wall -Wextra -pedantic -std=c11 -I./include
 TFLAGS = -I./tests
 DFLAGS = -g -pg
 
 SRCDIR 		:= src/
 TESTDIR 	:= tests/
-OBJDIR 		:= obj/
+OBJDIR		:= obj/
 BINDIR 		:= bin/
+
 SRCFILES 	:= $(shell find $(SRCDIR) -name "*.c")
-OBJSRC		:= $(patsubst $(SRCDIR)%.c, $(OBJDIR)%.o, $(SRCFILES))
-TESTFILES 	:= $(shell find $(TESTDIR) -name "*c")
-OBJTEST		:= $(patsubst $(TESTDIR)%.c, $(OBJDIR)%.o, $(TESTFILES))
-ALLFILES	:= $(SRCFILES) $(TESTFILES)
+TESTFILES 	:= $(shell find $(TESTDIR) -name "*.c")
+ALLSRC		:= $(SRCFILES) $(TESTFILES)
+
+OBJSRC 		:= $(patsubst $(SRCDIR)%.c, $(OBJDIR)%.o, $(SRCFILES))
+OBJTEST 	:= $(patsubst $(TESTDIR)%.c, $(OBJDIR)%.o, $(TESTFILES))
+ALLOBJ		:= $(OBJSRC) $(OBJTEST)
+
 TEST		:= $(BINDIR)test.out
 
-test: $(OBJSRC) $(OBJTEST)
+
+test: $(ALLOBJ)
 	$(CC) $^ -o $(TEST)
 
 $(OBJDIR)%.o: $(SRCDIR)%.c
 	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@
 
 $(OBJDIR)%.o: $(TESTDIR)%.c
-	$(CC) $(CFLAGS) $(TFLAGS) $(DFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(DFLAGS) $(TFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJSRC) $(OBJTEST) $(TEST)
+	rm -f $(ALLOBJ) $(TEST)

@@ -100,19 +100,18 @@ static inline int cmp_keys( const void *a, const void *b )
 Item *build_morton( const Value *vals, Item *items, size_t size )
 {
     size_t i;
-    Item *end;
 
     /* calculate keys from coordinates and set reference to corresp. value */
     for ( i = 0; i < size; ++i ) {
         items[i].key = interleave8(vals[i].x, vals[i].y);
         items[i].val = &vals[i];
+        items[i].last = 0;
     }
 
     qsort(items, size, sizeof(Item), cmp_keys);
 
-    /* set last element to NULL (terminating character) */
-    end = items + size;
-    end = NULL;
+    /* mark last element (terminating character) */
+    items[size].last = 1;
 
     return items;
 }

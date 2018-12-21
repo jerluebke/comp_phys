@@ -101,7 +101,7 @@ static inline key_t bap( key_t k, lvl_t j, lvl_t l )
  * val, Value *    :   content of final node
  *
  */
-static void build_branch( Node *head, lvl_t nl, key_t key, const Value *val )
+static Node *build_branch( lvl_t cl, lvl_t nl, key_t key, const Value *val )
 {
     lvl_t i, j;
     Node *nn;           /* new nodes */
@@ -110,7 +110,7 @@ static void build_branch( Node *head, lvl_t nl, key_t key, const Value *val )
     nn = xmalloc(sizeof(Node) * nl);
 
     /* set children references between new Nodes */
-    head = nn;
+    /* head = nn; */
     for ( i = 0; i < nl-1; ++i ) {
         /* allocate and init children */
         nn[i].c = xmalloc(sizeof(Node *) * NOC);
@@ -120,14 +120,14 @@ static void build_branch( Node *head, lvl_t nl, key_t key, const Value *val )
          * where j = head->lvl + i + 1;
          * head->lvl + i: level of current Node (i is 0-indexed)
          * +1 gives next level */
-        nn[i].c[bap(key, head->lvl+i+1, maxlvl)] = &nn[i+1];
+        nn[i].c[bap(key, cl+i+1, maxlvl)] = &nn[i+1];
     }
     nn[nl-1].c = NULL;
 
     /* init remaining attributes */
     for ( i = 0; i < nl; ++i ) {
         nn[i].val_arr   = NULL;
-        nn[i].lvl       = head->lvl + i + 1;
+        nn[i].lvl       = cl + i;   /* TODO: works correctly for larger branches? */
         nn[i].key       = key >> DIM * (maxlvl - nn[i].lvl);
         nn[i].allocated = 0;
     }
@@ -140,6 +140,8 @@ static void build_branch( Node *head, lvl_t nl, key_t key, const Value *val )
 
     /* mark nn[0] as beginning of allocated Nodes for cleanup */
     nn[0].allocated = 1;
+
+    return nn;
 }
 
 
@@ -202,7 +204,7 @@ Node *build_tree( const Item *items )
     head->c         = xmalloc(sizeof(Node *) * NOC);
     for ( i = 0; i < NOC; ++i ) head->c[i] = NULL;
 
-    while ( items != NULL ) {
+    while ( !items->last ) {
         insert( head, items );
         ++items;
     }
@@ -273,7 +275,7 @@ void insert( const Node *head, const Item *items )
     /* Node does not exist, create whole branch until lowest requiered level */
     else {  /* head->c[sb] == NULL */
         /* LOOK-AHEAD */
-        if ( (items+1) == NULL ) {   /* current item is last */
+        if ( (items+1)->last ) {   /* current item is last */
             lcl = 0;
         } else {
             /* `keys[0] XOR keys[1]` sets to one the bits which differ between current and next key */
@@ -282,7 +284,7 @@ void insert( const Node *head, const Item *items )
         }
         /* number of new levels */
         nl = (lcl - head->lvl > 0) ? lcl - head->lvl : 1;
-        build_branch( head->c[sb], nl, items->key, items->val );
+        head->c[sb] = build_branch( head->lvl+1, nl, items->key, items->val );
     }
 }
 
@@ -302,8 +304,11 @@ void insert( const Node *head, const Item *items )
  */
 Node *search( key_t key, Node *head, lvl_t lvl )
 {
-    while ( head->c && lvl != head->lvl )
-        head = head->c[bap(key, head->lvl+1, lvl)];
+    key_t sb;
+    while ( head->c && head->c[(sb = bap(key, head->lvl+1, lvl))] && lvl != head->lvl ) {
+        /* sb = bap(key, head->lvl+1, lvl); */
+        head = head->c[sb];
+    }
     return head;
 }
 

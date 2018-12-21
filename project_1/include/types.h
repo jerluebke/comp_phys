@@ -2,9 +2,7 @@
 
 #include <stdint.h>
 #include "dynamic_array.h"
-#ifdef key_t
-#undef key_t
-#endif
+// #define key_t __quadtree_key_t
 
 /* for 256x256 Resolution */
 typedef uint16_t key_t;
@@ -28,6 +26,7 @@ struct Value {
 struct Item {
     key_t key;
     const Value *val;
+    uint8_t last;
 };
 
 struct Node {

@@ -8,7 +8,7 @@
 static MunitResult
 test_morton_build(const MunitParameter params[], void *data)
 {
-   (void ) data;
+    (void ) data;
 
     size_t i;
 
@@ -21,7 +21,7 @@ test_morton_build(const MunitParameter params[], void *data)
     key_t keys[size];
 
     res = build_morton( vals, items, size );
-    for ( i = 0; i < size; ++i)
+    for ( i = 0; i < size; ++i )
         keys[i] = res[i].key;
 
     assert_memory_equal( sizeof(key_t)*size,
@@ -64,6 +64,8 @@ quadtree_setup(const MunitParameter params[], void *data)
 {
     (void) data;
 
+    munit_log(MUNIT_LOG_DEBUG, "setting up quadtree...");
+
     TreeInput *in   = (TreeInput *)munit_parameters_get(params, "setup");
     Value *vals     = in->vals;
     size_t size     = in->size;
@@ -83,6 +85,8 @@ quadtree_setup(const MunitParameter params[], void *data)
     data_ptr->k     = res;
     data_ptr->da    = neighbours;
     data_ptr->s     = size;
+
+    munit_log(MUNIT_LOG_DEBUG, "done setting up quadtree.");
 
     return (void *)data_ptr;
 }
@@ -109,18 +113,24 @@ test_quadtree_build(const MunitParameter params[], void *data)
     DataStruct *dp  = (DataStruct *)data;
     size_t size     = dp->s;
     Item *items     = dp->i;
+    munit_log(MUNIT_LOG_DEBUG, "building tree...");
     Node *head      = build_tree(items);
+    munit_log(MUNIT_LOG_DEBUG, "done building tree.");
 
     key_t leaf_keys[size];
     Node *tmp;
     size_t i = 0;
-    while ( items != NULL ) {
+    while ( !items->last ) {
+        munit_logf(MUNIT_LOG_DEBUG, "searching for key %d", items->key);
         tmp = search( items->key, head, maxlvl );
+        munit_logf(MUNIT_LOG_DEBUG, "found! actual key: %d", tmp->key);
         leaf_keys[i++] = tmp->key;
         ++items;
     }
 
+    munit_log(MUNIT_LOG_DEBUG, "deleting tree...");
     cleanup(head);
+    munit_log(MUNIT_LOG_DEBUG, "done deleting tree.");
 
     assert_memory_equal( sizeof(key_t)*size,
                          (void *)leaf_keys, (void *)exp );
@@ -169,7 +179,7 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
 /****************************/
 
 #define TEST_MORTON_DIRECTION_CONFIG(DIR) \
-    { "/test_morton_##DIR", test_morton_##DIR, NULL, NULL, \
+    { "/test_morton_"#DIR, test_morton_##DIR, NULL, NULL, \
         MUNIT_TEST_OPTION_NONE, morton_##DIR##_params }
 
 MunitTest tests[] = {
@@ -190,7 +200,7 @@ MunitTest tests[] = {
 
 
 static const MunitSuite test_suite = {
-    "/quadtree and morton tests", tests, NULL, 1, MUNIT_SUITE_OPTION_NONE
+    "/tests", tests, NULL, 1, MUNIT_SUITE_OPTION_NONE
 };
 
 

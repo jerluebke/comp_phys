@@ -1,3 +1,4 @@
+#pragma once
 #include "test.h"
 
 /* TODO:
@@ -26,8 +27,8 @@ static TreeInput __##WHICH##_build_input_##NO[] = { \
 
 static key_t __morton_build_expected_1[] = {
     0x0, 0x23F8, 0x2664, 0x2698,
-    0x29D0, 0x3FFF, 0x8C00, 0x9468,
-    0x9198, 0x9199, 0x919B, 0xFFFF
+    0x29D0, 0x3FFF, 0x8C00, 0x9198,
+    0x9199, 0x919B, 0x9468, 0xFFFF
 };
 
 
@@ -35,7 +36,6 @@ BUILD_INPUT(morton, 1)
 
 static char *morton_build_input[] = {
     (char *)__morton_build_input_1,
-    /* (char *)__morton_build_input_2, */
     /* etc. */
     NULL
 };
@@ -67,7 +67,7 @@ static key_t __morton_right_val_3       = 0x6AAA;
 static key_t __morton_top_val_3         = 0x3FFD;
 static key_t __morton_bot_val_3         = 0x9555;
 
-#define __morton_any_key_4  0x400ull
+#define __morton_any_key_4  0x4000ull
 static key_t __morton_left_val_4        = 0x1555;
 static key_t __morton_right_val_4       = 0x4001;
 static key_t __morton_top_val_4         = 0xEAAA;
@@ -114,8 +114,9 @@ MORTON_DIRECTION_PARAMS(bot)
 
 static key_t __quadtree_build_expected_1[] = {
     0x0, 0x8, 0x99, 0x9A,
-    0xA, 0x3, 0x8, 0x25,
-    0x9198, 0x9199, 0x919B
+    0xA, 0x3, 0x8,
+    0x9198, 0x9199, 0x919B,
+    0x25, 0x3
 };
 
 
@@ -138,32 +139,32 @@ static MunitParameterEnum quadtree_build_params[] = {
 
 #define __quadtree_neighbours_ref_1     0x0ull
 static key_t __quadtree_neighbours_exp_1[] = {
-
+    0x8, 0x3
 };
 
 #define __quadtree_neighbours_ref_2     0x23F8ull
 static key_t __quadtree_neighbours_exp_2[] = {
-
+    0x9A, 0x0, 0xA, 0x0     /* TODO: replicated keys! */
 };
 
 #define __quadtree_neighbours_ref_3     0x2664ull
 static key_t __quadtree_neighbours_exp_3[] = {
-
+    0x9A
 };
 
 #define __quadtree_neighbours_ref_4     0x3FFFull
 static key_t __quadtree_neighbours_exp_4[] = {
-
+    0x25, 0x0, 0x8, 0x3
 };
 
 #define __quadtree_neighbours_ref_5     0x9199ull
 static key_t __quadtree_neighbours_exp_5[] = {
-
+    0x9198, 0x919B
 };
 
 #define __quadtree_neighbours_ref_6     0xFFFFull
 static key_t __quadtree_neighbours_exp_6[] = {
-
+    0x25, 0x3
 };
 
 

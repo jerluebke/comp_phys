@@ -14,7 +14,7 @@
 #include <stdio.h>
 
 
-void *malloc_or_exit(size_t nbytes, const char *file, int line)
+inline void *malloc_or_exit(size_t nbytes, const char *file, int line)
 {
     void *res;
     if ( (res = malloc(nbytes)) == NULL ) {
@@ -27,7 +27,7 @@ void *malloc_or_exit(size_t nbytes, const char *file, int line)
 }
 
 
-void *realloc_or_exit(void *ptr, size_t nbytes, const char *file, int line)
+inline void *realloc_or_exit(void *ptr, size_t nbytes, const char *file, int line)
 {
     void *tp;
     if ( (tp = realloc(ptr, nbytes)) == NULL ) {

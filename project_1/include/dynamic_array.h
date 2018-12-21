@@ -3,6 +3,16 @@
 
 #define FACTOR 1.5L
 
+
+#define DARRAY_EXTERN(TYPE, NAME)                                           \
+extern inline TYPE DArray_##NAME##_get (DArray_##NAME *da, size_t i);       \
+extern inline void DArray_##NAME##_init(DArray_##NAME *da, size_t initial); \
+extern inline void DArray_##NAME##_append(DArray_##NAME *da, TYPE elem);    \
+extern inline void DArray_##NAME##_extend(DArray_##NAME *da,                \
+                                          DArray_##NAME *in);               \
+extern inline void DArray_##NAME##_free(DArray_##NAME *da);                 \
+
+
 #define DARRAY_TYPEDEF(TYPE, NAME)  \
 DARRAY_STRUCT(TYPE, NAME)           \
 DARRAY_GET(TYPE, NAME)              \
@@ -41,7 +51,7 @@ typedef struct {                                                            \
  *
  */
 #define DARRAY_GET(TYPE, NAME)                                              \
-TYPE DArray_##NAME##_get (DArray_##NAME *da, size_t i)                      \
+inline TYPE DArray_##NAME##_get (DArray_##NAME *da, size_t i)                      \
 {                                                                           \
     return da->p[i];                                                        \
 }                                                                           \
@@ -57,7 +67,7 @@ TYPE DArray_##NAME##_get (DArray_##NAME *da, size_t i)                      \
  *
  */
 #define DARRAY_INIT(TYPE, NAME)                                             \
-void DArray_##NAME##_init(DArray_##NAME *da, size_t initial)                \
+inline void DArray_##NAME##_init(DArray_##NAME *da, size_t initial)                \
 {                                                                           \
     da->p = xmalloc(sizeof(TYPE) * initial);                                \
     da->_used = 0;                                                          \
@@ -76,7 +86,7 @@ void DArray_##NAME##_init(DArray_##NAME *da, size_t initial)                \
  *
  */
 #define DARRAY_APPEND(TYPE, NAME)                                           \
-void DArray_##NAME##_append(DArray_##NAME *da, TYPE elem)                   \
+inline void DArray_##NAME##_append(DArray_##NAME *da, TYPE elem)                   \
 {                                                                           \
     if ( da->_used == da->_size )  {                                        \
         da->_size = (da->_size + 1) * FACTOR;   /* in case da->_size == 0 */\
@@ -97,7 +107,7 @@ void DArray_##NAME##_append(DArray_##NAME *da, TYPE elem)                   \
  *
  */
 #define DARRAY_EXTEND(TYPE, NAME)                                           \
-void DArray_##NAME##_extend(DArray_##NAME *da, DArray_##NAME *in)           \
+inline void DArray_##NAME##_extend(DArray_##NAME *da, DArray_##NAME *in)           \
 {                                                                           \
     size_t new_size = da->_used + in->_used, i = 0;                         \
     if ( new_size >= da->_size ) {                                          \
@@ -119,7 +129,7 @@ void DArray_##NAME##_extend(DArray_##NAME *da, DArray_##NAME *in)           \
  *
  */
 #define DARRAY_FREE(NAME)                                                   \
-void DArray_##NAME##_free(DArray_##NAME *da)                                \
+inline void DArray_##NAME##_free(DArray_##NAME *da)                                \
 {                                                                           \
     free(da->p);                                                            \
     da->p = NULL;                                                           \

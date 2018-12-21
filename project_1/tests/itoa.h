@@ -7,7 +7,7 @@
  * implementation of itoa to convert an Integer to C-String
  * taken from: http://www.strudel.org.uk/itoa/
  * */
-char *__itoa(int64_t val, char *res, int base)
+inline char *__itoa(int64_t val, char *res, int base)
 {
     /* check if base is valid */
     if (base < 2 || base > 36) {
