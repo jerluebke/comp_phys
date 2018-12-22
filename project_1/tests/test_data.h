@@ -144,7 +144,7 @@ static key_t __quadtree_neighbours_exp_1[] = {
 
 #define __quadtree_neighbours_ref_2     0x23F8ull
 static key_t __quadtree_neighbours_exp_2[] = {
-    0x9A, 0x0, 0xA, 0x0     /* TODO: replicated keys! */
+    0x9A, 0x0, 0xA, 0x0     /* TODO: duplicate keys! */
 };
 
 #define __quadtree_neighbours_ref_3     0x2664ull
@@ -170,7 +170,7 @@ static key_t __quadtree_neighbours_exp_6[] = {
 
 #define QUADTREE_NEIGHBOURS_INPUT(NO) \
 static KeyValueInput __quadtree_neighbours_input_##NO[] = { \
-    { __quadtree_neighbours_ref_##NO, __quadtree_neighbours_exp_##NO} \
+    { __quadtree_neighbours_ref_##NO, __quadtree_neighbours_exp_##NO } \
 };
 
 QUADTREE_NEIGHBOURS_INPUT(1)

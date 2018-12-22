@@ -1,3 +1,4 @@
+#include <assert.h>
 #include "../include/quadtree.h"
 #include "../include/morton.h"
 
@@ -162,18 +163,19 @@ static void scr( const Node *head, const key_t *suffix, DArray_Value *res )
 {
     const key_t *suffix_orig = suffix;
 
-    if ( !head->c )
+    while ( head->c && *suffix != 0xDEAD ) {
+        if ( head->c[*suffix] )
+            scr( head->c[*suffix], suffix_orig, res );
+        ++suffix;
+    }
+    if ( head->val_arr ) {  /* equivalent to head->c == NULL */
+        assert( head->c == NULL );
 #if FIND_NEIGHBOURS_RETURN_NODE
         DArray_Node_append(res, head);
 #else
         DArray_Value_extend(res, head->val_arr);
 #endif
-    else
-        while ( *suffix != 0xDEAD ) {
-            if ( head->c[*suffix] )
-                scr( head->c[*suffix], suffix_orig, res );
-            ++suffix;
-        }
+    }
 }
 
 
@@ -264,6 +266,7 @@ void insert( const Node *head, const Item *items )
     /* reached lowest level, Node already exists and is occupied:
      *     repeating keys, save in same Node */
     if ( head->lvl == maxlvl ) {
+        assert( head->val_arr != NULL );
         DArray_Value_append(head->val_arr, items->val);
     }
 
@@ -305,8 +308,9 @@ void insert( const Node *head, const Item *items )
 Node *search( key_t key, Node *head, lvl_t lvl )
 {
     key_t sb;
-    while ( head->c && head->c[(sb = bap(key, head->lvl+1, lvl))] && lvl != head->lvl ) {
-        /* sb = bap(key, head->lvl+1, lvl); */
+    while ( head->c
+            && head->c[(sb = bap(key, head->lvl+1, lvl))]
+            && lvl != head->lvl ) {
         head = head->c[sb];
     }
     return head;
@@ -341,7 +345,7 @@ void find_neighbours( key_t key, Node *head, DArray_Value *res )
 #endif
 {
     Node *c, *tmp;      /* current, temporary */
-    int i;
+    size_t i, j;
 
     /* find current node given by key, actual existing key is c->key */
     c = search( key, head, maxlvl );
@@ -370,12 +374,19 @@ void find_neighbours( key_t key, Node *head, DArray_Value *res )
          * else: write tmp into res */
         if ( tmp->c )
             scr( tmp, suffixes[i], res );
-        else
+        else if ( tmp->val_arr ) {
+            /* TODO: prettify */
 #if FIND_NEIGHBOURS_RETURN_NODE
+            for ( j = 0; j < res->_used; ++j ) {
+                if ( tmp == res->p[j] )
+                    goto next;
             DArray_Node_append(res, tmp);
 #else
             DArray_Value_extend(res, tmp->val_arr);
 #endif
+            }
+        }
+next: continue;
     }
 }
 

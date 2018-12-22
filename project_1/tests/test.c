@@ -159,7 +159,7 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
     munit_logf(MUNIT_LOG_DEBUG,
                "\ngiven key: %d\nfound key: %d\n", refk, refn->key);
 
-    find_neighbours( refn->key, head, neighbours );
+    find_neighbours( refk, head, neighbours );
     res = xrealloc( res, sizeof(key_t) * neighbours->_used );
     for ( i = 0; i < neighbours->_used; ++i )
         res[i] = neighbours->p[i]->key;
