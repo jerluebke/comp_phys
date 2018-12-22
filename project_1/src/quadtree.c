@@ -163,12 +163,7 @@ static void scr( const Node *head, const key_t *suffix, DArray_Value *res )
 {
     const key_t *suffix_orig = suffix;
 
-    while ( head->c && *suffix != 0xDEAD ) {
-        if ( head->c[*suffix] )
-            scr( head->c[*suffix], suffix_orig, res );
-        ++suffix;
-    }
-    if ( head->val_arr ) {  /* equivalent to head->c == NULL */
+    if ( head->val_arr ) {
         assert( head->c == NULL );
 #if FIND_NEIGHBOURS_RETURN_NODE
         DArray_Node_append(res, head);
@@ -176,6 +171,12 @@ static void scr( const Node *head, const key_t *suffix, DArray_Value *res )
         DArray_Value_extend(res, head->val_arr);
 #endif
     }
+    else
+        while ( *suffix != 0xDEAD ) {
+            if ( head->c[*suffix] )
+                scr( head->c[*suffix], suffix_orig, res );
+            ++suffix;
+        }
 }
 
 
@@ -266,7 +267,6 @@ void insert( const Node *head, const Item *items )
     /* reached lowest level, Node already exists and is occupied:
      *     repeating keys, save in same Node */
     if ( head->lvl == maxlvl ) {
-        assert( head->val_arr != NULL );
         DArray_Value_append(head->val_arr, items->val);
     }
 
@@ -345,7 +345,7 @@ void find_neighbours( key_t key, Node *head, DArray_Value *res )
 #endif
 {
     Node *c, *tmp;      /* current, temporary */
-    size_t i, j;
+    int i;
 
     /* find current node given by key, actual existing key is c->key */
     c = search( key, head, maxlvl );
@@ -374,19 +374,12 @@ void find_neighbours( key_t key, Node *head, DArray_Value *res )
          * else: write tmp into res */
         if ( tmp->c )
             scr( tmp, suffixes[i], res );
-        else if ( tmp->val_arr ) {
-            /* TODO: prettify */
+        else if ( tmp->val_arr )
 #if FIND_NEIGHBOURS_RETURN_NODE
-            for ( j = 0; j < res->_used; ++j ) {
-                if ( tmp == res->p[j] )
-                    goto next;
             DArray_Node_append(res, tmp);
 #else
             DArray_Value_extend(res, tmp->val_arr);
 #endif
-            }
-        }
-next: continue;
     }
 }
 
