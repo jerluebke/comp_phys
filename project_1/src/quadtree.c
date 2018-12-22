@@ -163,8 +163,9 @@ static void scr( const Node *head, const key_t *suffix, DArray_Value *res )
 {
     const key_t *suffix_orig = suffix;
 
-    if ( head->val_arr ) {
-        assert( head->c == NULL );
+    /* if ( head->val_arr ) { */
+    /*     assert( head->c == NULL ); */
+    if ( !head->c ) {
 #if FIND_NEIGHBOURS_RETURN_NODE
         DArray_Node_append(res, head);
 #else
@@ -369,12 +370,16 @@ void find_neighbours( key_t key, Node *head, DArray_Value *res )
 
         /* find neighbour candidate node */
         tmp = search( cand_keys[i], head, c->lvl );
+        /* if ( tmp->key == c->key ) */
+        /*     continue; */
+
         /* if it has further children: search them (findings will be written in
          *     res);
          * else: write tmp into res */
         if ( tmp->c )
             scr( tmp, suffixes[i], res );
-        else if ( tmp->val_arr )
+        /* else if ( tmp->val_arr ) */
+        else
 #if FIND_NEIGHBOURS_RETURN_NODE
             DArray_Node_append(res, tmp);
 #else

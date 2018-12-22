@@ -167,6 +167,11 @@ static key_t __quadtree_neighbours_exp_6[] = {
     0x25, 0x3
 };
 
+#define __quadtree_neighbours_ref_7     0x9468ull
+static key_t __quadtree_neighbours_exp_7[] = {
+    0x3, 0x3
+};
+
 
 #define QUADTREE_NEIGHBOURS_INPUT(NO) \
 static KeyValueInput __quadtree_neighbours_input_##NO[] = { \
@@ -179,6 +184,7 @@ QUADTREE_NEIGHBOURS_INPUT(3)
 QUADTREE_NEIGHBOURS_INPUT(4)
 QUADTREE_NEIGHBOURS_INPUT(5)
 QUADTREE_NEIGHBOURS_INPUT(6)
+QUADTREE_NEIGHBOURS_INPUT(7)
 
 static char *quadtree_neighbours_input[] = {
     (char *)__quadtree_neighbours_input_1,
@@ -187,6 +193,7 @@ static char *quadtree_neighbours_input[] = {
     (char *)__quadtree_neighbours_input_4,
     (char *)__quadtree_neighbours_input_5,
     (char *)__quadtree_neighbours_input_6,
+    (char *)__quadtree_neighbours_input_7,
     /* etc. */
     NULL
 };
