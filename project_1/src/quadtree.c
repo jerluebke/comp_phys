@@ -376,10 +376,10 @@ void find_neighbours( key_t key, Node *head, DArray_Value *res )
         /* if it has further children: search them (findings will be written in
          *     res);
          * else: write tmp into res */
-        if ( tmp->c )
+        if ( tmp->lvl == c->lvl && tmp->c )
             scr( tmp, suffixes[i], res );
-        /* else if ( tmp->val_arr ) */
-        else
+        else if ( tmp->val_arr )
+        /* else */
 #if FIND_NEIGHBOURS_RETURN_NODE
             DArray_Node_append(res, tmp);
 #else
