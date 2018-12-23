@@ -2,7 +2,7 @@
 
 #include <stdint.h>
 #include "dynamic_array.h"
-// #define key_t __quadtree_key_t
+/* #define key_t __quadtree_key_t */
 
 /* for 256x256 Resolution */
 typedef uint16_t key_t;
@@ -13,8 +13,7 @@ typedef struct Value Value;
 typedef struct Item Item;
 typedef struct Node Node;
 
-DARRAY_TYPEDEF(const Value *, Value)
-DARRAY_TYPEDEF(const Node *, Node)
+DARRAY_TYPEDEF(const Item *, Item)
 
 
 /* structure implementations */
@@ -31,7 +30,7 @@ struct Item {
 
 struct Node {
     key_t key;
-    DArray_Value *val_arr;
+    DArray_Item *iarr;
     lvl_t lvl;
     Node **c;   /* children */
     uint8_t allocated;

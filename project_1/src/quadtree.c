@@ -102,11 +102,11 @@ static inline key_t bap( key_t k, lvl_t j, lvl_t l )
  * val, Value *    :   content of final node
  *
  */
-static Node *build_branch( lvl_t cl, lvl_t nl, key_t key, const Value *val )
+static Node *build_branch( lvl_t cl, lvl_t nl, const Item *item )
 {
     lvl_t i, j;
     Node *nn;           /* new nodes */
-    DArray_Value *va;   /* value array for new node */
+    DArray_Item *ia;    /* item array for new node */
 
     nn = xmalloc(sizeof(Node) * nl);
 
@@ -121,23 +121,23 @@ static Node *build_branch( lvl_t cl, lvl_t nl, key_t key, const Value *val )
          * where j = head->lvl + i + 1;
          * head->lvl + i: level of current Node (i is 0-indexed)
          * +1 gives next level */
-        nn[i].c[bap(key, cl+i+1, maxlvl)] = &nn[i+1];
+        nn[i].c[bap(item->key, cl+i+1, maxlvl)] = &nn[i+1];
     }
     nn[nl-1].c = NULL;
 
     /* init remaining attributes */
     for ( i = 0; i < nl; ++i ) {
-        nn[i].val_arr   = NULL;
+        nn[i].iarr      = NULL;
         nn[i].lvl       = cl + i;   /* TODO: works correctly for larger branches? */
-        nn[i].key       = key >> DIM * (maxlvl - nn[i].lvl);
+        nn[i].key       = item->key >> DIM * (maxlvl - nn[i].lvl);
         nn[i].allocated = 0;
     }
 
     /* set value to last of the new Nodes */
-    va = xmalloc(sizeof(DArray_Value));
-    DArray_Value_init(va, 1);
-    DArray_Value_append(va, val);
-    nn[nl-1].val_arr = va;
+    ia = xmalloc(sizeof(DArray_Item));
+    DArray_Item_init(ia, 1);
+    DArray_Item_append(ia, item);
+    nn[nl-1].iarr = ia;
 
     /* mark nn[0] as beginning of allocated Nodes for cleanup */
     nn[0].allocated = 1;
@@ -155,29 +155,21 @@ static Node *build_branch( lvl_t cl, lvl_t nl, key_t key, const Value *val )
  * res, DArray_Value * :   Array in which to write result
  *
  */
-#if FIND_NEIGHBOURS_RETURN_NODE
-static void scr( const Node *head, const key_t *suffix, DArray_Node *res )
-#else
-static void scr( const Node *head, const key_t *suffix, DArray_Value *res )
-#endif
+static void scr( const Node *head, const key_t *suffix, DArray_Item *res )
 {
     const key_t *suffix_orig = suffix;
 
-    /* if ( head->val_arr ) { */
-    /*     assert( head->c == NULL ); */
-    if ( !head->c ) {
-#if FIND_NEIGHBOURS_RETURN_NODE
-        DArray_Node_append(res, head);
-#else
-        DArray_Value_extend(res, head->val_arr);
-#endif
-    }
-    else
+    if ( head->iarr ) {
+    /* if ( !head->c ) */
+        assert( head->c == NULL );
+        DArray_Item_append(res, head->iarr->p[0]);
+    } else {
         while ( *suffix != 0xDEAD ) {
             if ( head->c[*suffix] )
                 scr( head->c[*suffix], suffix_orig, res );
             ++suffix;
         }
+    }
 }
 
 
@@ -203,7 +195,7 @@ Node *build_tree( const Item *items )
     head            = xmalloc(sizeof(Node));
     head->key       = 0;
     head->lvl       = 0;
-    head->val_arr   = NULL;
+    head->iarr      = NULL;
     head->allocated = 1;
     head->c         = xmalloc(sizeof(Node *) * NOC);
     for ( i = 0; i < NOC; ++i ) head->c[i] = NULL;
@@ -235,9 +227,9 @@ void cleanup( Node *head )
                 cleanup(head->c[i]);
         free(head->c);
     }
-    if ( head->val_arr ) {
-        DArray_Value_free(head->val_arr);
-        free(head->val_arr);
+    if ( head->iarr ) {
+        DArray_Item_free(head->iarr);
+        free(head->iarr);
     }
     if ( head->allocated ) {
         free(head);
@@ -268,7 +260,7 @@ void insert( const Node *head, const Item *items )
     /* reached lowest level, Node already exists and is occupied:
      *     repeating keys, save in same Node */
     if ( head->lvl == maxlvl ) {
-        DArray_Value_append(head->val_arr, items->val);
+        DArray_Item_append(head->iarr, items);
     }
 
     /* Node exists, insert in its child */
@@ -288,7 +280,7 @@ void insert( const Node *head, const Item *items )
         }
         /* number of new levels */
         nl = (lcl - head->lvl > 0) ? lcl - head->lvl : 1;
-        head->c[sb] = build_branch( head->lvl+1, nl, items->key, items->val );
+        head->c[sb] = build_branch( head->lvl+1, nl, items );
     }
 }
 
@@ -309,6 +301,7 @@ void insert( const Node *head, const Item *items )
 Node *search( key_t key, Node *head, lvl_t lvl )
 {
     key_t sb;
+    /* TODO */
     while ( head->c
             && head->c[(sb = bap(key, head->lvl+1, lvl))]
             && lvl != head->lvl ) {
@@ -339,11 +332,7 @@ Node *search( key_t key, Node *head, lvl_t lvl )
  *     Perhaps you want to filter out those values which are too far away
  *
  */
-#if FIND_NEIGHBOURS_RETURN_NODE
-void find_neighbours( key_t key, Node *head, DArray_Node *res )
-#else
-void find_neighbours( key_t key, Node *head, DArray_Value *res )
-#endif
+void find_neighbours( key_t key, Node *head, DArray_Item *res )
 {
     Node *c, *tmp;      /* current, temporary */
     int i;
@@ -378,13 +367,9 @@ void find_neighbours( key_t key, Node *head, DArray_Value *res )
          * else: write tmp into res */
         if ( tmp->lvl == c->lvl && tmp->c )
             scr( tmp, suffixes[i], res );
-        else if ( tmp->val_arr )
+        else if ( tmp->iarr )
         /* else */
-#if FIND_NEIGHBOURS_RETURN_NODE
-            DArray_Node_append(res, tmp);
-#else
-            DArray_Value_extend(res, tmp->val_arr);
-#endif
+            DArray_Item_append(res, tmp->iarr->p[0]);
     }
 }
 

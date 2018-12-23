@@ -78,9 +78,9 @@ quadtree_setup(const MunitParameter params[], void *data)
 
     key_t *res      = xmalloc( sizeof(key_t) );
 
-    DArray_Node
-        *neighbours = xmalloc( sizeof(DArray_Node) );
-    DArray_Node_init(neighbours, 8);
+    DArray_Item
+        *neighbours = xmalloc( sizeof(DArray_Item) );
+    DArray_Item_init(neighbours, 8);
 
     DataStruct
         *data_ptr   = xmalloc( sizeof(DataStruct) );
@@ -98,11 +98,11 @@ static void
 quadtree_teardown(void *data)
 {
     DataStruct *dp  = (DataStruct *)data;
-    DArray_Node *ns = dp->da;
+    DArray_Item *ns = dp->da;
 
     free(dp->i);
     free(dp->k);
-    DArray_Node_free(ns);
+    DArray_Item_free(ns);
     free(ns);
     free(dp);
 }
@@ -146,6 +146,7 @@ static MunitResult
 test_quadtree_neighbours(const MunitParameter params[], void *data)
 {
     size_t i;
+    Node *tmp;
 
     KeyValueInput *in   = (KeyValueInput *)munit_parameters_get(params,
                                                                 "input");
@@ -153,7 +154,7 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
     key_t *exp          = in->val;
 
     DataStruct *dp      = (DataStruct *)data;
-    DArray_Node
+    DArray_Item
         *neighbours     = dp->da;
     key_t *res          = dp->k;
     Item *items         = dp->i;
@@ -164,8 +165,10 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
 
     find_neighbours( refk, head, neighbours );
     res = xrealloc( res, sizeof(key_t) * neighbours->_used );
-    for ( i = 0; i < neighbours->_used; ++i )
-        res[i] = neighbours->p[i]->key;
+    for ( i = 0; i < neighbours->_used; ++i ) {
+        tmp = search(neighbours->p[i]->key, head, maxlvl);
+        res[i] = tmp->key;
+    }
 
     fprintf(stderr, "res\texpected\n\n");
     for ( i = 0; i < neighbours->_used; ++i )

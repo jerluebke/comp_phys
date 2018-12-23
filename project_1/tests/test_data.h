@@ -176,12 +176,12 @@ static key_t __quadtree_neighbours_exp_7[] = {
     0x3, 0x3, 0x3, 0x1, 0x3
 };
 
-#define __quadtree_neighbours_ref_8     0xA555
+#define __quadtree_neighbours_ref_8     0xA555ull
 static key_t __quadtree_neighbours_exp_8[] = {
     0xB, 0x8
 };
 
-#define __quadtree_neighbours_ref_9     0x6AAA
+#define __quadtree_neighbours_ref_9     0x6AAAull
 static key_t __quadtree_neighbours_exp_9[] = {
     0x1, 0x3, 0x3, 0x25
 };

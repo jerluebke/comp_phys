@@ -9,7 +9,7 @@
 
 
 typedef struct {
-    Item *i; key_t *k; DArray_Node *da; size_t s;
+    Item *i; key_t *k; DArray_Item *da; size_t s;
 } DataStruct;
 
 typedef struct {

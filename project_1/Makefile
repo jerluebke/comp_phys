@@ -9,7 +9,7 @@ OBJDIR		:= obj/
 BINDIR 		:= bin/
 
 SRCFILES 	:= $(shell find $(SRCDIR) -name "*.c")
-TESTFILES 	:= $(shell find $(TESTDIR) -name "*.c")
+TESTFILES 	:= $(shell find $(TESTDIR) \( -name "*.c" -not -name "*printing.c" \))
 ALLSRC		:= $(SRCFILES) $(TESTFILES)
 
 OBJSRC 		:= $(patsubst $(SRCDIR)%.c, $(OBJDIR)%.o, $(SRCFILES))
