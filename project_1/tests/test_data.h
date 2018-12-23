@@ -5,11 +5,12 @@
  *     fill test values
  *     consider order in memory */
 
-#define __any_values_1_size 12u
+#define __any_values_1_size 16u
 static Value __any_values_1[] = {
     /* 1 */     { 0x1C, 0x68 }, { 0x7F, 0x7F }, { 0x20, 0xA0 }, { 0x68, 0x86 },
     /* 0 */     { 0x0, 0x0 }, { 0x1C, 0x5E }, { 0x2A, 0x54 }, { 0x24, 0x5A },
-    /* 2 */     { 0x54, 0x8A }, { 0x55, 0x8A }, { 0x55, 0x8B }, { 0xFF, 0xFF }
+    /* 2 */     { 0x54, 0x8A }, { 0x55, 0x8A }, { 0x55, 0x8B }, { 0xFF, 0xFF },
+    { 0x60, 0x20 }, { 0x80, 0x7F }, { 0x3F, 0xC0 }, { 0x40, 0xFF }
 };
 
 
@@ -26,9 +27,10 @@ static TreeInput __##WHICH##_build_input_##NO[] = { \
 /**********/
 
 static key_t __morton_build_expected_1[] = {
-    0x0, 0x23F8, 0x2664, 0x2698,
-    0x29D0, 0x3FFF, 0x8C00, 0x9198,
-    0x9199, 0x919B, 0x9468, 0xFFFF
+    0x0, 0x1C00, 0x23F8, 0x2664,
+    0x2698, 0x29D0, 0x3FFF, 0x6AAA,
+    0x8C00, 0x9198, 0x9199, 0x919B,
+    0x9468, 0xA555, 0xBAAA, 0xFFFF
 };
 
 
@@ -113,10 +115,10 @@ MORTON_DIRECTION_PARAMS(bot)
 /************/
 
 static key_t __quadtree_build_expected_1[] = {
-    0x0, 0x8, 0x99, 0x9A,
-    0xA, 0x3, 0x8,
-    0x9198, 0x9199, 0x919B,
-    0x25, 0x3
+    0x0, 0x1, 0x8, 0x99,
+    0x9A, 0xA, 0x3, 0x1,
+    0x8, 0x9198, 0x9199, 0x919B,
+    0x25, 0xA, 0xB, 0x3
 };
 
 
@@ -137,14 +139,16 @@ static MunitParameterEnum quadtree_build_params[] = {
 /*********************************************************************/
 /*********************************************************************/
 
+/* TODO: duplicated keys! */
+
 #define __quadtree_neighbours_ref_1     0x0ull
 static key_t __quadtree_neighbours_exp_1[] = {
-    0x8, 0x3
+    0x1, 0x8, 0x3
 };
 
 #define __quadtree_neighbours_ref_2     0x23F8ull
 static key_t __quadtree_neighbours_exp_2[] = {
-    0x9A, 0x0, 0xA, 0x0     /* TODO: duplicate keys! */
+    0x9A, 0x0, 0xA, 0x0
 };
 
 #define __quadtree_neighbours_ref_3     0x2664ull
@@ -154,7 +158,7 @@ static key_t __quadtree_neighbours_exp_3[] = {
 
 #define __quadtree_neighbours_ref_4     0x3FFFull
 static key_t __quadtree_neighbours_exp_4[] = {
-    0x25, 0x0, 0x8, 0x3
+    0x1, 0x1, 0x25, 0x0, 0x1, 0x8, 0x3
 };
 
 #define __quadtree_neighbours_ref_5     0x9199ull
@@ -164,12 +168,22 @@ static key_t __quadtree_neighbours_exp_5[] = {
 
 #define __quadtree_neighbours_ref_6     0xFFFFull
 static key_t __quadtree_neighbours_exp_6[] = {
-    0x25, 0x3
+    0x25, 0xB, 0x1, 0x3
 };
 
 #define __quadtree_neighbours_ref_7     0x9468ull
 static key_t __quadtree_neighbours_exp_7[] = {
-    0x3, 0x3
+    0x3, 0x3, 0x3, 0x1, 0x3
+};
+
+#define __quadtree_neighbours_ref_8     0xA555
+static key_t __quadtree_neighbours_exp_8[] = {
+    0xB, 0x8
+};
+
+#define __quadtree_neighbours_ref_9     0x6AAA
+static key_t __quadtree_neighbours_exp_9[] = {
+    0x1, 0x3, 0x3, 0x25
 };
 
 
@@ -185,6 +199,8 @@ QUADTREE_NEIGHBOURS_INPUT(4)
 QUADTREE_NEIGHBOURS_INPUT(5)
 QUADTREE_NEIGHBOURS_INPUT(6)
 QUADTREE_NEIGHBOURS_INPUT(7)
+QUADTREE_NEIGHBOURS_INPUT(8)
+QUADTREE_NEIGHBOURS_INPUT(9)
 
 static char *quadtree_neighbours_input[] = {
     (char *)__quadtree_neighbours_input_1,
@@ -194,6 +210,8 @@ static char *quadtree_neighbours_input[] = {
     (char *)__quadtree_neighbours_input_5,
     (char *)__quadtree_neighbours_input_6,
     (char *)__quadtree_neighbours_input_7,
+    (char *)__quadtree_neighbours_input_8,
+    (char *)__quadtree_neighbours_input_9,
     /* etc. */
     NULL
 };

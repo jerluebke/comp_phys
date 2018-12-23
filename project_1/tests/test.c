@@ -21,8 +21,11 @@ test_morton_build(const MunitParameter params[], void *data)
     key_t keys[size];
 
     res = build_morton( vals, items, size );
-    for ( i = 0; i < size; ++i )
+    fprintf(stderr, "res\texpected\n\n");
+    for ( i = 0; i < size; ++i ) {
         keys[i] = res[i].key;
+        fprintf(stderr, "0x%X\t0x%X\n", keys[i], exp[i]);
+    }
 
     assert_memory_equal( sizeof(key_t)*size,
                          (void *)keys, (void *)exp );
@@ -121,9 +124,9 @@ test_quadtree_build(const MunitParameter params[], void *data)
     Node *tmp;
     size_t i = 0;
     while ( !items->last ) {
-        munit_logf(MUNIT_LOG_DEBUG, "searching for key %d", items->key);
+        munit_logf(MUNIT_LOG_DEBUG, "searching for key 0x%X", items->key);
         tmp = search( items->key, head, maxlvl );
-        munit_logf(MUNIT_LOG_DEBUG, "found! actual key: %d", tmp->key);
+        munit_logf(MUNIT_LOG_DEBUG, "found! actual key: 0x%X", tmp->key);
         leaf_keys[i++] = tmp->key;
         ++items;
     }
@@ -157,7 +160,7 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
     Node *head          = build_tree(items);
     Node *refn          = search(refk, head, maxlvl);
     munit_logf(MUNIT_LOG_DEBUG,
-               "\ngiven key: %d\nfound key: %d\n", refk, refn->key);
+               "\ngiven key: 0x%X\nfound key: 0x%X\n", refk, refn->key);
 
     find_neighbours( refk, head, neighbours );
     res = xrealloc( res, sizeof(key_t) * neighbours->_used );
@@ -166,7 +169,7 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
 
     fprintf(stderr, "res\texpected\n\n");
     for ( i = 0; i < neighbours->_used; ++i )
-        fprintf(stderr, "%d\t%d\n", res[i], exp[i]);
+        fprintf(stderr, "0x%X\t0x%X\n", res[i], exp[i]);
 
     cleanup(head);
 
