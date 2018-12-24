@@ -6,8 +6,8 @@
 
 #define DARRAY_EXTERN(TYPE, NAME)                                           \
 extern inline TYPE DArray_##NAME##_get(DArray_##NAME *da, size_t i);        \
-extern inline NAME##Iterator *DArray_##NAME##_start(DArray_##NAME *da);      \
-extern inline NAME##Iterator *DArray_##NAME##_end(DArray_##NAME *da);        \
+extern inline NAME##Iterator *DArray_##NAME##_start(DArray_##NAME *da);     \
+extern inline NAME##Iterator *DArray_##NAME##_end(DArray_##NAME *da);       \
 extern inline void DArray_##NAME##_init(DArray_##NAME *da, size_t initial); \
 extern inline void DArray_##NAME##_append(DArray_##NAME *da, TYPE elem);    \
 extern inline void DArray_##NAME##_extend(DArray_##NAME *da,                \
@@ -153,7 +153,7 @@ inline void DArray_##NAME##_extend(DArray_##NAME *da, DArray_##NAME *in)    \
         da->_size = new_size;                                               \
         da->p = xrealloc(da->p, sizeof(TYPE) * da->_size);                  \
     }                                                                       \
-    while ( da->_used < da->_size )                                         \
+    while ( da->_used < new_size )                                          \
         da->p[da->_used++] = in->p[i++];                                    \
 }
 

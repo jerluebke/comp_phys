@@ -36,8 +36,8 @@ static const lvl_t log_table[256] = {
 static const key_t bnds[8][2] = {
     { 0x5555, 0x0 },    { 0x5555, 0x5555 },
     { 0xAAAA, 0x0 },    { 0xAAAA, 0xAAAA },
-    { 0x5, 0xDEAD },    { 0x6, 0xDEAD },
-    { 0x9, 0xDEAD },    { 0xA, 0xDEAD },
+    { 0x5 },            { 0x6 },
+    { 0x9 },            { 0xA },
 };
 
 static const key_t suffixes[8][3] = {
@@ -96,10 +96,13 @@ static inline key_t bap( key_t k, lvl_t j, lvl_t l )
  *
  * Params
  * ======
- * head, Node *    :   node at which to start building the branch
- * nl, lvl_t       :   number of new levels
- * key, key_t      :   key of final node of new branch
- * val, Value *    :   content of final node
+ * cl, lvl_t       :   current level, at which to start building the branch
+ * nl, lvl_t       :   number of new level
+ * item, Item *    :   key-value-pair of final node in new branch
+ *
+ * Returns
+ * =======
+ * Node pointer to new branch
  *
  */
 static Node *build_branch( lvl_t cl, lvl_t nl, const Item *item )
@@ -128,7 +131,7 @@ static Node *build_branch( lvl_t cl, lvl_t nl, const Item *item )
     /* init remaining attributes */
     for ( i = 0; i < nl; ++i ) {
         nn[i].iarr      = NULL;
-        nn[i].lvl       = cl + i;   /* TODO: works correctly for larger branches? */
+        nn[i].lvl       = cl + i;
         nn[i].key       = item->key >> DIM * (maxlvl - nn[i].lvl);
         nn[i].allocated = 0;
     }
@@ -152,7 +155,7 @@ static Node *build_branch( lvl_t cl, lvl_t nl, const Item *item )
  * ======
  * head, Node*         :   node at which to start searching
  * suffix, key_t *     :   relevant search directions, terminated by 0xDEAD
- * res, DArray_Value * :   Array in which to write result
+ * res, DArray_Item *  :   Array in which to write result
  *
  */
 static void scr( const Node *head, const key_t *suffix, DArray_Item *res )
@@ -161,7 +164,7 @@ static void scr( const Node *head, const key_t *suffix, DArray_Item *res )
 
     if ( head->iarr ) {
         assert( head->c == NULL );
-        DArray_Item_append(res, head->iarr->p[0]);
+        DArray_Item_extend(res, head->iarr);
     } else {
         while ( *suffix != 0xDEAD ) {
             if ( head->c[*suffix] )
@@ -246,8 +249,10 @@ void cleanup( Node *head )
  * Params
  * ======
  * head, Node *    :   starting Node of tree, in which to insert key
- * keys, key_t *   :   array of keys of which the first one is to be inserted,
- *                     its last element should be NULL
+ * items, Item *   :   array of key-value-pairs of which the first one is to be
+ *                     inserted,
+ *                     its last element should be marked as such (i.e.
+ *                     item->last == 1)
  *
  */
 void insert( const Node *head, const Item *items )
@@ -288,9 +293,10 @@ void insert( const Node *head, const Item *items )
  *
  * Params
  * ======
- * head, Node *    :   node at which to start searching
  * key, key_t      :   key to look for
+ * head, Node *    :   node at which to start searching
  * lvl, lvl_t      :   level of searched node, i.e. 2*(length of key)
+ *                     (might be < maxlvl for searching in incomplete trees)
  *
  * Returns
  * =======
@@ -300,12 +306,12 @@ void insert( const Node *head, const Item *items )
 Node *search( key_t key, Node *head, lvl_t lvl )
 {
     key_t sb;
-    /* TODO */
+
     while ( head->c
             && head->c[(sb = bap(key, head->lvl+1, lvl))]
-            && lvl != head->lvl ) {
+            && lvl != head->lvl )
         head = head->c[sb];
-    }
+
     return head;
 }
 
@@ -333,10 +339,10 @@ Node *search( key_t key, Node *head, lvl_t lvl )
  */
 void find_neighbours( key_t key, Node *head, DArray_Item *res )
 {
-    Node *c, *tmp;      /* current, temporary */
-    ItemIterator *it, *end;
     size_t i, tkey;
     uint8_t flag = 0;
+    Node *c, *tmp;      /* current, temporary */
+    ItemIterator *it, *end;
 
     /* find current node given by key, actual existing key is c->key */
     c = search( key, head, maxlvl );
@@ -371,7 +377,7 @@ void find_neighbours( key_t key, Node *head, DArray_Item *res )
         if ( tmp->lvl == c->lvl && tmp->c )
             scr( tmp, suffixes[i], res );
         else if ( tmp->iarr )
-            DArray_Item_append(res, tmp->iarr->p[0]);
+            DArray_Item_extend(res, tmp->iarr);
     }
 
     /* iterate over diagonal directions */
@@ -390,8 +396,7 @@ void find_neighbours( key_t key, Node *head, DArray_Item *res )
                 ;
             /* if it < end, the element was already found previously */
             if ( it == end )
-                /* TODO: use extend */
-                DArray_Item_append(res, tmp->iarr->p[0]);
+                DArray_Item_extend(res, tmp->iarr);
         }
     }
 }

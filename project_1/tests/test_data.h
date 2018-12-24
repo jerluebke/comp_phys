@@ -1,9 +1,6 @@
 #pragma once
 #include "test.h"
 
-/* TODO:
- *     fill test values
- *     consider order in memory */
 
 #define __any_values_1_size 16u
 static Value __any_values_1[] = {
