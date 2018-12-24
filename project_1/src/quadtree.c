@@ -36,8 +36,8 @@ static const lvl_t log_table[256] = {
 static const key_t bnds[8][2] = {
     { 0x5555, 0x0 },    { 0x5555, 0x5555 },
     { 0xAAAA, 0x0 },    { 0xAAAA, 0xAAAA },
-    { 0xFFFF, 0x0 },    { 0xFFFF, 0x5555 },
-    { 0xFFFF, 0xAAAA }, { 0xFFFF, 0xFFFF}
+    { 0x5, 0xDEAD },    { 0x6, 0xDEAD },
+    { 0x9, 0xDEAD },    { 0xA, 0xDEAD },
 };
 
 static const key_t suffixes[8][3] = {
@@ -160,7 +160,6 @@ static void scr( const Node *head, const key_t *suffix, DArray_Item *res )
     const key_t *suffix_orig = suffix;
 
     if ( head->iarr ) {
-    /* if ( !head->c ) */
         assert( head->c == NULL );
         DArray_Item_append(res, head->iarr->p[0]);
     } else {
@@ -335,7 +334,7 @@ Node *search( key_t key, Node *head, lvl_t lvl )
 void find_neighbours( key_t key, Node *head, DArray_Item *res )
 {
     Node *c, *tmp;      /* current, temporary */
-    int i;
+    int i, flag = 0;
 
     /* find current node given by key, actual existing key is c->key */
     c = search( key, head, maxlvl );
@@ -351,24 +350,37 @@ void find_neighbours( key_t key, Node *head, DArray_Item *res )
     /* overwrite res */
     res->_used = 0;
 
-    /* iterate over directions */
-    for ( i = 0; i < 8; ++i ) {
+    /* iterate over directions left, right, top and bottom */
+    for ( i = 0; i < 4; ++i ) {
         /* if node is on boundary: skip */
-        if ( (c->key & bnds[i][0]) == bnds[i][1] )
+        if ( (c->key & bnds[i][0]) == bnds[i][1] ) {
+            flag |= 1 << i;
             continue;
+        }
 
         /* find neighbour candidate node */
         tmp = search( cand_keys[i], head, c->lvl );
-        /* if ( tmp->key == c->key ) */
-        /*     continue; */
 
-        /* if it has further children: search them (findings will be written in
-         *     res);
-         * else: write tmp into res */
+        /* IF it is on the same level as the current node
+         *  AND has further children: search them (write findings in res)
+         *  (if it has further children but isn't on the same level, those
+         *  children are currently irrelevant)
+         * ELSE: write tmp into res */
         if ( tmp->lvl == c->lvl && tmp->c )
             scr( tmp, suffixes[i], res );
         else if ( tmp->iarr )
-        /* else */
+            DArray_Item_append(res, tmp->iarr->p[0]);
+    }
+
+    /* iterate over diagonal directions */
+    /* TODO:check for duplicates */
+    for ( i = 4; i < 8; ++i ) {
+        if ( (flag & bnds[i][0]) )
+            continue;
+        tmp = search( cand_keys[i], head, c->lvl );
+        if ( tmp->lvl == c->lvl && tmp->c )
+            scr( tmp, suffixes[i], res );
+        else if ( tmp->iarr )
             DArray_Item_append(res, tmp->iarr->p[0]);
     }
 }

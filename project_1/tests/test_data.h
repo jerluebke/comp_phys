@@ -186,6 +186,8 @@ static key_t __quadtree_neighbours_exp_9[] = {
     0x1, 0x3, 0x3, 0x25
 };
 
+/* TODO: node without neighbours */
+
 
 #define QUADTREE_NEIGHBOURS_INPUT(NO) \
 static KeyValueInput __quadtree_neighbours_input_##NO[] = { \
