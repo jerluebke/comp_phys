@@ -205,13 +205,13 @@ QUADTREE_NEIGHBOURS_INPUT(8)
 QUADTREE_NEIGHBOURS_INPUT(9)
 
 static char *quadtree_neighbours_input[] = {
-    /* (char *)__quadtree_neighbours_input_1, */
-    /* (char *)__quadtree_neighbours_input_2, */
-    /* (char *)__quadtree_neighbours_input_3, */
-    /* (char *)__quadtree_neighbours_input_4, */
-    /* (char *)__quadtree_neighbours_input_5, */
+    (char *)__quadtree_neighbours_input_1,
+    (char *)__quadtree_neighbours_input_2,
+    (char *)__quadtree_neighbours_input_3,
+    (char *)__quadtree_neighbours_input_4,
+    (char *)__quadtree_neighbours_input_5,
     (char *)__quadtree_neighbours_input_6,
-    /* (char *)__quadtree_neighbours_input_7, */
+    (char *)__quadtree_neighbours_input_7,
     (char *)__quadtree_neighbours_input_8,
     (char *)__quadtree_neighbours_input_9,
     /* etc. */

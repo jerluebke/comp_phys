@@ -355,7 +355,7 @@ void find_neighbours( key_t key, Node *head, DArray_Item *res )
     /* iterate over directions left, right, top and bottom */
     for ( i = 0; i < 4; ++i ) {
         /* if node is on boundary: skip */
-        if ( (c->key & bnds[i][0]) == bnds[i][1] ) {
+        if ( (c->key & bnds[i][0]) == (bnds[i][1] >> 2*(maxlvl - c->lvl)) ) {
             flag |= 1 << i;
             continue;
         }
@@ -390,6 +390,7 @@ void find_neighbours( key_t key, Node *head, DArray_Item *res )
                 ;
             /* if it < end, the element was already found previously */
             if ( it == end )
+                /* TODO: use extend */
                 DArray_Item_append(res, tmp->iarr->p[0]);
         }
     }

@@ -201,12 +201,12 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
         MUNIT_TEST_OPTION_NONE, morton_##DIR##_params }
 
 MunitTest tests[] = {
-    /* { "/test_morton_build", test_morton_build, NULL, NULL, */
-    /*     MUNIT_TEST_OPTION_NONE, morton_build_params}, */
-    /* TEST_MORTON_DIRECTION_CONFIG(left), */
-    /* TEST_MORTON_DIRECTION_CONFIG(right), */
-    /* TEST_MORTON_DIRECTION_CONFIG(top), */
-    /* TEST_MORTON_DIRECTION_CONFIG(bot), */
+    { "/test_morton_build", test_morton_build, NULL, NULL,
+        MUNIT_TEST_OPTION_NONE, morton_build_params},
+    TEST_MORTON_DIRECTION_CONFIG(left),
+    TEST_MORTON_DIRECTION_CONFIG(right),
+    TEST_MORTON_DIRECTION_CONFIG(top),
+    TEST_MORTON_DIRECTION_CONFIG(bot),
 
     { "/test_quadtree_build", test_quadtree_build, quadtree_setup,
         quadtree_teardown, MUNIT_TEST_OPTION_NONE, quadtree_build_params },
