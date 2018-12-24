@@ -334,7 +334,9 @@ Node *search( key_t key, Node *head, lvl_t lvl )
 void find_neighbours( key_t key, Node *head, DArray_Item *res )
 {
     Node *c, *tmp;      /* current, temporary */
-    int i, flag = 0;
+    ItemIterator *it, *end;
+    size_t i, tkey;
+    uint8_t flag = 0;
 
     /* find current node given by key, actual existing key is c->key */
     c = search( key, head, maxlvl );
@@ -362,9 +364,9 @@ void find_neighbours( key_t key, Node *head, DArray_Item *res )
         tmp = search( cand_keys[i], head, c->lvl );
 
         /* IF it is on the same level as the current node
-         *  AND has further children: search them (write findings in res)
+         *  AND has further children: search them (write findings into res)
          *  (if it has further children but isn't on the same level, those
-         *  children are currently irrelevant)
+         *  children are irrelevant, i.e. not neighbours of tmp or tmp itself)
          * ELSE: write tmp into res */
         if ( tmp->lvl == c->lvl && tmp->c )
             scr( tmp, suffixes[i], res );
@@ -373,15 +375,23 @@ void find_neighbours( key_t key, Node *head, DArray_Item *res )
     }
 
     /* iterate over diagonal directions */
-    /* TODO:check for duplicates */
     for ( i = 4; i < 8; ++i ) {
         if ( (flag & bnds[i][0]) )
             continue;
         tmp = search( cand_keys[i], head, c->lvl );
         if ( tmp->lvl == c->lvl && tmp->c )
             scr( tmp, suffixes[i], res );
-        else if ( tmp->iarr )
-            DArray_Item_append(res, tmp->iarr->p[0]);
+        else if ( tmp->iarr ) {
+            /* check if element already exists */
+            tkey    = tmp->iarr->p[0]->key;
+            it      = DArray_Item_start(res);
+            end     = DArray_Item_end(res);
+            while ( *it && tkey != (*it)->key && ++it != end )
+                ;
+            /* if it < end, the element was already found previously */
+            if ( it == end )
+                DArray_Item_append(res, tmp->iarr->p[0]);
+        }
     }
 }
 

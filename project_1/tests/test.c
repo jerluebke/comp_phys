@@ -151,6 +151,7 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
     KeyValueInput *in   = (KeyValueInput *)munit_parameters_get(params,
                                                                 "input");
     key_t refk          = in->key;
+    key_t num           = *in->val++;
     key_t *exp          = in->val;
 
     DataStruct *dp      = (DataStruct *)data;
@@ -164,6 +165,7 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
                "\ngiven key: 0x%X\nfound key: 0x%X\n", refk, refn->key);
 
     find_neighbours( refk, head, neighbours );
+
     res = xrealloc( res, sizeof(key_t) * neighbours->_used );
     for ( i = 0; i < neighbours->_used; ++i ) {
         tmp = search(neighbours->p[i]->key, head, maxlvl);
@@ -175,6 +177,10 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
         fprintf(stderr, "0x%X\t0x%X\n", res[i], exp[i]);
 
     cleanup(head);
+
+    assert_ullong(neighbours->_used, ==, num);
+    if ( num == 0)
+        return MUNIT_OK;
 
     assert_memory_equal( sizeof(key_t)*neighbours->_used,
                          (void *)res, (void *)exp );
@@ -195,12 +201,12 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
         MUNIT_TEST_OPTION_NONE, morton_##DIR##_params }
 
 MunitTest tests[] = {
-    { "/test_morton_build", test_morton_build, NULL, NULL,
-        MUNIT_TEST_OPTION_NONE, morton_build_params},
-    TEST_MORTON_DIRECTION_CONFIG(left),
-    TEST_MORTON_DIRECTION_CONFIG(right),
-    TEST_MORTON_DIRECTION_CONFIG(top),
-    TEST_MORTON_DIRECTION_CONFIG(bot),
+    /* { "/test_morton_build", test_morton_build, NULL, NULL, */
+    /*     MUNIT_TEST_OPTION_NONE, morton_build_params}, */
+    /* TEST_MORTON_DIRECTION_CONFIG(left), */
+    /* TEST_MORTON_DIRECTION_CONFIG(right), */
+    /* TEST_MORTON_DIRECTION_CONFIG(top), */
+    /* TEST_MORTON_DIRECTION_CONFIG(bot), */
 
     { "/test_quadtree_build", test_quadtree_build, quadtree_setup,
         quadtree_teardown, MUNIT_TEST_OPTION_NONE, quadtree_build_params },

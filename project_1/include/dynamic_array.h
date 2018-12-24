@@ -5,17 +5,22 @@
 
 
 #define DARRAY_EXTERN(TYPE, NAME)                                           \
-extern inline TYPE DArray_##NAME##_get (DArray_##NAME *da, size_t i);       \
+extern inline TYPE DArray_##NAME##_get(DArray_##NAME *da, size_t i);        \
+extern inline NAME##Iterator *DArray_##NAME##_start(DArray_##NAME *da);      \
+extern inline NAME##Iterator *DArray_##NAME##_end(DArray_##NAME *da);        \
 extern inline void DArray_##NAME##_init(DArray_##NAME *da, size_t initial); \
 extern inline void DArray_##NAME##_append(DArray_##NAME *da, TYPE elem);    \
 extern inline void DArray_##NAME##_extend(DArray_##NAME *da,                \
                                           DArray_##NAME *in);               \
-extern inline void DArray_##NAME##_free(DArray_##NAME *da);                 \
+extern inline void DArray_##NAME##_free(DArray_##NAME *da);
 
 
 #define DARRAY_TYPEDEF(TYPE, NAME)  \
+typedef TYPE NAME##Iterator;        \
 DARRAY_STRUCT(TYPE, NAME)           \
 DARRAY_GET(TYPE, NAME)              \
+DARRAY_START(TYPE, NAME)            \
+DARRAY_END(TYPE, NAME)              \
 DARRAY_INIT(TYPE, NAME)             \
 DARRAY_APPEND(TYPE, NAME)           \
 DARRAY_EXTEND(TYPE, NAME)           \
@@ -40,6 +45,40 @@ typedef struct {                                                            \
 } DArray_##NAME;                                                            \
 
 
+/* DArray_start, DArray_end
+ * get pointer to first or end (i.e. one behind last) element of data for
+ * c++-style iterating:
+ * 
+ *     Iterator *it, *end;
+ *     it = DArray_start(da);
+ *     end = DArray_end(da);
+ *     while ( it != end )
+ *         // do something
+ * 
+ * Params
+ * ======
+ * da, DArray *    :   DArray over which to iterate
+ * 
+ * Returns
+ * =======
+ * Iterator * (aka TYPE *, e.g. const Item **) pointing to the Arrays first
+ *     or one beyond last element
+ * 
+ *  */
+#define DARRAY_START(TYPE, NAME)                                            \
+inline NAME##Iterator *DArray_##NAME##_start(DArray_##NAME *da)             \
+{                                                                           \
+    return da->p;                                                           \
+}
+
+/* see DArray_start */
+#define DARRAY_END(TYPE, NAME)                                              \
+inline NAME##Iterator *DArray_##NAME##_end(DArray_##NAME *da)               \
+{                                                                           \
+    return da->p + da->_used;                                               \
+}
+
+
 /* DArray_get
  * subscript wrapper to access some DArray's data
  * NO BOUNDCHECKING!
@@ -51,7 +90,7 @@ typedef struct {                                                            \
  *
  */
 #define DARRAY_GET(TYPE, NAME)                                              \
-inline TYPE DArray_##NAME##_get (DArray_##NAME *da, size_t i)                      \
+inline TYPE DArray_##NAME##_get(DArray_##NAME *da, size_t i)                \
 {                                                                           \
     return da->p[i];                                                        \
 }                                                                           \
@@ -67,7 +106,7 @@ inline TYPE DArray_##NAME##_get (DArray_##NAME *da, size_t i)                   
  *
  */
 #define DARRAY_INIT(TYPE, NAME)                                             \
-inline void DArray_##NAME##_init(DArray_##NAME *da, size_t initial)                \
+inline void DArray_##NAME##_init(DArray_##NAME *da, size_t initial)         \
 {                                                                           \
     da->p = xmalloc(sizeof(TYPE) * initial);                                \
     da->_used = 0;                                                          \
@@ -86,7 +125,7 @@ inline void DArray_##NAME##_init(DArray_##NAME *da, size_t initial)             
  *
  */
 #define DARRAY_APPEND(TYPE, NAME)                                           \
-inline void DArray_##NAME##_append(DArray_##NAME *da, TYPE elem)                   \
+inline void DArray_##NAME##_append(DArray_##NAME *da, TYPE elem)            \
 {                                                                           \
     if ( da->_used == da->_size )  {                                        \
         da->_size = (da->_size + 1) * FACTOR;   /* in case da->_size == 0 */\
@@ -107,7 +146,7 @@ inline void DArray_##NAME##_append(DArray_##NAME *da, TYPE elem)                
  *
  */
 #define DARRAY_EXTEND(TYPE, NAME)                                           \
-inline void DArray_##NAME##_extend(DArray_##NAME *da, DArray_##NAME *in)           \
+inline void DArray_##NAME##_extend(DArray_##NAME *da, DArray_##NAME *in)    \
 {                                                                           \
     size_t new_size = da->_used + in->_used, i = 0;                         \
     if ( new_size >= da->_size ) {                                          \
@@ -115,7 +154,7 @@ inline void DArray_##NAME##_extend(DArray_##NAME *da, DArray_##NAME *in)        
         da->p = xrealloc(da->p, sizeof(TYPE) * da->_size);                  \
     }                                                                       \
     while ( da->_used < da->_size )                                         \
-        da->p[da->_used++] = in->p[i++];                                     \
+        da->p[da->_used++] = in->p[i++];                                    \
 }
 
 
@@ -129,7 +168,7 @@ inline void DArray_##NAME##_extend(DArray_##NAME *da, DArray_##NAME *in)        
  *
  */
 #define DARRAY_FREE(NAME)                                                   \
-inline void DArray_##NAME##_free(DArray_##NAME *da)                                \
+inline void DArray_##NAME##_free(DArray_##NAME *da)                         \
 {                                                                           \
     free(da->p);                                                            \
     da->p = NULL;                                                           \

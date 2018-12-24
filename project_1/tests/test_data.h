@@ -139,51 +139,51 @@ static MunitParameterEnum quadtree_build_params[] = {
 /*********************************************************************/
 /*********************************************************************/
 
-/* TODO: duplicated keys! */
+/* first element is number of expected key */
 
 #define __quadtree_neighbours_ref_1     0x0ull
 static key_t __quadtree_neighbours_exp_1[] = {
-    0x1, 0x8, 0x3
+    3, 0x1, 0x8, 0x3
 };
 
 #define __quadtree_neighbours_ref_2     0x23F8ull
 static key_t __quadtree_neighbours_exp_2[] = {
-    0x9A, 0x0, 0xA, 0x0
+    3, 0x9A, 0x0, 0xA
 };
 
 #define __quadtree_neighbours_ref_3     0x2664ull
 static key_t __quadtree_neighbours_exp_3[] = {
-    0x9A
+    1, 0x9A
 };
 
 #define __quadtree_neighbours_ref_4     0x3FFFull
 static key_t __quadtree_neighbours_exp_4[] = {
-    0x1, 0x1, 0x25, 0x0, 0x1, 0x8, 0x3
+    6, 0x1, 0x1, 0x25, 0x0, 0x8, 0x3
 };
 
 #define __quadtree_neighbours_ref_5     0x9199ull
 static key_t __quadtree_neighbours_exp_5[] = {
-    0x9198, 0x919B
+    2, 0x9198, 0x919B
 };
 
 #define __quadtree_neighbours_ref_6     0xFFFFull
 static key_t __quadtree_neighbours_exp_6[] = {
-    0x25, 0xB, 0x1, 0x3
+    4, 0x25, 0xB, 0x1, 0x3
 };
 
 #define __quadtree_neighbours_ref_7     0x9468ull
 static key_t __quadtree_neighbours_exp_7[] = {
-    0x3, 0x3, 0x3, 0x1, 0x3
+    3, 0x3, 0x3, 0x1
 };
 
 #define __quadtree_neighbours_ref_8     0xA555ull
 static key_t __quadtree_neighbours_exp_8[] = {
-    0xB, 0x8
+    2, 0xB, 0x8
 };
 
 #define __quadtree_neighbours_ref_9     0x6AAAull
 static key_t __quadtree_neighbours_exp_9[] = {
-    0x1, 0x3, 0x3, 0x25
+    4, 0x1, 0x3, 0x3, 0x25
 };
 
 /* TODO: node without neighbours */
@@ -205,13 +205,13 @@ QUADTREE_NEIGHBOURS_INPUT(8)
 QUADTREE_NEIGHBOURS_INPUT(9)
 
 static char *quadtree_neighbours_input[] = {
-    (char *)__quadtree_neighbours_input_1,
-    (char *)__quadtree_neighbours_input_2,
-    (char *)__quadtree_neighbours_input_3,
-    (char *)__quadtree_neighbours_input_4,
-    (char *)__quadtree_neighbours_input_5,
+    /* (char *)__quadtree_neighbours_input_1, */
+    /* (char *)__quadtree_neighbours_input_2, */
+    /* (char *)__quadtree_neighbours_input_3, */
+    /* (char *)__quadtree_neighbours_input_4, */
+    /* (char *)__quadtree_neighbours_input_5, */
     (char *)__quadtree_neighbours_input_6,
-    (char *)__quadtree_neighbours_input_7,
+    /* (char *)__quadtree_neighbours_input_7, */
     (char *)__quadtree_neighbours_input_8,
     (char *)__quadtree_neighbours_input_9,
     /* etc. */
