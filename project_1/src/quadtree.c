@@ -108,13 +108,11 @@ static inline key_t bap( key_t k, lvl_t j, lvl_t l )
 static Node *build_branch( lvl_t cl, lvl_t nl, const Item *item )
 {
     lvl_t i, j;
-    Node *nn;           /* new nodes */
-    DArray_Item *ia;    /* item array for new node */
+    Node *nn;   /* new nodes */
 
     nn = xmalloc(sizeof(Node) * nl);
 
     /* set children references between new Nodes */
-    /* head = nn; */
     for ( i = 0; i < nl-1; ++i ) {
         /* allocate and init children */
         nn[i].c = xmalloc(sizeof(Node *) * NOC);
@@ -130,17 +128,14 @@ static Node *build_branch( lvl_t cl, lvl_t nl, const Item *item )
 
     /* init remaining attributes */
     for ( i = 0; i < nl; ++i ) {
-        nn[i].iarr      = NULL;
+        nn[i].i         = NULL;
         nn[i].lvl       = cl + i;
         nn[i].key       = item->key >> DIM * (maxlvl - nn[i].lvl);
         nn[i].allocated = 0;
     }
 
     /* set value to last of the new Nodes */
-    ia = xmalloc(sizeof(DArray_Item));
-    DArray_Item_init(ia, 1);
-    DArray_Item_append(ia, item);
-    nn[nl-1].iarr = ia;
+    nn[nl-1].i = item;
 
     /* mark nn[0] as beginning of allocated Nodes for cleanup */
     nn[0].allocated = 1;
@@ -162,9 +157,9 @@ static void scr( const Node *head, const key_t *suffix, DArray_Item *res )
 {
     const key_t *suffix_orig = suffix;
 
-    if ( head->iarr ) {
+    if ( head->i ) {
         assert( head->c == NULL );
-        DArray_Item_extend(res, head->iarr);
+        DArray_Item_append(res, head->i);
     } else {
         while ( *suffix != 0xDEAD ) {
             if ( head->c[*suffix] )
@@ -197,7 +192,7 @@ Node *build_tree( const Item *items )
     head            = xmalloc(sizeof(Node));
     head->key       = 0;
     head->lvl       = 0;
-    head->iarr      = NULL;
+    head->i         = NULL;
     head->allocated = 1;
     head->c         = xmalloc(sizeof(Node *) * NOC);
     for ( i = 0; i < NOC; ++i ) head->c[i] = NULL;
@@ -228,13 +223,9 @@ void cleanup( Node *head )
                 cleanup(head->c[i]);
         free(head->c);
     }
-    if ( head->iarr ) {
-        DArray_Item_free(head->iarr);
-        free(head->iarr);
-    }
-    if ( head->allocated ) {
+    if ( head->allocated )
         free(head);
-    }
+
     head = NULL;
 }
 
@@ -258,14 +249,11 @@ void insert( const Node *head, const Item *items )
     key_t sb, lcl;      /* significant bits x_i, y_i; lowest common level */
     sb = bap(items->key, head->lvl+1, maxlvl);
 
-    /* reached lowest level, Node already exists and is occupied:
-     *     repeating keys, save in same Node */
-    if ( head->lvl == maxlvl ) {
-        DArray_Item_append(head->iarr, items);
-    }
+    /* reached lowest level, Node already exists and is occupied */
+    assert( head->lvl != maxlvl );  /* don't allow multiple items per node yet */
 
     /* Node exists, insert in its child */
-    else if ( head->c[sb] != NULL ) {
+    if ( head->c[sb] != NULL ) {
         insert(head->c[sb], items);
     }
 
@@ -374,8 +362,8 @@ void find_neighbours( key_t key, Node *head, DArray_Item *res )
          * ELSE: write tmp into res */
         if ( tmp->lvl == c->lvl && tmp->c )
             scr( tmp, suffixes[i], res );
-        else if ( tmp->iarr )
-            DArray_Item_extend(res, tmp->iarr);
+        else if ( tmp->i )
+            DArray_Item_append(res, tmp->i);
     }
 
     /* iterate over diagonal directions */
@@ -385,16 +373,16 @@ void find_neighbours( key_t key, Node *head, DArray_Item *res )
         tmp = search( cand_keys[i], head, c->lvl );
         if ( tmp->lvl == c->lvl && tmp->c )
             scr( tmp, suffixes[i], res );
-        else if ( tmp->iarr ) {
+        else if ( tmp->i ) {
             /* check if element already exists */
-            tkey    = tmp->iarr->p[0]->key;
+            tkey    = tmp->i->key;
             it      = DArray_Item_start(res);
             end     = DArray_Item_end(res);
             while ( *it && tkey != (*it)->key && ++it != end )
                 ;
             /* if it < end, the element was already found previously */
             if ( it == end )
-                DArray_Item_extend(res, tmp->iarr);
+                DArray_Item_append(res, tmp->i);
         }
     }
 }

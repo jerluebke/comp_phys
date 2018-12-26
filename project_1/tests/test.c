@@ -231,7 +231,6 @@ static const MunitSuite test_suite = {
 
 int main(int argc, char *argv[])
 {
-    printf("Call with `--iterations N` for multiple test runs\n\n");
     return munit_suite_main(&test_suite, NULL, argc, argv);
 }
 

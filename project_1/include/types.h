@@ -30,9 +30,9 @@ struct Item {
 
 struct Node {
     key_t key;
-    DArray_Item *iarr;
+    const Item *i;  /* content */
     lvl_t lvl;
-    Node **c;   /* children */
+    Node **c;       /* children */
     uint8_t allocated;
 };
 

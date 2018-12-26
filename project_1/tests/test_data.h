@@ -11,11 +11,9 @@ static Value __any_values_1[] = {
 };
 
 
-#define __any_values_2_size 7u
+#define __any_values_2_size 3u
 static Value __any_values_2[] = {
-    { 0x40, 0xC0 },
-    { 0xA0, 0x20 }, { 0xA0, 0x20 }, { 0xA0, 0x20 },
-    { 0xE0, 0x60 }, { 0xE0, 0x60 }, { 0xE0, 0x60 }
+    { 0x40, 0xC0 }, { 0xA0, 0x20 }, { 0xE0, 0x60 }
 };
 
 
@@ -39,9 +37,7 @@ static key_t __morton_build_expected_1[] = {
 };
 
 static key_t __morton_build_expected_2[] = {
-    0x4C00, 0x4C00, 0x4C00,
-    0x7C00, 0x7C00, 0x7C00,
-    0xB000
+    0x4C00, 0x7C00, 0xB000
 };
 
 
@@ -136,9 +132,7 @@ static key_t __quadtree_build_expected_1[] = {
 
 
 static key_t __quadtree_build_expected_2[] = {
-    0x4C00, 0x4C00, 0x4C00,
-    0x7C00, 0x7C00, 0x7C00,
-    0x2
+    0x4, 0x7, 0x2
 };
 
 
@@ -224,7 +218,7 @@ static key_t __quadtree_neighbours_exp_9[] = {
 
 #define __quadtree_neighbours_ref_10    0x4C00ull
 static key_t __quadtree_neighbours_exp_10[] = {
-    3, 0x7, 0x7, 0x7
+    1, 0x7
 };
 
 #define __quadtree_neighbours_ref_11    0xB000ull
