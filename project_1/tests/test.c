@@ -73,7 +73,7 @@ quadtree_setup(const MunitParameter params[], void *data)
     Value *vals     = in->vals;
     size_t size     = in->size;
 
-    Item *items     = xmalloc( sizeof(Item) * (size+1) );
+    Item *items     = xmalloc( sizeof(Item) * size );
     items           = build_morton( vals, items, size );
 
     key_t *res      = xmalloc( sizeof(key_t) );
@@ -120,14 +120,16 @@ test_quadtree_build(const MunitParameter params[], void *data)
     Node *head      = build_tree(items);
     munit_log(MUNIT_LOG_DEBUG, "done building tree.");
 
-    key_t leaf_keys[size];
+    key_t leaf_keys[size-1];
     Node *tmp;
     size_t i = 0;
-    while ( !items->last ) {
+    while ( 1 ) {
         munit_logf(MUNIT_LOG_DEBUG, "searching for key 0x%X", items->key);
         tmp = search( items->key, head, maxlvl );
         munit_logf(MUNIT_LOG_DEBUG, "found! actual key: 0x%X", tmp->key);
         leaf_keys[i++] = tmp->key;
+        if ( items->last )
+            break;
         ++items;
     }
 
@@ -166,7 +168,7 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
 
     find_neighbours( refk, head, neighbours );
 
-    res = xrealloc( res, sizeof(key_t) * neighbours->_used );
+    res = xrealloc( res, sizeof(key_t) * (neighbours->_used+1) );
     for ( i = 0; i < neighbours->_used; ++i ) {
         tmp = search(neighbours->p[i]->key, head, maxlvl);
         res[i] = tmp->key;
@@ -209,9 +211,14 @@ MunitTest tests[] = {
     TEST_MORTON_DIRECTION_CONFIG(bot),
 
     { "/test_quadtree_build", test_quadtree_build, quadtree_setup,
-        quadtree_teardown, MUNIT_TEST_OPTION_NONE, quadtree_build_params },
+        quadtree_teardown, MUNIT_TEST_OPTION_NONE, quadtree_build_params_1 },
     { "/test_quadtree_neighbours", test_quadtree_neighbours, quadtree_setup,
-        quadtree_teardown, MUNIT_TEST_OPTION_NONE, quadtree_neighbours_params },
+        quadtree_teardown, MUNIT_TEST_OPTION_NONE, quadtree_neighbours_params_1 },
+
+    { "/test_quadtree_build", test_quadtree_build, quadtree_setup,
+        quadtree_teardown, MUNIT_TEST_OPTION_NONE, quadtree_build_params_2 },
+    { "/test_quadtree_neighbours", test_quadtree_neighbours, quadtree_setup,
+        quadtree_teardown, MUNIT_TEST_OPTION_NONE, quadtree_neighbours_params_2 },
 
     { NULL, NULL, NULL, NULL, MUNIT_TEST_OPTION_NONE, NULL }
 };

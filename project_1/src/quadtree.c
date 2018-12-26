@@ -6,7 +6,7 @@
 /* lookup table for msb */
 static const lvl_t log_table[256] = {
 #define LT(n) n, n, n, n, n, n, n, n, n, n, n, n, n, n, n, n
-    -1, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
+    0, 0, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3,
     LT(4), LT(5), LT(5), LT(6), LT(6), LT(6), LT(6),
     LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7), LT(7)
 };
@@ -202,10 +202,9 @@ Node *build_tree( const Item *items )
     head->c         = xmalloc(sizeof(Node *) * NOC);
     for ( i = 0; i < NOC; ++i ) head->c[i] = NULL;
 
-    while ( !items->last ) {
-        insert( head, items );
-        ++items;
-    }
+    insert( head, items );
+    while ( !items->last )
+        insert( head, ++items );
 
     return head;
 }
@@ -243,16 +242,14 @@ void cleanup( Node *head )
 /* insert
  *
  * NOTICE: for fast tree building, the key following the currently considered
- * one is examined; the key past the end of the array should therefor be NULL
- * to indicate the end and prevent memory corruption
+ * one is examined; the last key should therefor be marked as such
+ * (i.e. item->last == 1)
  *
  * Params
  * ======
  * head, Node *    :   starting Node of tree, in which to insert key
  * items, Item *   :   array of key-value-pairs of which the first one is to be
- *                     inserted,
- *                     its last element should be marked as such (i.e.
- *                     item->last == 1)
+ *                     inserted
  *
  */
 void insert( const Node *head, const Item *items )
@@ -275,10 +272,11 @@ void insert( const Node *head, const Item *items )
     /* Node does not exist, create whole branch until lowest requiered level */
     else {  /* head->c[sb] == NULL */
         /* LOOK-AHEAD */
-        if ( (items+1)->last ) {   /* current item is last */
+        if ( items->last ) {   /* current item is last */
             lcl = 0;
         } else {
-            /* `keys[0] XOR keys[1]` sets to one the bits which differ between current and next key */
+            /* `keys[0] XOR keys[1]` sets to one the bits which differ between
+             *      current and next key */
             /* lowest common level of current and next key */
             lcl = maxlvl - msb(items[0].key ^ items[1].key) / 2;
         }

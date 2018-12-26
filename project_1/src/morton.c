@@ -86,11 +86,9 @@ static inline int cmp_keys( const void *a, const void *b )
  *
  * Params
  * ======
- * vals, Value *   :   values to hash with `size` elements
- * keys, Item *    :   array to write result with `size+1` elements
- * size, size_t    :   size of `vals`, `keys` needs to have size+1 (for
- *                      terminating character, for look-ahead during tree
- *                      building)
+ * vals, Value *   :   values to hash
+ * keys, Item *    :   array to write result
+ * size, size_t    :   size of `vals` and `keys`
  *
  * Returns
  * =======
@@ -110,8 +108,8 @@ Item *build_morton( const Value *vals, Item *items, size_t size )
 
     qsort(items, size, sizeof(Item), cmp_keys);
 
-    /* mark last element (terminating character) */
-    items[size].last = 1;
+    /* mark last element as terminating character */
+    items[size-1].last = 1;
 
     return items;
 }

@@ -11,6 +11,14 @@ static Value __any_values_1[] = {
 };
 
 
+#define __any_values_2_size 7u
+static Value __any_values_2[] = {
+    { 0x40, 0xC0 },
+    { 0xA0, 0x20 }, { 0xA0, 0x20 }, { 0xA0, 0x20 },
+    { 0xE0, 0x60 }, { 0xE0, 0x60 }, { 0xE0, 0x60 }
+};
+
+
 #define BUILD_INPUT(WHICH, NO) \
 static TreeInput __##WHICH##_build_input_##NO[] = { \
     { __any_values_##NO, __any_values_##NO##_size, __##WHICH##_build_expected_##NO } \
@@ -30,11 +38,19 @@ static key_t __morton_build_expected_1[] = {
     0x9468, 0xA555, 0xBAAA, 0xFFFF
 };
 
+static key_t __morton_build_expected_2[] = {
+    0x4C00, 0x4C00, 0x4C00,
+    0x7C00, 0x7C00, 0x7C00,
+    0xB000
+};
+
 
 BUILD_INPUT(morton, 1)
+BUILD_INPUT(morton, 2)
 
 static char *morton_build_input[] = {
     (char *)__morton_build_input_1,
+    (char *)__morton_build_input_2,
     /* etc. */
     NULL
 };
@@ -119,16 +135,38 @@ static key_t __quadtree_build_expected_1[] = {
 };
 
 
-BUILD_INPUT(quadtree, 1)
+static key_t __quadtree_build_expected_2[] = {
+    0x4C00, 0x4C00, 0x4C00,
+    0x7C00, 0x7C00, 0x7C00,
+    0x2
+};
 
-static char *quadtree_build_input[] = {
+
+BUILD_INPUT(quadtree, 1)
+BUILD_INPUT(quadtree, 2)
+
+static char *quadtree_build_input_1[] = {
     (char *)__quadtree_build_input_1,
     /* etc. */
     NULL
 };
 
-static MunitParameterEnum quadtree_build_params[] = {
-    { "setup", quadtree_build_input },
+static MunitParameterEnum quadtree_build_params_1[] = {
+    { "setup", quadtree_build_input_1 },
+    {  NULL, NULL }
+};
+
+
+/* seperate set of params to avoid conflict with neighbour tests (since all
+ * permutations of one given set of params are tested) */
+static char *quadtree_build_input_2[] = {
+    (char *)__quadtree_build_input_2,
+    /* etc. */
+    NULL
+};
+
+static MunitParameterEnum quadtree_build_params_2[] = {
+    { "setup", quadtree_build_input_2 },
     {  NULL, NULL }
 };
 
@@ -183,7 +221,16 @@ static key_t __quadtree_neighbours_exp_9[] = {
     4, 0x1, 0x3, 0x3, 0x25
 };
 
-/* TODO: node without neighbours */
+
+#define __quadtree_neighbours_ref_10    0x4C00ull
+static key_t __quadtree_neighbours_exp_10[] = {
+    3, 0x7, 0x7, 0x7
+};
+
+#define __quadtree_neighbours_ref_11    0xB000ull
+static key_t __quadtree_neighbours_exp_11[] = {
+    0
+};
 
 
 #define QUADTREE_NEIGHBOURS_INPUT(NO) \
@@ -201,7 +248,12 @@ QUADTREE_NEIGHBOURS_INPUT(7)
 QUADTREE_NEIGHBOURS_INPUT(8)
 QUADTREE_NEIGHBOURS_INPUT(9)
 
-static char *quadtree_neighbours_input[] = {
+QUADTREE_NEIGHBOURS_INPUT(10)
+QUADTREE_NEIGHBOURS_INPUT(11)
+
+
+/* find_neighbours: general */
+static char *quadtree_neighbours_input_1[] = {
     (char *)__quadtree_neighbours_input_1,
     (char *)__quadtree_neighbours_input_2,
     (char *)__quadtree_neighbours_input_3,
@@ -215,11 +267,24 @@ static char *quadtree_neighbours_input[] = {
     NULL
 };
 
-static MunitParameterEnum quadtree_neighbours_params[] = {
-    { "setup", quadtree_build_input },
-    { "input", quadtree_neighbours_input },
+static MunitParameterEnum quadtree_neighbours_params_1[] = {
+    { "setup", quadtree_build_input_1 },
+    { "input", quadtree_neighbours_input_1 },
     { NULL, NULL }
 };
 
+
+/* find_neighbours: node without neighbours and multiple items */
+static char *quadtree_neighbours_input_2[] = {
+    (char *)__quadtree_neighbours_input_10,
+    (char *)__quadtree_neighbours_input_11,
+    NULL
+};
+
+static MunitParameterEnum quadtree_neighbours_params_2[] = {
+    { "setup", quadtree_build_input_2 },
+    { "input", quadtree_neighbours_input_2 },
+    { NULL, NULL }
+};
 
 /* vim: set ff=unix tw=79 sw=4 ts=4 et ic ai : */
