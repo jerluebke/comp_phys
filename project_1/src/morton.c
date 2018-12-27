@@ -10,49 +10,8 @@
 #include "../include/morton.h"
 
 /* lookup tables for `split2` */
-static const uint16_t B[] = {0x5555, 0x3333, 0x0F0F};
-static const uint16_t S[] = {1, 2, 4};
-
-
-/* split2
- * split up binary representation of given x such that between each two bits
- * a 0 is inserted (right bound), e.g.: 0b000111 -> 0b010101
- *
- * Params
- * ======
- * x, uint16_t     :   number to split up, must be less than 256
- *
- * Returns
- * =======
- * uint16_t
- *
- */
-static inline uint16_t split2( uint16_t x )
-{
-    x = (x | (x << S[2])) & B[2];
-    x = (x | (x << S[1])) & B[1];
-    x = (x | (x << S[0])) & B[0];
-    return x;
-}
-
-
-/* interleave8
- * interleave two 8-bit integers by splitting up their binary representation
- * and shuffeling their bits, i.e. y7 x7 ... y1 x1 y0 x0
- *
- * Params
- * ======
- * x, y (uint8_t)  :   numbers to interleave
- *
- * Returns
- * =======
- * uint16_t
- *
- */
-static inline uint16_t interleave8( uint8_t x, uint8_t y )
-{
-    return split2(x) | (split2(y) << 1);
-}
+const uint16_t B[] = {0x5555, 0x3333, 0x0F0F};
+const uint16_t S[] = {1, 2, 4};
 
 
 /* cmp_keys
@@ -101,7 +60,7 @@ Item *build_morton( const Value *vals, Item *items, size_t size )
 
     /* calculate keys from coordinates and set reference to corresp. value */
     for ( i = 0; i < size; ++i ) {
-        items[i].key = interleave8(vals[i].x, vals[i].y);
+        items[i].key = interleave(vals[i].x, vals[i].y);
         items[i].val = &vals[i];
         items[i].last = 0;
     }
@@ -116,9 +75,16 @@ Item *build_morton( const Value *vals, Item *items, size_t size )
 
 
 /*
+ * en- and decoding
+ */
+extern inline key_t split2( key_t );
+extern inline key_t interleave( lvl_t, lvl_t );
+extern inline lvl_t decode( key_t );
+extern inline Coords2d_8bit coords2( key_t );
+
+/*
  * convenience functions to retreive adjacent keys
  */
-
 extern inline key_t left( key_t );
 extern inline key_t right( key_t );
 extern inline key_t top( key_t );

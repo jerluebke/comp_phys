@@ -22,14 +22,15 @@ OBJSRC 		:= $(patsubst $(SRCDIR)%.c, $(OBJDIR)%.o, $(SRCFILES))
 OBJTEST 	:= $(patsubst $(TESTDIR)%.c, $(OBJDIR)%.o, $(TESTFILES))
 OBJVISUAL	:= $(OBJDIR)print_tree.o
 OBJMEM   	:= $(OBJDIR)mem_test.o
-ALLOBJ		:= $(OBJSRC) $(OBJTEST)
+ALLOBJ		:= $(OBJSRC) $(OBJTEST) $(OBJVISUAL) $(OBJMEM)
 
 TEST		:= $(BINDIR)test.out
 VISUAL 		:= $(BINDIR)visual.out
 MEMTEST		:= $(BINDIR)mem_test.out
+ALLBIN 		:= $(TEST) $(VISUAL) $(MEMTEST)
 
 
-test: $(ALLOBJ)
+test: $(OBJSRC) $(OBJTEST)
 	$(CC) $^ -o $(TEST)
 
 visual: $(OBJSRC) $(OBJVISUAL)
@@ -53,4 +54,4 @@ $(OBJDIR)%.o: $(TESTDIR)%.c
 
 
 clean:
-	rm -f $(ALLOBJ) $(TEST)
+	rm -f $(ALLOBJ) $(ALLBIN)

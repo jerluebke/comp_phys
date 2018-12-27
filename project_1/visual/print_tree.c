@@ -2,31 +2,11 @@
 #include <stdio.h>
 #include "../tests/test_data.h"
 
-extern inline lvl_t decode(key_t);
-extern inline Value coords(key_t);
-
-static const key_t B[] = {0x5555, 0x3333, 0x0F0F};
-static const key_t S[] = {1, 2, 4};
-
-inline lvl_t decode(key_t k)
-{
-    k &= B[0];
-    k = (k ^ (k >> S[0])) & B[1];
-    k = (k ^ (k >> S[1])) & B[2];
-    k = (k ^ (k >> S[2]));
-    return k;
-}
-
-inline Value coords(key_t k)
-{
-    Value val = { .x = decode(k), .y = decode(k >> 1) };
-    return val;
-}
 
 void print_node(Node *head, FILE *fp)
 {
     int i = 0;
-    Value c = coords(head->key);
+    Coords2d_8bit c = coords2(head->key);
 
     char ws[maxlvl];
     while ( i < head->lvl ) ws[i++] = ' ';
