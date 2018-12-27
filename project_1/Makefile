@@ -1,8 +1,10 @@
 CC = gcc
-CFLAGS = -Wall -Wextra -pedantic -std=c11 -I./include
-LFLAGS = -lm
-TFLAGS = -I./tests
-DFLAGS = -g -pg
+CFLAGS 	= -Wall -Wextra -pedantic -std=c11 -I./include
+COFLAGS = -O3
+CGFLAGS = $(shell pkg-config libgvc --cflags)
+LDFLAGS = $(shell pkg-config libgvc --libs)	# -lm
+TFLAGS  = -I./tests
+DFLAGS  = -g -pg
 
 SRCDIR 		:= src/
 VISUALDIR 	:= visual/
@@ -14,13 +16,13 @@ SRCFILES 	:= $(shell find $(SRCDIR) -name "*.c")
 TESTFILES 	:= $(shell find $(TESTDIR) \( -name "*.c"					$\
 											-not -name "*printing.c"	$\
 											-not -name "mem_test.c" \))
-VFILES		:= $(VISUALDIR)print_tree.c
+VFILES 		:= $(shell find $(VISUALDIR) -name "*.c")
 MEMFILES 	:= $(TESTDIR)mem_test.c
 ALLSRC		:= $(SRCFILES) $(TESTFILES)
 
 OBJSRC 		:= $(patsubst $(SRCDIR)%.c, $(OBJDIR)%.o, $(SRCFILES))
 OBJTEST 	:= $(patsubst $(TESTDIR)%.c, $(OBJDIR)%.o, $(TESTFILES))
-OBJVISUAL	:= $(OBJDIR)print_tree.o
+OBJVISUAL 	:= $(patsubst $(VISUALDIR)%.c, $(OBJDIR)%.o, $(VFILES))
 OBJMEM   	:= $(OBJDIR)mem_test.o
 ALLOBJ		:= $(OBJSRC) $(OBJTEST) $(OBJVISUAL) $(OBJMEM)
 
@@ -34,14 +36,14 @@ test: $(OBJSRC) $(OBJTEST)
 	$(CC) $^ -o $(TEST)
 
 visual: $(OBJSRC) $(OBJVISUAL)
-	$(CC) $^ $(LFLAGS) -o $(VISUAL)
+	$(CC) $^ $(LDFLAGS) -o $(VISUAL)
 
 memtest: $(OBJSRC) $(OBJMEM)
 	$(CC) $^ -o $(MEMTEST)
 
 
-$(OBJVISUAL): $(VFILES)
-	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@
+$(OBJDIR)%.o: $(VISUALDIR)%.c
+	$(CC) $(CFLAGS) $(CGFLAGS) $(DFLAGS) -c $< -o $@
 
 $(OBJMEM): $(MEMFILES)
 	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@
@@ -54,4 +56,4 @@ $(OBJDIR)%.o: $(TESTDIR)%.c
 
 
 clean:
-	rm -f $(ALLOBJ) $(ALLBIN)
+	rm -f $(ALLOBJ) $(ALLBIN) # data/*

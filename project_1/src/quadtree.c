@@ -1,6 +1,6 @@
 #include <assert.h>
-#include "../include/quadtree.h"
-#include "../include/morton.h"
+#include "quadtree.h"
+#include "morton.h"
 
 
 /* lookup table for msb */

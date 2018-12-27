@@ -7,7 +7,7 @@
  *     https://en.wikipedia.org/wiki/Z-order_curve#Coordinate_values
  *
  */
-#include "../include/morton.h"
+#include "morton.h"
 
 /* lookup tables for `split2` */
 const uint16_t B[] = {0x5555, 0x3333, 0x0F0F};

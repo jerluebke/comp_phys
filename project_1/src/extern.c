@@ -1,6 +1,6 @@
-#include "../include/types.h"
-#include "../include/xmalloc.h"
-#include "../include/dynamic_array.h"
+#include "types.h"
+#include "xmalloc.h"
+#include "dynamic_array.h"
 
 extern inline void *realloc_or_exit(void *ptr, size_t nbytes, const char *file, int line);
 extern inline void *malloc_or_exit(size_t nbytes, const char *file, int line);
