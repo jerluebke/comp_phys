@@ -14,10 +14,6 @@ Item *build_morton( const Value *, Item *, size_t );
 extern const uint16_t B[];
 extern const uint16_t S[];
 
-typedef struct {
-    uint8_t x, y;
-} Coords2d_8bit;
-
 
 /* split2
  * split up binary representation of given x such that between each two bits
@@ -96,9 +92,9 @@ inline uint8_t decode(uint16_t k)
  * Coords2d_8bit, struct holding decoded x and y component of given key
  *
  */
-inline Coords2d_8bit coords2(uint16_t k)
+inline Value coords2(uint16_t k)
 {
-    Coords2d_8bit c = { .x = decode(k), .y = decode(k >> 1) };
+    Value c = { .x = decode(k), .y = decode(k >> 1) };
     return c;
 }
 

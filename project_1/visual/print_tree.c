@@ -1,5 +1,5 @@
 #define _CRT_SECURE_NO_WARNINGS 1
-/* #include <math.h> */
+#include <math.h>
 #include <stdio.h>
 #include <graphviz/gvc.h>
 #include "morton.h"
@@ -20,7 +20,7 @@ static Value any_values_1[] = {
 void build_graph(Agraph_t *g, Node *head, Agnode_t *prev, char *buf)
 {
     size_t i;
-    Agnode_t *n, *m;
+    Agnode_t *n/*, *m*/;
 
     snprintf(buf, NAMESZ, "%u-%x", head->lvl, head->key);
     n = agnode(g, buf, 1);
@@ -32,7 +32,7 @@ void build_graph(Agraph_t *g, Node *head, Agnode_t *prev, char *buf)
         agsafeset(n, "color", "blue", "");
 
     else {
-        agsafeset(n, "color", "gray", "");
+        agsafeset(n, "color", "grey", "");
         for ( i = 0; i < NOC; ++i ) {
             if ( head->c[i] )
                 build_graph(g, head->c[i], n, buf);
@@ -41,7 +41,7 @@ void build_graph(Agraph_t *g, Node *head, Agnode_t *prev, char *buf)
              *              head->lvl+1, (key_t)((head->key << 2) | i));
              *     m = agnode(g, buf, 1);
              *     agedge(g, n, m, NULL, 1);
-             *     agsafeset(m, "color", "gray", "");
+             *     agsafeset(m, "color", "grey", "");
              * } */
         }
     }
@@ -59,9 +59,9 @@ int render_tree(Node *head, FILE *fp)
 
     build_graph(g, head, NULL, &buf[0]);
 
-    gvLayout(gvc, g, "dot");
+    gvLayout(gvc, g, "osage");
     gvRender(gvc, g, "svg", fp);
-    gvRender(gvc, g, "dot", stdout);
+    /* gvRender(gvc, g, "dot", stdout); */
     gvFreeLayout(gvc, g);
 
     agclose(g);
@@ -70,18 +70,18 @@ int render_tree(Node *head, FILE *fp)
 }
 
 
-#if 0
 void print_node(Node *head, FILE *fp)
 {
     int i = 0;
-    Coords2d_8bit c = coords2(head->key);
+    Value c = coords2(head->key);
 
     char ws[maxlvl];
     while ( i < head->lvl ) ws[i++] = ' ';
     ws[i] = '\0';
 
-    fprintf(fp, "%s[(%u, %u), %lf, '%c', [\n",
-            ws, c.x, c.y, 1./pow(2, head->lvl), head->c ? 'l' : 'b');
+    double res = pow(2, head->lvl);
+    fprintf(fp, "%s[(%e, %e), %e, [\n",
+            ws, ((double)c.x)/res, ((double)c.y)/res, 1./res);
     if ( !head->c )
         fprintf(fp, "%s 'none'", ws);
     else
@@ -90,34 +90,40 @@ void print_node(Node *head, FILE *fp)
                 print_node(head->c[i], fp);
     fprintf(fp, "\n%s]],", ws);
 }
-#endif
 
 
 int main()
 {
+    char buf[120], filename[128];
     size_t size = any_values_1_size;
     Value *vals = any_values_1;
     Item *items = xmalloc( sizeof(Item) * size );
     items = build_morton( vals, items, size );
     Node *head = build_tree( items );
 
-#if 0
+#if 1
     FILE *fp = fopen("data/res.py", "w+");
     fputs("tree = ", fp);
 
     print_node(head, fp);
     fputs("\n", fp);
-
-    fclose(fp);
 #endif
 
-    FILE *fp = fopen("data/out.svg", "w+");
+#if 0
+    printf("Enter name for output file: ");
+    scanf("%120s", buf);
+    snprintf(filename, 128, "data/%s.svg", buf);
+
+    FILE *fp = fopen(filename, "w+");
     if (render_tree(head, fp))
         return EXIT_FAILURE;
-    fclose(fp);
+#endif
 
+    fclose(fp);
     cleanup( head );
     free( items );
 
     return EXIT_SUCCESS;
 }
+
+/* vim: set ff=unix tw=79 sw=4 ts=4 et ic ai : */

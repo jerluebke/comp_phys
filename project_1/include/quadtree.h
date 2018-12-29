@@ -13,7 +13,7 @@
 Node *build_tree( const Item * );
 void cleanup( Node * );
 
-void insert( const Node *, const Item * );
+lvl_t insert( const Node *, const Item * );
 Node *search( key_t , Node *, lvl_t );
 
 void find_neighbours( key_t , Node *, DArray_Item * );

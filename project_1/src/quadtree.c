@@ -242,8 +242,12 @@ void cleanup( Node *head )
  * items, Item *   :   array of key-value-pairs of which the first one is to be
  *                     inserted
  *
+ * Returns
+ * =======
+ * lvl_t, number of newly created levels
+ *
  */
-void insert( const Node *head, const Item *items )
+lvl_t insert( const Node *head, const Item *items )
 {
     lvl_t nl;           /* number of new levels */
     key_t sb, lcl;      /* significant bits x_i, y_i; lowest common level */
@@ -254,7 +258,7 @@ void insert( const Node *head, const Item *items )
 
     /* Node exists, insert in its child */
     if ( head->c[sb] != NULL ) {
-        insert(head->c[sb], items);
+        return insert(head->c[sb], items);
     }
 
     /* Node does not exist, create whole branch until lowest requiered level */
@@ -271,6 +275,8 @@ void insert( const Node *head, const Item *items )
         /* number of new levels */
         nl = (lcl - head->lvl > 0) ? lcl - head->lvl : 1;
         head->c[sb] = build_branch( head->lvl+1, nl, items );
+
+        return nl;
     }
 }
 

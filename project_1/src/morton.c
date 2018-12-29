@@ -80,7 +80,7 @@ Item *build_morton( const Value *vals, Item *items, size_t size )
 extern inline key_t split2( key_t );
 extern inline key_t interleave( lvl_t, lvl_t );
 extern inline lvl_t decode( key_t );
-extern inline Coords2d_8bit coords2( key_t );
+extern inline Value coords2( key_t );
 
 /*
  * convenience functions to retreive adjacent keys

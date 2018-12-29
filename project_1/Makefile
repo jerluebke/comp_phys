@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS 	= -Wall -Wextra -pedantic -std=c11 -I./include
 COFLAGS = -O3
 CGFLAGS = $(shell pkg-config libgvc --cflags)
-LDFLAGS = $(shell pkg-config libgvc --libs)	# -lm
+LDFLAGS = $(shell pkg-config libgvc --libs)	-lm
 TFLAGS  = -I./tests
 DFLAGS  = -g -pg
 
