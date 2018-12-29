@@ -1,5 +1,5 @@
 #include <math.h>
-#include "visualise.h"
+#include "cvisualise.h"
 #include "morton.h"
 #include "quadtree.h"
 
@@ -13,9 +13,13 @@ lvl_t qtenv_insert(QuadtreeEnv *this, lvl_t *res)
 {
     lvl_t i, nl, rl;    /* index, new levels, relevant level */
     Node *n, *m;        /* temporary nodes */
-    n = this->head;
-    Item *item  = &(this->items[this->idx]);
-    key_t key   = item->key;
+    Item *item;
+    Value v;            /* temporary coordinate */
+    double r;           /* resolution */
+    key_t key;
+    n       = this->head;
+    item    = &(this->items[this->idx]);
+    key     = item->key;
     ++this->idx;
 
     nl  = insert(n, item);
@@ -25,10 +29,12 @@ lvl_t qtenv_insert(QuadtreeEnv *this, lvl_t *res)
     while ( n->lvl < rl-1 )
         n = n->c[bap(m->key, n->lvl+1, m->lvl)];
     for ( i = 0; n->lvl < m->lvl; i+=3) {
-        n           = n->c[bap(m->key, n->lvl+1, m->lvl)];
-        res[i]      = n->i->val->x;
-        res[i+1]    = n->i->val->y;
-        res[i+2]    = pow(2, n->lvl);
+        n = n->c[bap(m->key, n->lvl+1, m->lvl)];
+        v = coords2(n->key);
+        r = pow(2, n->lvl);
+        res[i]      = ((double)v.x) / r;
+        res[i+1]    = ((double)v.y) / r;
+        res[i+2]    = 1.0f / r;
     }
 
     return nl;
@@ -49,8 +55,8 @@ QuadtreeEnv *qtenv_setup(const lvl_t *in, size_t size)
 
     vals = xmalloc(sizeof(Value) * size);
     for ( i = 0; i < 2*size; i+=2 ) {
-        vals[i].x = in[i];
-        vals[i+1].y = in[i+1];
+        vals[i/2].x = in[i];
+        vals[i/2].y = in[i+1];
     }
     items = xmalloc(sizeof(Item)*size);
     items = build_morton(vals, items, size);
