@@ -5,7 +5,7 @@ cdef extern from "visualise.h" nogil:
     ctypedef struct QuadtreeEnv:
         pass
 
-    lvl_t qtenv_insert(QuadtreeEnv *this, lvl_t res)
+    lvl_t qtenv_insert(QuadtreeEnv *this, lvl_t* res)
     int qtenv_is_last(QuadtreeEnv *this)
     QuadtreeEnv *qtenv_setup(const lvl_t *vals, size_t size)
     void qtenv_free(QuadtreeEnv *this)
