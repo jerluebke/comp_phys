@@ -25,6 +25,7 @@ struct Value {
 struct Item {
     key_t key;
     const Value *val;
+    size_t idx;     /* original index */
     uint8_t last;
 };
 

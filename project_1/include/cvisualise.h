@@ -10,7 +10,7 @@ typedef struct QuadtreeEnv {
 
 lvl_t qtenv_insert(QuadtreeEnv *, double *);
 int qtenv_is_last(QuadtreeEnv *);
-QuadtreeEnv *qtenv_setup(const unsigned int *, size_t);
+QuadtreeEnv *qtenv_setup(const unsigned int *, size_t, unsigned int *);
 void qtenv_free(QuadtreeEnv *);
 
 /* vim: set ff=unix tw=79 sw=4 ts=4 et ic ai : */

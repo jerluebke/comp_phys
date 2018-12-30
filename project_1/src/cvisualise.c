@@ -31,7 +31,7 @@ lvl_t qtenv_insert(QuadtreeEnv *this, double *res)
     for ( i = 0; n->lvl < m->lvl; i+=3) {
         n = n->c[bap(m->key, n->lvl+1, m->lvl)];
         v = coords2(n->key);
-        r = pow(2, n->lvl);
+        r = pow(2, n->lvl-2);
         res[i]      = ((double)v.x) / r;
         res[i+1]    = ((double)v.y) / r;
         res[i+2]    = 1.0f / r;
@@ -45,7 +45,7 @@ int qtenv_is_last(QuadtreeEnv *this)
     return this->items[this->idx].last;
 }
 
-QuadtreeEnv *qtenv_setup(const unsigned int *in, size_t size)
+QuadtreeEnv *qtenv_setup(const unsigned int *in, size_t size, unsigned int *si)
 {
     size_t i, j;
     Value *vals;
@@ -60,6 +60,7 @@ QuadtreeEnv *qtenv_setup(const unsigned int *in, size_t size)
     }
     items = xmalloc(sizeof(Item)*size);
     items = build_morton(vals, items, size);
+    for ( i = 0; i < size; ++i ) si[i] = items[i].idx;
     head = xmalloc(sizeof(Node));
     head->allocated = 1;
     head->key = 0;

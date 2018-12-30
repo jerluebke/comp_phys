@@ -60,9 +60,10 @@ Item *build_morton( const Value *vals, Item *items, size_t size )
 
     /* calculate keys from coordinates and set reference to corresp. value */
     for ( i = 0; i < size; ++i ) {
-        items[i].key = interleave(vals[i].x, vals[i].y);
-        items[i].val = &vals[i];
-        items[i].last = 0;
+        items[i].idx    = i;
+        items[i].key    = interleave(vals[i].x, vals[i].y);
+        items[i].val    = &vals[i];
+        items[i].last   = 0;
     }
 
     qsort(items, size, sizeof(Item), cmp_keys);
