@@ -29,12 +29,13 @@ cdef class PyQuadtreeEnv:
     def insert_next(self):
         if self.is_last:
             raise StopIteration
-        res = np.empty((maxlvl*dim+1), dtype=np.uint, order='c')
-        cdef unsigned int[::1] res_mv = res
+        res = np.ones(maxlvl*(dim+1), dtype=np.double, order='c')
+        cdef double[::1] res_mv = res
         nl = qtenv_insert(self.this, &res_mv[0])
         self.is_last = qtenv_is_last(self.this);
-        #  return (res.reshape((maxlvl, dim+1)))[:maxlvl-nl,:]
-        return res, nl
+        res = np.asarray(res_mv)
+        return (res.reshape((maxlvl, dim+1)))[:nl]
+        #  return res, nl
 
 
 #  vim: set ff=unix tw=79 sw=4 ts=8 et ic ai : 

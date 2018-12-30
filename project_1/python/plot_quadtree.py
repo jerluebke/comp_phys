@@ -6,6 +6,8 @@
 import numpy as np
 from visualise import PyQuadtreeEnv
 
+np.random.seed(100)
+
 x = np.linspace(0, 1, 64)
 # some random data
 d = .4 * np.sin(10*x) + .05 * np.random.randn(64) + .5
@@ -19,8 +21,8 @@ qtenv = PyQuadtreeEnv(indices)
 
 while 1:
     try:
-        r, l = qtenv.insert_next()
-        print(l)
+        r = qtenv.insert_next()
+        print(r, '\n')
     except StopIteration:
         break
 print('done.')

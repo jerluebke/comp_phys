@@ -9,7 +9,7 @@ static inline key_t bap( key_t k, lvl_t j, lvl_t l )
 }
 
 /* TODO: draw graph for each step */
-lvl_t qtenv_insert(QuadtreeEnv *this, lvl_t *res)
+lvl_t qtenv_insert(QuadtreeEnv *this, double *res)
 {
     lvl_t i, nl, rl;    /* index, new levels, relevant level */
     Node *n, *m;        /* temporary nodes */
@@ -45,18 +45,18 @@ int qtenv_is_last(QuadtreeEnv *this)
     return this->items[this->idx].last;
 }
 
-QuadtreeEnv *qtenv_setup(const lvl_t *in, size_t size)
+QuadtreeEnv *qtenv_setup(const unsigned int *in, size_t size)
 {
-    size_t i;
+    size_t i, j;
     Value *vals;
     Item *items;
     Node *head;
     QuadtreeEnv *this;
 
     vals = xmalloc(sizeof(Value) * size);
-    for ( i = 0; i < 2*size; i+=2 ) {
-        vals[i/2].x = in[i];
-        vals[i/2].y = in[i+1];
+    for ( i = 0, j = 0; i < 2*size; i+=2, j++ ) {
+        vals[j].x = in[i];
+        vals[j].y = in[i+1];
     }
     items = xmalloc(sizeof(Item)*size);
     items = build_morton(vals, items, size);
@@ -68,10 +68,10 @@ QuadtreeEnv *qtenv_setup(const lvl_t *in, size_t size)
     head->c = xmalloc(sizeof(Node *)*NOC);
     for ( i = 0; i < NOC; ++i ) head->c[i] = NULL;
     this = xmalloc(sizeof(QuadtreeEnv));
-    this->idx = 0;
-    this->vals = vals;
+    this->idx   = 0;
+    this->vals  = vals;
     this->items = items;
-    this->head = head;
+    this->head  = head;
 
     return this;
 }

@@ -7,27 +7,26 @@ TFLAGS  = -I./tests
 DFLAGS  = -g -pg
 
 SRCDIR 		:= src/
-VISUALDIR 	:= visual/
+CYTDIR 		:= cython_test/
 TESTDIR 	:= tests/
 OBJDIR		:= obj/
 BINDIR 		:= bin/
 
-SRCFILES 	:= $(shell find $(SRCDIR) -name "*.c")
+SRCFILES 	:= $(shell find $(SRCDIR) \( -name "*.c" -not -name "print_tree.c" \))
 TESTFILES 	:= $(shell find $(TESTDIR) \( -name "*.c"					$\
-											-not -name "*printing.c"	$\
-											-not -name "mem_test.c" \))
-VFILES 		:= $(shell find $(VISUALDIR) -name "*.c")
+										-not -name "mem_test.c" \))
+CYTFILES 	:= $(shell find $(CYTDIR) -name "*.c")
 MEMFILES 	:= $(TESTDIR)mem_test.c
 ALLSRC		:= $(SRCFILES) $(TESTFILES)
 
 OBJSRC 		:= $(patsubst $(SRCDIR)%.c, $(OBJDIR)%.o, $(SRCFILES))
 OBJTEST 	:= $(patsubst $(TESTDIR)%.c, $(OBJDIR)%.o, $(TESTFILES))
-OBJVISUAL 	:= $(patsubst $(VISUALDIR)%.c, $(OBJDIR)%.o, $(VFILES))
+OBJCYT 		:= $(patsubst $(CYTDIR)%.c, $(OBJDIR)%.o, $(CYTDIR))
 OBJMEM   	:= $(OBJDIR)mem_test.o
 ALLOBJ		:= $(OBJSRC) $(OBJTEST) $(OBJVISUAL) $(OBJMEM)
 
 TEST		:= $(BINDIR)test.out
-VISUAL 		:= $(BINDIR)visual.out
+CYTEST 		:= $(BINDIR)cytest.out
 MEMTEST		:= $(BINDIR)mem_test.out
 ALLBIN 		:= $(TEST) $(VISUAL) $(MEMTEST)
 
@@ -35,15 +34,15 @@ ALLBIN 		:= $(TEST) $(VISUAL) $(MEMTEST)
 test: $(OBJSRC) $(OBJTEST)
 	$(CC) $^ -o $(TEST)
 
-visual: $(OBJSRC) $(OBJVISUAL)
-	$(CC) $^ $(LDFLAGS) -o $(VISUAL)
+cytest: $(OBJSRC) $(OBJCYT)
+	$(CC) $^ -o $(VISUAL)
 
 memtest: $(OBJSRC) $(OBJMEM)
 	$(CC) $^ -o $(MEMTEST)
 
 
-$(OBJDIR)%.o: $(VISUALDIR)%.c
-	$(CC) $(CFLAGS) $(CGFLAGS) $(DFLAGS) -c $< -o $@
+$(OBJDIR)%.o: $(CYTDIR)%.c
+	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@
 
 $(OBJMEM): $(MEMFILES)
 	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@
