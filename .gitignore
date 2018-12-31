@@ -5,6 +5,7 @@ __pycache__
 *.gp
 *.gch
 *.dll
+*.pyd
 
 *.avi
 *.mp4

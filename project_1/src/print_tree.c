@@ -36,13 +36,6 @@ void build_graph(Agraph_t *g, Node *head, Agnode_t *prev, char *buf)
         for ( i = 0; i < NOC; ++i ) {
             if ( head->c[i] )
                 build_graph(g, head->c[i], n, buf);
-            /* else {
-             *     snprintf(buf, NAMESZ, "%u-%x",
-             *              head->lvl+1, (key_t)((head->key << 2) | i));
-             *     m = agnode(g, buf, 1);
-             *     agedge(g, n, m, NULL, 1);
-             *     agsafeset(m, "color", "grey", "");
-             * } */
         }
     }
 }
@@ -59,7 +52,7 @@ int render_tree(Node *head, FILE *fp)
 
     build_graph(g, head, NULL, &buf[0]);
 
-    gvLayout(gvc, g, "osage");
+    gvLayout(gvc, g, "dot");
     gvRender(gvc, g, "svg", fp);
     /* gvRender(gvc, g, "dot", stdout); */
     gvFreeLayout(gvc, g);
@@ -67,28 +60,6 @@ int render_tree(Node *head, FILE *fp)
     agclose(g);
 
     return gvFreeContext(gvc);
-}
-
-
-void print_node(Node *head, FILE *fp)
-{
-    int i = 0;
-    Value c = coords2(head->key);
-
-    char ws[maxlvl];
-    while ( i < head->lvl ) ws[i++] = ' ';
-    ws[i] = '\0';
-
-    double res = pow(2, head->lvl);
-    fprintf(fp, "%s[(%e, %e), %e, [\n",
-            ws, ((double)c.x)/res, ((double)c.y)/res, 1./res);
-    if ( !head->c )
-        fprintf(fp, "%s 'none'", ws);
-    else
-        for ( i = 0; i < 4; ++i )
-            if ( head->c[i] )
-                print_node(head->c[i], fp);
-    fprintf(fp, "\n%s]],", ws);
 }
 
 
@@ -101,15 +72,6 @@ int main()
     items = build_morton( vals, items, size );
     Node *head = build_tree( items );
 
-#if 1
-    FILE *fp = fopen("data/res.py", "w+");
-    fputs("tree = ", fp);
-
-    print_node(head, fp);
-    fputs("\n", fp);
-#endif
-
-#if 0
     printf("Enter name for output file: ");
     scanf("%120s", buf);
     snprintf(filename, 128, "data/%s.svg", buf);
@@ -117,7 +79,6 @@ int main()
     FILE *fp = fopen(filename, "w+");
     if (render_tree(head, fp))
         return EXIT_FAILURE;
-#endif
 
     fclose(fp);
     cleanup( head );

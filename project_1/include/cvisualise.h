@@ -8,7 +8,7 @@ typedef struct QuadtreeEnv {
     Node *head;
 } QuadtreeEnv;
 
-lvl_t qtenv_insert(QuadtreeEnv *, double *);
+unsigned int qtenv_insert(QuadtreeEnv *, double *);
 int qtenv_is_last(QuadtreeEnv *);
 QuadtreeEnv *qtenv_setup(const unsigned int *, size_t, unsigned int *);
 void qtenv_free(QuadtreeEnv *);

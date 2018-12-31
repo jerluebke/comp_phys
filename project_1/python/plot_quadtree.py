@@ -47,7 +47,11 @@ while 1:
             ax.add_line(v)
     except StopIteration:
         break
+
+fig.tight_layout()
+plt.savefig('out-plot.svg', dpi=300, format='svg')
+
 print('done.')
 
 
-#  vim: set ff=unix tw=79 sw=4 ts=8 et ic ai : 
+#  vim: set ff=unix tw=79 sw=4 ts=8 et ic ai :

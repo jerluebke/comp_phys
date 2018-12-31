@@ -2,10 +2,10 @@
 
 #include <stdint.h>
 #include "dynamic_array.h"
-/* #define key_t __quadtree_key_t */
 
 /* for 256x256 Resolution */
-typedef uint16_t key_t;
+typedef uint16_t _quadtree_key_t;
+#define key_t _quadtree_key_t
 typedef uint8_t lvl_t;
 static const uint8_t maxlvl = 8;
 

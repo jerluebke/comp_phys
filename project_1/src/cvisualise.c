@@ -9,7 +9,7 @@ static inline key_t bap( key_t k, lvl_t j, lvl_t l )
 }
 
 /* TODO: draw graph for each step */
-lvl_t qtenv_insert(QuadtreeEnv *this, double *res)
+unsigned int qtenv_insert(QuadtreeEnv *this, double *res)
 {
     lvl_t i, nl, rl;    /* index, new levels, relevant level */
     Node *n, *m;        /* temporary nodes */

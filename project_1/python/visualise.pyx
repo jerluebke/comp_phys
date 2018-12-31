@@ -15,10 +15,10 @@ cdef class PyQuadtreeEnv:
 
     @cython.boundscheck(False)
     @cython.wraparound(False)
-    def __cinit__(self, np.ndarray[np.uint_t, ndim=2, mode='c'] data not None):
+    def __cinit__(self, np.ndarray[np.uint32_t, ndim=2, mode='c'] data not None):
         self.is_last = 0
         a, b = data.shape[0], data.shape[1]
-        self.sorted_indices = np.empty(a, dtype=np.uint, order='c')
+        self.sorted_indices = np.empty(a, dtype=np.uint32, order='c')
         cdef unsigned int[::1] data_memview = data.reshape(a*b)
         cdef unsigned int[::1] sorted_memview = self.sorted_indices
         self.this = qtenv_setup(&data_memview[0], a, &sorted_memview[0])
