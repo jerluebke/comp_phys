@@ -32,6 +32,9 @@ cdef class PyQuadtreeEnv:
     def get_sorted(self):
         return self.sorted_indices
 
+    def get_key(self, idx):
+        return qtenv_get_key(self.this, idx)
+
     @cython.boundscheck(False)
     @cython.wraparound(False)
     def insert_next(self):

@@ -4,7 +4,7 @@ cdef extern from "cvisualise.h" nogil:
     ctypedef struct QuadtreeEnv:
         pass
 
-    unsigned int *qtenv_get_sorted(QuadtreeEnv *this)
+    unsigned int qtenv_get_key(QuadtreeEnv *this, unsigned int idx)
     unsigned int qtenv_insert(QuadtreeEnv *this, double* res)
     int qtenv_is_last(QuadtreeEnv *this)
     QuadtreeEnv *qtenv_setup(const unsigned int *vals, size_t size,

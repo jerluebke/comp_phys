@@ -5,6 +5,7 @@ __pycache__
 *.gp
 *.gch
 *.dll
+*.so
 *.pyd
 
 *.avi
@@ -19,6 +20,7 @@ ns
 obj
 bin
 data
+cython_debug
 
 .ycm_extra_conf.py
 *.taghl

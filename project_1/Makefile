@@ -31,7 +31,7 @@ test: $(OBJSRC) $(OBJTEST)
 	$(CC) $^ -lm -o $(TEST)
 
 memtest: $(OBJSRC) $(OBJMEM)
-	$(CC) $^ -o $(MEMTEST)
+	$(CC) $^ -lm -o $(MEMTEST)
 
 
 $(OBJMEM): $(MEMFILES)
