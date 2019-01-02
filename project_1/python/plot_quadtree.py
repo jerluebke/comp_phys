@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from visualise import PyQuadtreeEnv
 
-FILENAMETEMPLATE = 'data/plots/out-%03d.svg'
+FILENAMETEMPLATE = 'data/plots/out-%03d.png'
 
 np.random.seed(100)
 
@@ -26,18 +26,20 @@ si = qtenv.get_sorted()
 fig, ax = plt.subplots()
 ax.grid(False)
 ax.tick_params(axis='both', **dict(bottom = False, left = False,
-                                   top = False, right = False,
-                                   labelbottom = False, labelleft = False))
-#  cl = lambda i: [*["blue"]*i, "red", *["grey"]*(64-1)]
+                                   top = False, right = False))
+ax.set_xticks([0.0, 0.25, 0.5, 0.75, 1.])
+ax.set_yticks([0.0, 0.25, 0.5, 0.75, 1.])
+ax.set_xticklabels([0, 16, 32, 48, 64])
+ax.set_yticklabels([0, 16, 32, 48, 64])
 cl = ["gray"]*64
-s = ax.scatter(x, d, c='gray', s=100, marker='1', lw=1.5, zorder=3)
+s = ax.scatter(x, d, c='gray', s=200, marker='1', lw=2, zorder=3)
 ax.set_title("raw data")
 ax.set(xlim=(0, 1), ylim=(0, 1))
-plt.savefig(FILENAMETEMPLATE % 0 , dpi=300, format='svg')
+plt.savefig(FILENAMETEMPLATE % 0 , dpi=300, format='png')
 ax.plot(x[si], d[si], c='gray', lw=1, zorder=1)
 ax.set_title("morton curve")
 ax.set(xlim=(0, 1), ylim=(0, 1))
-plt.savefig(FILENAMETEMPLATE % 1, dpi=300, format='svg')
+plt.savefig(FILENAMETEMPLATE % 1, dpi=300, format='png')
 
 linekwargs = dict(c = 'black', lw = 1, zorder = 2)
 
@@ -46,7 +48,7 @@ for i in range(1, 64):
         cl[si[i]] = "red"
         cl[si[i-1]] = "green"
         s.set_facecolor(cl)
-        ax.set_title("current key: 0x%04x" % qtenv.get_key(i))
+        ax.set_title("current key: 0x%04X" % qtenv.get_key(i))
         r = qtenv.insert_next()
         for elem in r:
             x, y, a = elem
@@ -55,12 +57,12 @@ for i in range(1, 64):
             ax.add_line(h)
             ax.add_line(v)
         #  fig.draw()
-        plt.savefig(FILENAMETEMPLATE % (i+1), dpi=300, format='svg')
+        plt.savefig(FILENAMETEMPLATE % (i+1), dpi=300, format='png')
     except StopIteration:
         break
 
 fig.tight_layout()
-#  plt.savefig('out-plot.svg', dpi=300, format='svg')
+#  plt.savefig('out-plot.png', dpi=300, format='png')
 
 print('done.')
 

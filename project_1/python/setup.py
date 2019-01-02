@@ -15,10 +15,14 @@ ext = Extension(
     "visualise",
     sources = ["./visualise.pyx", *[os.path.join("..", "src", d) for d in
                                     os.listdir("../src") if d not in exclude]],
-    include_dirs = ["../include", numpy.get_include(), "/usr/include/graphviz"],
+    include_dirs = ["../include", numpy.get_include(),
+                    "/usr/include/graphviz"
+                   ],
     libraries = ["m", "gvc", "cgraph", "cdt"],
     #  extra_compile_args = ["-std=c11"]
 )
 
 setup(cmdclass = {"build_ext" : build_ext},
-      ext_modules = cythonize(ext, gdb_debug=True))
+      ext_modules = cythonize(ext,
+                              #  gdb_debug=True
+                             ))

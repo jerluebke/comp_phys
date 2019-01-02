@@ -1,5 +1,7 @@
 #pragma once
+#ifndef _WIN32
 #include <graphviz/gvc.h>
+#endif
 #include "types.h"
 
 typedef struct QuadtreeEnv {
@@ -7,7 +9,9 @@ typedef struct QuadtreeEnv {
     Value *vals;
     Item *items;
     Node *head;
+#ifndef _WIN32
     GVC_t *gvc;
+#endif
 } QuadtreeEnv;
 
 unsigned int qtenv_get_key(QuadtreeEnv *, unsigned int);
