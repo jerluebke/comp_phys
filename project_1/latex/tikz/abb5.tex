@@ -1,0 +1,108 @@
+\documentclass{standalone}
+\usepackage{animate}
+\usepackage{graphicx}
+\usepackage{ifthen}
+\usepackage{tikz}
+\usetikzlibrary[backgrounds]
+
+\newcommand{\nodelabel}[1]{%
+    {\LARGE{\textcolor{blue}{$#1$}}}
+}
+
+\newcommand{\drawpoints}{%
+    \draw (0, 0) rectangle (16, 16);
+    \coordinate (A) at (5.5, 2.5);
+    \coordinate (B) at (6.5, 5.5);
+    \coordinate (C) at (5.5, 6.5);
+    \coordinate (D) at (7.5, 7.5);
+    \coordinate (E) at (9.5, 6.5);
+    \coordinate (F) at (8.5, 8.5);
+    \coordinate (G) at (12.5, 9.5);
+    \coordinate (H) at (9.5, 12.5);
+}
+
+\begin{document}
+
+\begin{animateinline}[%
+    controls={step},
+    buttonsize=10pt
+]{1}
+\multiframe{4}{i=1+1}{%
+    \begin{tikzpicture}
+        \drawpoints
+
+        \ifthenelse{\i > 0}{%
+            \draw (8, 0) -- (8, 16);
+            \draw (0, 8) -- (16, 8);
+        }{}
+
+        \ifthenelse{\i = 1}{%
+            \coordinate [label=45:\nodelabel{00}] (00) at (0, 0);
+            \coordinate [label=45:\nodelabel{01}] (01) at (8, 0);
+            \coordinate [label=315:\nodelabel{10}] (10) at (0, 16);
+            \coordinate [label=315:\nodelabel{11}] (11) at (8, 16);
+        }{}
+
+        \ifthenelse{\i > 1}{%
+            \draw (4, 0) -- (4, 8);
+            \draw (0, 4) -- (8, 4);
+            \draw (8, 12) -- (16, 12);
+            \draw (12, 8) -- (12, 16);
+        }{}
+
+        \ifthenelse{\i = 2}{%
+            \begin{pgfonlayer}{background}
+                \fill[orange!20] (0,0) -- (8,0) -- (8,8) -- (0,8) -- cycle;
+                \fill[orange!20] (8,8) -- (16,8) -- (16,16) -- (8,16) -- cycle;
+            \end{pgfonlayer}
+            \coordinate [label=45:\nodelabel{0000}] (0000) at (0, 0);
+            \coordinate [label=45:\nodelabel{0001}] (0001) at (4, 0);
+            \coordinate [label=45:\nodelabel{0010}] (0010) at (0, 4);
+            \coordinate [label=45:\nodelabel{0011}] (0011) at (4, 4);
+            \coordinate [label=315:\nodelabel{1100}] (1100) at (8, 12);
+            \coordinate [label=315:\nodelabel{1101}] (1101) at (12, 12);
+            \coordinate [label=315:\nodelabel{1110}] (1110) at (8, 16);
+            \coordinate [label=315:\nodelabel{1111}] (1111) at (12, 16);
+        }{}
+
+        \ifthenelse{\i > 2}{%
+            \draw (4, 6) -- (8, 6);
+            \draw (6, 4) -- (6, 8);
+        }{}
+
+        \ifthenelse{\i = 3}{%
+            \begin{pgfonlayer}{background}
+                \fill[orange!20] (4,4) -- (8,4) -- (8,8) -- (4,8) -- cycle;
+            \end{pgfonlayer}
+            \coordinate [label=315:\nodelabel{001100}] (001100) at (4, 4);
+            \coordinate [label=315:\nodelabel{001101}] (001101) at (6, 4);
+            \coordinate [label=45:\nodelabel{001110}] (001110) at (4, 8);
+            \coordinate [label=45:\nodelabel{001111}] (001111) at (6, 8);
+        }{}
+
+        \foreach \point in {A, B, C, D, E, F, G, H}
+            \fill [black] (\point) circle (3pt);
+
+        \ifthenelse{\i = 4}{%
+            \begin{pgfonlayer}{background}
+                \fill[orange!20] (4,6) -- (6,6) -- (6,8) -- (4,8) -- cycle;
+            \end{pgfonlayer}
+
+            \draw (A) -- (B);
+            \draw (B) -- (C);
+            \draw (C) -- (D);
+            \draw (D) -- (E);
+            \draw (E) -- (F);
+            \draw (F) -- (G);
+            \draw (G) -- (H);
+
+            \coordinate [label=left:\nodelabel{(5,6)}] (mortonC) at (5.5, 6.5);
+            \coordinate [label=45:\nodelabel{00111001}] (pointC) at (4, 8);
+            \fill [red] (C) circle (3pt);
+        }{}
+
+    \end{tikzpicture}
+}
+\end{animateinline}
+
+\end{document}
