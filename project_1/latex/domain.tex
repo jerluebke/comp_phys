@@ -3,11 +3,16 @@
 
 \begin{document}
 \begin{tikzpicture}
-    \def\A{\textcolor{blue}{$A$}}   \def\B{\textcolor{blue}{$B$}}
-    \def\C{\textcolor{blue}{$C$}}   \def\D{\textcolor{blue}{$D$}}
-    \def\E{\textcolor{blue}{$E$}}   \def\F{\textcolor{blue}{$F$}}
-    \def\G{\textcolor{blue}{$G$}}   \def\H{\textcolor{blue}{$H$}}
+    \def\A{\LARGE{\textcolor{blue}{$A$}}}
+    \def\B{\LARGE{\textcolor{blue}{$B$}}}
+    \def\C{\LARGE{\textcolor{blue}{$C$}}}
+    \def\D{\LARGE{\textcolor{blue}{$D$}}}
+    \def\E{\LARGE{\textcolor{blue}{$E$}}}
+    \def\F{\LARGE{\textcolor{blue}{$F$}}}
+    \def\G{\LARGE{\textcolor{blue}{$G$}}}
+    \def\H{\LARGE{\textcolor{blue}{$H$}}}
 
+    \draw[gray] (0, 0) grid (16, 16);
     \draw (0, 0) rectangle (16, 16);
 
     \coordinate [label=left:\A] (A) at (5.5, 2.5);
@@ -18,6 +23,13 @@
     \coordinate [label=above:\F] (F) at (8.5, 8.5);
     \coordinate [label=right:\G] (G) at (12.5, 9.5);
     \coordinate [label=above:\H] (H) at (9.5, 12.5);
+
+    \coordinate [label=45:00] (00) at (0, 0);
+    \coordinate [label=45:01] (01) at (8, 0);
+    \coordinate [label=45:10] (10) at (0, 8);
+    \coordinate [label=45:11] (11) at (8, 8);
+    % \coordinate (0000) at (0, 0);
+    % \coordinate (0001) at ()
 
     \draw (8, 0) -- (8, 16);
     \draw (0, 8) -- (16, 8);
@@ -40,3 +52,5 @@
         \fill [black] (\point) circle (2pt);
 \end{tikzpicture}
 \end{document}
+
+% vim: set ff=unix tw=79 sw=4 ts=4 et ic ai :
