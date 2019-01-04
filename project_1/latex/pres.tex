@@ -4,7 +4,9 @@
 \graphicspath{{D:/source/repos/computational_physics/project_1/python/data/}}
 \usepackage{ifthen}
 \usepackage{tikz}
-\usetikzlibrary[backgrounds]
+% \usetikzlibrary[backgrounds]
+\usetikzlibrary{backgrounds,graphs,graphdrawing,shapes.geometric}
+\usegdlibrary{trees}
 
 \newcommand{\nodelabel}[1]{%
     {\LARGE{\textcolor{blue}{$#1$}}}
@@ -33,6 +35,26 @@
     \draw (12, 8) -- (12, 16);
 }
 
+\tikzstyle{rn} = [%
+    rectangle,
+    rounded corners,
+    draw,
+    fill=gray!30
+]
+
+\tikzstyle{leaf} = [%
+    circle,
+    draw,
+    fill=green!30
+]
+
+\tikzstyle{branch} = [%
+    circle,
+    draw,
+    fill=gray!30
+]
+
+
 
 \begin{document}
 
@@ -58,6 +80,9 @@
 
 \begin{frame}
     \textit{TODO: tree diagram of quadtree, abb4}
+    \resizebox{\textwidth}{!}{%
+        \input{tikz/abb4.tex}
+    }
 \end{frame}
 
 
