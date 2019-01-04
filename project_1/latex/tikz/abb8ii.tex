@@ -1,88 +1,42 @@
-\documentclass{standalone}
-\usepackage{animate}
-\usepackage{graphicx}
-\usepackage{ifthen}
-\usepackage{tikz}
-\usetikzlibrary{backgrounds}
+\begin{tikzpicture}
+\drawpoints
+\drawquadtree
+\fill [red] (E) circle (3pt);
+\foreach \point in {A, B, C, D, F, G, H}
+    \fill [black] (\point) circle (3pt);
 
-\newcommand{\nodelabel}[1]{%
-    {\LARGE{\textcolor{blue}{$#1$}}}
-}
+\ifthenelse{4 > \i > 1 }{%
+    \begin{pgfonlayer}{background}
+        \fill[orange!20] (8,0) -- (16,0) -- (16,8) -- (8,8) -- cycle;
+    \end{pgfonlayer}
+}{}
 
-\newcommand{\drawpoints}{%
-    \draw (0, 0) rectangle (16, 16);
-    \coordinate (A) at (5.5, 2.5);
-    \coordinate (B) at (6.5, 5.5);
-    \coordinate (C) at (5.5, 6.5);
-    \coordinate (D) at (7.5, 7.5);
-    \coordinate (E) at (9.5, 6.5);
-    \coordinate (F) at (8.5, 8.5);
-    \coordinate (G) at (12.5, 9.5);
-    \coordinate (H) at (9.5, 12.5);
-}
+\ifthenelse{\i = 2}{%
+    \begin{pgfonlayer}{background}
+        \fill[blue!20] (0,0) -- (8,0) -- (8,8) -- (0,8) -- cycle;
+        \fill[blue!20] (8,8) -- (16,8) -- (16,16) -- (8,16) -- cycle;
+    \end{pgfonlayer}
+}{}
 
-\newcommand{\drawquadtree}{%
-    \draw (8, 0) -- (8, 16);
-    \draw (0, 8) -- (16, 8);
-    \draw (4, 0) -- (4, 8);
-    \draw (0, 4) -- (8, 4);
-    \draw (4, 6) -- (8, 6);
-    \draw (6, 4) -- (6, 8);
-    \draw (8, 12) -- (16, 12);
-    \draw (12, 8) -- (12, 16);
-}
+\ifthenelse{\i = 3}{%
+    \begin{pgfonlayer}{background}
+        \fill[blue!20] (4,0) -- (8,0) -- (8,4) -- (4,4) -- cycle;
+        \fill[blue!20] (6,4) -- (8,4) -- (8,8) -- (6,8) -- cycle;
+        \fill[blue!20] (8,8) -- (16,8) -- (16,12) -- (8,12) -- cycle;
+    \end{pgfonlayer}
+}{}
 
-\begin{document}
-
-\begin{animateinline}[%
-        controls={step},
-        buttonsize=10pt
-]{1}
-\multiframe{4}{i=1+1}{%
-    \begin{tikzpicture}
-        \drawpoints
-        \drawquadtree
-        \fill [red] (E) circle (3pt);
-        \foreach \point in {A, B, C, D, F, G, H}
-            \fill [black] (\point) circle (3pt);
-
-        \ifthenelse{4 > \i > 1 }{%
-            \begin{pgfonlayer}{background}
-                \fill[orange!20] (8,0) -- (16,0) -- (16,8) -- (8,8) -- cycle;
-            \end{pgfonlayer}
-        }
-
-        \ifthenelse{\i = 2}{%
-            \begin{pgfonlayer}{background}
-                \fill[blue!20] (0,0) -- (8,0) -- (8,8) -- (0,8) -- cycle;
-                \fill[blue!20] (8,8) -- (16,8) -- (16,16) -- (8,16) -- cycle;
-            \end{pgfonlayer}
-        }
-
-        \ifthenelse{\i = 3}{%
-            \begin{pgfonlayer}{background}
-                \fill[blue!20] (4,0) -- (8,0) -- (8,4) -- (4,4) -- cycle;
-                \fill[blue!20] (6,4) -- (8,4) -- (8,8) -- (6,8) -- cycle;
-                \fill[blue!20] (8,8) -- (16,8) -- (16,12) -- (8,12) -- cycle;
-            \end{pgfonlayer}
-        }
-
-        \ifthenelse{\i = 4}{%
-            \coordinate [label=right:\nodelabel{(9,6)}] (pointE) at (9.5, 6.5);
-            \coordinate [label=right:\nodelabel{(5,2)}] (pointA) at (5.5, 2.5);
-            \coordinate [label=315:\nodelabel{(6,5)}] (pointB) at (6.5, 5.5);
-            \coordinate [label=225:\nodelabel{(7,7)}] (pointD) at (7.5, 7.5);
-            \coordinate [label=45:\nodelabel{(8,8)}] (pointF) at (8.5, 8.5);
-            \coordinate [label=right:\nodelabel{(12,9)}] (pointG) at (12.5, 9.5);
-            \fill[blue] (A) circle (3pt);
-            \fill[blue] (B) circle (3pt);
-            \fill[blue] (D) circle (3pt);
-            \fill[blue] (F) circle (3pt);
-            \fill[blue] (G) circle (3pt);
-        }
-
-    \end{tikzpicture}
-}
-\end{animateinline}
-
-\end{document}
+\ifthenelse{\i = 4}{%
+    \coordinate [label=right:\nodelabel{(9,6)}] (pointE) at (9.5, 6.5);
+    \coordinate [label=right:\nodelabel{(5,2)}] (pointA) at (5.5, 2.5);
+    \coordinate [label=315:\nodelabel{(6,5)}] (pointB) at (6.5, 5.5);
+    \coordinate [label=225:\nodelabel{(7,7)}] (pointD) at (7.5, 7.5);
+    \coordinate [label=45:\nodelabel{(8,8)}] (pointF) at (8.5, 8.5);
+    \coordinate [label=right:\nodelabel{(12,9)}] (pointG) at (12.5, 9.5);
+    \fill[blue] (A) circle (3pt);
+    \fill[blue] (B) circle (3pt);
+    \fill[blue] (D) circle (3pt);
+    \fill[blue] (F) circle (3pt);
+    \fill[blue] (G) circle (3pt);
+}{}
+\end{tikzpicture}
