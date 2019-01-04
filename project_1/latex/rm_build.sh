@@ -1,8 +1,8 @@
 #!/bin/bash
 
 for f in $(ls); do
-    b=$(basename -- "$f")
-    if [ "$b" = "tikz" ] || [ "$b" = "tikz" ] || [ "$f" = "$0" ]; then
+    f=$(basename -- "$f")
+    if [ "$f" = "tikz" ] || [ "$f" = "tags" ] || [ "$f" = $(basename -- "$0") ]; then
         continue
     fi
     e="${f##*.}"

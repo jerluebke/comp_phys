@@ -1,0 +1,13 @@
+\begin{tikzpicture} [tree layout]
+    \graph {%
+        ROOT [rn] -- {[fresh nodes]%
+            / [branch] -- {%
+                NULL [null], A [leaf], NULL [null], / [branch] -- {%
+                    NULL [null], B [leaf], C [leaf], D [leaf]
+                }
+            }, E [leaf], NULL [null], / [branch] -- {%
+                F [leaf], G [leaf], H [leaf], NULL [null]
+            }
+        }
+    };
+\end{tikzpicture}

@@ -1,10 +1,10 @@
+%! TEX program = lualatex
 \documentclass{beamer}
 \usepackage{animate}
 \usepackage{graphicx}
 \graphicspath{{D:/source/repos/computational_physics/project_1/python/data/}}
 \usepackage{ifthen}
 \usepackage{tikz}
-% \usetikzlibrary[backgrounds]
 \usetikzlibrary{backgrounds,graphs,graphdrawing,shapes.geometric}
 \usegdlibrary{trees}
 
@@ -54,6 +54,11 @@
     fill=gray!30
 ]
 
+\tikzstyle{null} = [%
+    ellipse,
+    dashed,
+    draw
+]
 
 
 \begin{document}
@@ -79,9 +84,15 @@
 
 
 \begin{frame}
-    \textit{TODO: tree diagram of quadtree, abb4}
     \resizebox{\textwidth}{!}{%
-        \input{tikz/abb4.tex}
+        \input{tikz/abb4i.tex}
+    }
+\end{frame}
+
+
+\begin{frame}
+    \resizebox{\textwidth}{!}{%
+        \input{tikz/abb4ii.tex}
     }
 \end{frame}
 

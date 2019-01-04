@@ -1,0 +1,96 @@
+%! TEX program = lualatex
+\documentclass{standalone}
+\usepackage{animate}
+\usepackage{graphicx}
+\usepackage{ifthen}
+\usepackage{tikz}
+\usetikzlibrary{backgrounds,graphs,graphdrawing,shapes.geometric}
+\usegdlibrary{trees}
+
+\tikzstyle{rn} = [% rootnode
+    rectangle,
+    rounded corners,
+    draw,
+    fill=gray!30
+]
+
+\tikzstyle{query} = [%
+    circle,
+    draw,
+    fill=red!30
+]
+
+\tikzstyle{neighbour} = [%
+    circle,
+    draw,
+    fill=blue!30
+]
+
+\tikzstyle{candidate} = [%
+    circle,
+    draw,
+    dashed,
+    fill=blue!20
+]
+
+\tikzstyle{branch} = [%
+    circle,
+    draw,
+    % fill=gray!30
+]
+
+
+\begin{document}
+
+% \begin{animateinline}[%
+    % controls={step},
+    % buttonsize=10pt
+% ]{1}
+    % \multiframe{2}{i=1+1}{%
+        \begin{tikzpicture} [tree layout]
+
+\graph {%
+    ROOT [rn] -- {[fresh nodes]%
+        / [branch] -- {%%
+
+        % \ifthenelse{\i = 1}{%
+            A [branch] -- {%%%
+                / [candidate]
+            },%%%
+        % }{}
+        % \ifthenelse{\i = 2}{%
+        %     A [neighbour]
+        % }{}
+
+            / [branch] -- {%%%
+
+            % \ifthenelse{\i = 1}{%
+                / [candidate], B [query], C [branch], D [candidate]
+            % }{}
+            % \ifthenelse{\i = 2}{%
+            %     B [query], C [branch], D [neighbour]
+            % }{}
+
+            }%%%
+        },%%
+
+        % \ifthenelse{\i = 1}{%
+            E [branch] -- {%%
+                / [branch] -- {/ [candidate]}
+            },%%
+        % }{}
+        % \ifthenelse{\i = 2}{%
+        %     E [neighbour]
+        % }{}
+
+        / [branch] -- {%%
+            F [branch], G [branch], H [branch]
+        }%%
+    }%
+};
+
+        \end{tikzpicture}
+    % }
+% \end{animateinline}
+
+\end{document}
