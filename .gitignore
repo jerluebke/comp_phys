@@ -16,6 +16,8 @@ __pycache__
 
 *.fdb_latexmk
 *.fls
+*.pygtex
+*.pygstyle
 
 build
 lib
