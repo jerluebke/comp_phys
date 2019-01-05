@@ -35,7 +35,7 @@
     \draw (12, 8) -- (12, 16);
 }
 
-\tikzstyle{rn} = [%
+\tikzstyle{rn} = [% root node
     rectangle,
     rounded corners,
     draw,
@@ -58,6 +58,25 @@
     ellipse,
     dashed,
     draw
+]
+
+\tikzstyle{query} = [%
+    circle,
+    draw,
+    fill=red!30
+]
+
+\tikzstyle{neighbour} = [%
+    circle,
+    draw,
+    fill=blue!30
+]
+
+\tikzstyle{candidate} = [%
+    circle,
+    draw,
+    dashed,
+    fill=blue!20
 ]
 
 
@@ -170,7 +189,68 @@
 
 
 \begin{frame}
-    \textit{TODO: tree diagram of neighbour search}
+\begin{tikzpicture} [tree layout]
+\graph {%
+    ROOT [rn] -- {[fresh nodes]
+        / [branch] -- {A [branch] -- {/ [candidate]}, / [branch] -- {%
+                / [candidate], B [query], C [branch], D [candidate]
+            }
+        },
+        E [branch] -- {/ [branch] -- {/ [candidate]}}, / [branch] -- {%
+            F [branch], G [branch], H [branch]
+        }
+    }
+};
+\end{tikzpicture}
+\end{frame}
+
+
+\begin{frame}
+\begin{tikzpicture} [tree layout]
+\graph {%
+    ROOT [rn] -- {[fresh nodes]
+        / [branch] -- {A [neighbour]}, / [branch] -- {%
+            B [query], C [branch], D [neighbour]
+        },
+        E [neighbour], / [branch] -- {%
+            F [branch], G [branch], H [branch]
+        }
+    }
+};
+\end{tikzpicture}
+\end{frame}
+
+
+\begin{frame}
+\begin{tikzpicture} [tree layout]
+\graph {%
+    ROOT [rn] -- {[fresh nodes]
+        / [candidate] -- {A [branch], / [branch] -- {%
+                B [branch], C [branch], D [branch]
+            }
+        },
+        E [query], / [candidate] -- {%
+            F [branch], G [branch], H [branch]
+        }
+    }
+};
+\end{tikzpicture}
+\end{frame}
+
+
+\begin{frame}
+\begin{tikzpicture} [tree layout]
+\graph {%
+    ROOT [rn] -- {[fresh nodes]
+        / [branch] -- {A [neighbour]}, / [branch] -- {%
+            B [neighbour], C [branch], D [neighbour]
+        },
+        E [query], / [branch] -- {%
+            F [neighbour], G [neighbour], H [branch]
+        }
+    }
+};
+\end{tikzpicture}
 \end{frame}
 
 \end{document}

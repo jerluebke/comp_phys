@@ -8,7 +8,7 @@
     \def\G{\LARGE{\textcolor{blue}{$(12, 9)$}}}
     \def\H{\LARGE{\textcolor{blue}{$(9, 12)$}}}
 
-    % \draw[step=1cm,gray,thin] (0, 0) grid (16, 16);
+    \draw[step=2cm,gray,thin] (0, 0) grid (16, 16);
     \draw (0, 0) rectangle (16, 16);
 
     \coordinate [label=left:\A] (A) at (5.5, 2.5);
@@ -19,6 +19,11 @@
     \coordinate [label=above:\F] (F) at (8.5, 8.5);
     \coordinate [label=right:\G] (G) at (12.5, 9.5);
     \coordinate [label=above:\H] (H) at (9.5, 12.5);
+
+    \foreach \p in {0,2,...,14}{%
+        \draw (0,\p) node[anchor=south east] {\LARGE{$\p$}};
+        \draw (\p,0) node[anchor=north west] {\LARGE{$\p$}};
+    }
 
     \draw (A) -- (B);
     \draw (B) -- (C);
