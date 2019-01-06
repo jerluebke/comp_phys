@@ -10,10 +10,10 @@
 #define MASK 0x3
 
 
-Node *build_tree( const Item * );
+Node *build_tree( const Item *, lvl_t (*)(const Node *, const Item *) );
 void cleanup( Node * );
 
-lvl_t insert( const Node *, const Item * );
+lvl_t insert_fast( const Node *, const Item * );
 Node *search( key_t , Node *, lvl_t );
 
 void find_neighbours( key_t , Node *, DArray_Item * );

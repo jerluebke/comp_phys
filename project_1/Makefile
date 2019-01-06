@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS 	= -Wall -Wextra -pedantic -std=c11 -I./include
 COFLAGS = -O3
 CGFLAGS = $(shell pkg-config libgvc --cflags)
-LDFLAGS = $(shell pkg-config libgvc --libs)	-lm
+LDFLAGS = $(shell pkg-config libgvc --libs) -lm
 TFLAGS  = -I./tests
 DFLAGS  = -g -pg
 
@@ -12,8 +12,7 @@ OBJDIR		:= obj/
 BINDIR 		:= bin/
 
 SRCFILES 	:= $(shell find $(SRCDIR) \( -name "*.c" -not -name "print_tree.c" \))
-TESTFILES 	:= $(shell find $(TESTDIR) \( -name "*.c"					$\
-										-not -name "mem_test.c" \))
+TESTFILES 	:= $(shell find $(TESTDIR) \( -name "*.c" -not -name "mem_test.c" \))
 MEMFILES 	:= $(TESTDIR)mem_test.c
 ALLSRC		:= $(SRCFILES) $(TESTFILES)
 
@@ -28,7 +27,7 @@ ALLBIN 		:= $(TEST) $(MEMTEST)
 
 
 test: $(OBJSRC) $(OBJTEST)
-	$(CC) $^ -lm -o $(TEST)
+	$(CC) $^ $(LDFLAGS) -o $(TEST)
 
 memtest: $(OBJSRC) $(OBJMEM)
 	$(CC) $^ -lm -o $(MEMTEST)
@@ -38,7 +37,7 @@ $(OBJMEM): $(MEMFILES)
 	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@
 
 $(OBJDIR)%.o: $(SRCDIR)%.c
-	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(CGFLAGS) $(DFLAGS) -c $< -o $@
 
 $(OBJDIR)%.o: $(TESTDIR)%.c
 	$(CC) $(CFLAGS) $(DFLAGS) $(TFLAGS) -c $< -o $@

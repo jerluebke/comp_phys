@@ -73,7 +73,7 @@ unsigned int qtenv_insert(QuadtreeEnv *this, double *res)
     key     = item->key;
     ++this->idx;
 
-    nl  = insert(n, item);
+    nl  = insert_fast(n, item);
     m   = search(key, n, maxlvl);
     rl  = m->lvl - nl;
 #ifndef _WIN32

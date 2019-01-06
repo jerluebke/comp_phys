@@ -9,6 +9,7 @@
 
 typedef struct {
     Item *i; key_t *k; DArray_Item *da; size_t s;
+    insert_fptr_t ifunc;
 } DataStruct;
 
 typedef struct {
@@ -19,12 +20,5 @@ typedef struct {
     key_t key; key_t *val;
 } KeyValueInput;
 
-
-void print_node(Node *, FILE *);
-void print_tree(Node *, char *);
-void print_leafs(Node *, Item *, char *);
-void print_neighbours(Node *, key_t, FILE *);
-void print_all_neighbours(Node *, Item *, char *);
-void print_morton(Item *, char *);
 
 /* vim: set ff=unix tw=79 sw=4 ts=4 et ic ai : */

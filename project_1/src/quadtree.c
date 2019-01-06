@@ -177,6 +177,8 @@ static void scr( const Node *head, const key_t *suffix, DArray_Item *res )
  * Params
  * ======
  * items, Item*    :   array for items to insert in tree
+ * insert_fptr     :   pointer to insert function
+ *                     signature: lvl_t insert(const Node *, const Item *)
  *
  * Returns
  * =======
@@ -184,7 +186,7 @@ static void scr( const Node *head, const key_t *suffix, DArray_Item *res )
  *     usage!)
  *
  */
-Node *build_tree( const Item *items )
+Node *build_tree( const Item *items, lvl_t (*insert_fptr)(const Node *, const Item *) )
 {
     int i;
     Node *head;
@@ -197,9 +199,9 @@ Node *build_tree( const Item *items )
     head->c         = xmalloc(sizeof(Node *) * NOC);
     for ( i = 0; i < NOC; ++i ) head->c[i] = NULL;
 
-    insert( head, items );
+    (*insert_fptr)( head, items );
     while ( !items->last )
-        insert( head, ++items );
+        (*insert_fptr)( head, ++items );
 
     return head;
 }
@@ -230,7 +232,7 @@ void cleanup( Node *head )
 }
 
 
-/* insert
+/* insert_fast
  *
  * NOTICE: for fast tree building, the key following the currently considered
  * one is examined; the last key should therefor be marked as such
@@ -247,7 +249,7 @@ void cleanup( Node *head )
  * lvl_t, number of newly created levels
  *
  */
-lvl_t insert( const Node *head, const Item *items )
+lvl_t insert_fast( const Node *head, const Item *items )
 {
     lvl_t nl;           /* number of new levels */
     key_t sb, lcl;      /* significant bits x_i, y_i; lowest common level */
@@ -258,7 +260,7 @@ lvl_t insert( const Node *head, const Item *items )
 
     /* Node exists, insert in its child */
     if ( head->c[sb] != NULL ) {
-        return insert(head->c[sb], items);
+        return insert_fast(head->c[sb], items);
     }
 
     /* Node does not exist, create whole branch until lowest requiered level */

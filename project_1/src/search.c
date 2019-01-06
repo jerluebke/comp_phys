@@ -1,7 +1,7 @@
 #include "types.h"
 
 #define SQUARE(x) (x)*(x)
-#define SD(v, w, a) SQUARE((v)->(a) - (w)->(a))     /* squared difference */
+#define SD(v, w, a) SQUARE((v)->a - (w)->a)         /* squared difference */
 #define METRIC(v, w) (SD(v, w, x) + SD(v, w, y))
 
 #define SEARCH_FUNC(TYPE, CHECK_QUERY, IS_VALUE)                            \
@@ -22,5 +22,5 @@ int search_##TYPE( Value *query, DArray_##TYPE *vals, double r_sq,          \
     return num;                                                             \
 }
 
-SEARCH_FUNC(Value, if(*it==query)continue;, ->val)
-SEARCH_FUNC(Item,,)
+SEARCH_FUNC(Value, if(*it==query)continue;,)
+SEARCH_FUNC(Item,, ->val)

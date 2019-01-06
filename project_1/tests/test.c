@@ -1,5 +1,7 @@
 #include "test_data.h"
 
+#define MAX(a, b) (a > b ? a : b)
+
 
 /********************/
 /*      MORTON      */
@@ -73,6 +75,14 @@ quadtree_setup(const MunitParameter params[], void *data)
     Value *vals     = in->vals;
     size_t size     = in->size;
 
+    /* const char *ifp_id = munit_parameters_get(params, "ifunc"); */
+    insert_fptr_t ifp = insert_fast;
+    /* switch ( ifp_id[0] ) {
+        case 'f':
+            ifp = insert_fast;
+            break;
+    } */
+
     Item *items     = xmalloc( sizeof(Item) * size );
     items           = build_morton( vals, items, size );
 
@@ -88,6 +98,7 @@ quadtree_setup(const MunitParameter params[], void *data)
     data_ptr->k     = res;
     data_ptr->da    = neighbours;
     data_ptr->s     = size;
+    data_ptr->ifunc = ifp;
 
     munit_log(MUNIT_LOG_DEBUG, "done setting up quadtree.");
 
@@ -117,7 +128,7 @@ test_quadtree_build(const MunitParameter params[], void *data)
     size_t size     = dp->s;
     Item *items     = dp->i;
     munit_log(MUNIT_LOG_DEBUG, "building tree...");
-    Node *head      = build_tree(items);
+    Node *head      = build_tree(items, insert_fast);
     munit_log(MUNIT_LOG_DEBUG, "done building tree.");
 
     key_t leaf_keys[size-1];
@@ -150,8 +161,7 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
     size_t i;
     Node *tmp;
 
-    KeyValueInput *in   = (KeyValueInput *)munit_parameters_get(params,
-                                                                "input");
+    KeyValueInput *in   = (KeyValueInput *)munit_parameters_get(params, "input");
     key_t refk          = in->key;
     key_t num           = *in->val++;
     key_t *exp          = in->val;
@@ -161,7 +171,7 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
         *neighbours     = dp->da;
     key_t *res          = dp->k;
     Item *items         = dp->i;
-    Node *head          = build_tree(items);
+    Node *head          = build_tree(items, insert_fast);
     Node *refn          = search(refk, head, maxlvl);
     munit_logf(MUNIT_LOG_DEBUG,
                "\ngiven key: 0x%X\nfound key: 0x%X\n", refk, refn->key);
@@ -175,7 +185,7 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
     }
 
     fprintf(stderr, "res\texpected\n\n");
-    for ( i = 0; i < neighbours->_used; ++i )
+    for ( i = 0; i < MAX(neighbours->_used, num); ++i )
         fprintf(stderr, "0x%X\t0x%X\n", res[i], exp[i]);
 
     cleanup(head);
