@@ -113,11 +113,17 @@ test_quadtree_build(const MunitParameter params[], void *data)
     TreeInput *in   = (TreeInput *)munit_parameters_get(params, "setup");
     key_t *exp      = in->exp;
 
+    insert_fptr_t ifunc;
+    const char *ifunc_str = munit_parameters_get(params, "ifunc");
+    switch ( ifunc_str[0] ) {
+        case 'f': ifunc = insert;
+    }
+
     DataStruct *dp  = (DataStruct *)data;
     size_t size     = dp->s;
     Item *items     = dp->i;
     munit_log(MUNIT_LOG_DEBUG, "building tree...");
-    Node *head      = build_tree(items);
+    Node *head      = build_tree(items, ifunc);
     munit_log(MUNIT_LOG_DEBUG, "done building tree.");
 
     key_t leaf_keys[size-1];
@@ -161,7 +167,7 @@ test_quadtree_neighbours(const MunitParameter params[], void *data)
         *neighbours     = dp->da;
     key_t *res          = dp->k;
     Item *items         = dp->i;
-    Node *head          = build_tree(items);
+    Node *head          = build_tree(items, insert);
     Node *refn          = search(refk, head, maxlvl);
     munit_logf(MUNIT_LOG_DEBUG,
                "\ngiven key: 0x%X\nfound key: 0x%X\n", refk, refn->key);

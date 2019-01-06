@@ -15,6 +15,7 @@ typedef struct Node Node;
 
 DARRAY_TYPEDEF(const Item *, Item)
 
+typedef lvl_t (*insert_fptr_t)(const Node *, const Item *);
 
 /* structure implementations */
 

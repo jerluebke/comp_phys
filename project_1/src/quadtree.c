@@ -184,7 +184,7 @@ static void scr( const Node *head, const key_t *suffix, DArray_Item *res )
  *     usage!)
  *
  */
-Node *build_tree( const Item *items )
+Node *build_tree( const Item *items, lvl_t (*insert_fptr)(const Node *, const Item *) )
 {
     int i;
     Node *head;
@@ -197,9 +197,9 @@ Node *build_tree( const Item *items )
     head->c         = xmalloc(sizeof(Node *) * NOC);
     for ( i = 0; i < NOC; ++i ) head->c[i] = NULL;
 
-    insert( head, items );
+    (*insert_fptr)( head, items );
     while ( !items->last )
-        insert( head, ++items );
+        (*insert_fptr)( head, ++items );
 
     return head;
 }

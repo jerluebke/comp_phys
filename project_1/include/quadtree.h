@@ -10,7 +10,7 @@
 #define MASK 0x3
 
 
-Node *build_tree( const Item * );
+Node *build_tree( const Item *, lvl_t (*)(const Node *, const Item *) );
 void cleanup( Node * );
 
 lvl_t insert( const Node *, const Item * );
