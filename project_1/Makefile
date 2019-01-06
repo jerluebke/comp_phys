@@ -11,9 +11,8 @@ TESTDIR 	:= tests/
 OBJDIR		:= obj/
 BINDIR 		:= bin/
 
-SRCFILES 	:= $(shell find $(SRCDIR) \( -name "*.c" -not -name "print_tree.c" \))
-TESTFILES 	:= $(shell find $(TESTDIR) \( -name "*.c"					$\
-										-not -name "mem_test.c" \))
+SRCFILES 	:= $(shell find $(SRCDIR) -name "*.c")
+TESTFILES 	:= $(shell find $(TESTDIR) \( -name "*.c" -not -name "mem_test.c" \))
 MEMFILES 	:= $(TESTDIR)mem_test.c
 ALLSRC		:= $(SRCFILES) $(TESTFILES)
 
@@ -28,7 +27,7 @@ ALLBIN 		:= $(TEST) $(MEMTEST)
 
 
 test: $(OBJSRC) $(OBJTEST)
-	$(CC) $^ -lm -o $(TEST)
+	$(CC) $^ $(LDFLAGS) -o $(TEST)
 
 memtest: $(OBJSRC) $(OBJMEM)
 	$(CC) $^ -lm -o $(MEMTEST)
@@ -38,7 +37,7 @@ $(OBJMEM): $(MEMFILES)
 	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@
 
 $(OBJDIR)%.o: $(SRCDIR)%.c
-	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(CGFLAGS) $(DFLAGS) -c $< -o $@
 
 $(OBJDIR)%.o: $(TESTDIR)%.c
 	$(CC) $(CFLAGS) $(DFLAGS) $(TFLAGS) -c $< -o $@
