@@ -24,3 +24,6 @@ int search_##TYPE( Value *query, DArray_##TYPE *vals, double r_sq,          \
 
 SEARCH_FUNC(Value, if(*it==query)continue;,)
 SEARCH_FUNC(Item,, ->val)
+
+
+/* vim: set ff=unix tw=79 sw=4 ts=4 et ic ai : */

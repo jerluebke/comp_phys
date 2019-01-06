@@ -75,14 +75,6 @@ quadtree_setup(const MunitParameter params[], void *data)
     Value *vals     = in->vals;
     size_t size     = in->size;
 
-    /* const char *ifp_id = munit_parameters_get(params, "ifunc"); */
-    insert_fptr_t ifp = insert_fast;
-    /* switch ( ifp_id[0] ) {
-        case 'f':
-            ifp = insert_fast;
-            break;
-    } */
-
     Item *items     = xmalloc( sizeof(Item) * size );
     items           = build_morton( vals, items, size );
 
@@ -98,7 +90,6 @@ quadtree_setup(const MunitParameter params[], void *data)
     data_ptr->k     = res;
     data_ptr->da    = neighbours;
     data_ptr->s     = size;
-    data_ptr->ifunc = ifp;
 
     munit_log(MUNIT_LOG_DEBUG, "done setting up quadtree.");
 
@@ -124,11 +115,17 @@ test_quadtree_build(const MunitParameter params[], void *data)
     TreeInput *in   = (TreeInput *)munit_parameters_get(params, "setup");
     key_t *exp      = in->exp;
 
+    insert_fptr_t ifunc;
+    const char *ifunc_str = munit_parameters_get(params, "ifunc");
+    switch ( ifunc_str[0] ) {
+        case 'f': ifunc = insert_fast;
+    }
+
     DataStruct *dp  = (DataStruct *)data;
     size_t size     = dp->s;
     Item *items     = dp->i;
     munit_log(MUNIT_LOG_DEBUG, "building tree...");
-    Node *head      = build_tree(items, insert_fast);
+    Node *head      = build_tree(items, ifunc);
     munit_log(MUNIT_LOG_DEBUG, "done building tree.");
 
     key_t leaf_keys[size-1];

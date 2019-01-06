@@ -9,7 +9,6 @@
 
 typedef struct {
     Item *i; key_t *k; DArray_Item *da; size_t s;
-    insert_fptr_t ifunc;
 } DataStruct;
 
 typedef struct {

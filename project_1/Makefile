@@ -11,7 +11,7 @@ TESTDIR 	:= tests/
 OBJDIR		:= obj/
 BINDIR 		:= bin/
 
-SRCFILES 	:= $(shell find $(SRCDIR) \( -name "*.c" -not -name "print_tree.c" \))
+SRCFILES 	:= $(shell find $(SRCDIR) -name "*.c")
 TESTFILES 	:= $(shell find $(TESTDIR) \( -name "*.c" -not -name "mem_test.c" \))
 MEMFILES 	:= $(TESTDIR)mem_test.c
 ALLSRC		:= $(SRCFILES) $(TESTFILES)

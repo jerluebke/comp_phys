@@ -150,7 +150,6 @@ static char *insert_func_ids[] = {
     NULL
 };
 
-
 static MunitParameterEnum quadtree_build_params_1[] = {
     { "setup", quadtree_build_input_1 },
     { "ifunc", insert_func_ids },
@@ -271,7 +270,6 @@ static char *quadtree_neighbours_input_1[] = {
 
 static MunitParameterEnum quadtree_neighbours_params_1[] = {
     { "setup", quadtree_build_input_1 },
-    { "ifunc", insert_func_ids },
     { "input", quadtree_neighbours_input_1 },
     { NULL, NULL }
 };
@@ -286,7 +284,6 @@ static char *quadtree_neighbours_input_2[] = {
 
 static MunitParameterEnum quadtree_neighbours_params_2[] = {
     { "setup", quadtree_build_input_2 },
-    { "ifunc", insert_func_ids },
     { "input", quadtree_neighbours_input_2 },
     { NULL, NULL }
 };

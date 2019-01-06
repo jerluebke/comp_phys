@@ -283,46 +283,46 @@ lvl_t insert_fast( const Node *head, const Item *items )
 }
 
 
-lvl_t insert_simple( const Node *head, const Item *item )
-{
-    key_t sb = 0;
-    lvl_t length;
-    Value c;
-    Node *tmp;
-
-    if ( !Node->c && !Node->i ) {
-        Node->i = item;
-        return 0;
-    }
-
-    assert(head->lvl != maxlvl);
-    c = coords2(head->key << DIM*(maxlvl-head->lvl));
-    length = 256 / pow(2, head->lvl+1);
-    assert(item->val->x < (c->x + 2*length));
-    assert(item->val->y < (c->y + 2*length));
-    sb |= (item->val->x > (c->x + length)) ? 1 : 0;
-    sb |= (item->val->y > (c->y + length)) ? 2 : 0;
-
-    if ( Node->c ) {
-        assert(!Node->i);
-        if ( Node->c[sb] ) {
-            return insert_simple(head->sb[sb], item);
-        } else {
-            tmp = xmalloc(sizeof(Node));        
-            tmp->i = item;
-            tmp->key = (head->key << DIM) | sb;
-            tmp->lvl = head->lvl + 1;
-            tmp->c = NULL;
-            tmp->allocated = 1;
-            head->c[sb] = tmp;
-            return 1;
-        }
-    }
-    else {
-        assert(Node->i);
-        assert(!Node->c);
-    }
-}
+/* lvl_t insert_simple( const Node *head, const Item *item ) */
+/* { */
+/*     key_t sb = 0; */
+/*     lvl_t length; */
+/*     Value c; */
+/*     Node *tmp; */
+/*  */
+/*     if ( !Node->c && !Node->i ) { */
+/*         Node->i = item; */
+/*         return 0; */
+/*     } */
+/*  */
+/*     assert(head->lvl != maxlvl); */
+/*     c = coords2(head->key << DIM*(maxlvl-head->lvl)); */
+/*     length = 256 / pow(2, head->lvl+1); */
+/*     assert(item->val->x < (c->x + 2*length)); */
+/*     assert(item->val->y < (c->y + 2*length)); */
+/*     sb |= (item->val->x > (c->x + length)) ? 1 : 0; */
+/*     sb |= (item->val->y > (c->y + length)) ? 2 : 0; */
+/*  */
+/*     if ( Node->c ) { */
+/*         assert(!Node->i); */
+/*         if ( Node->c[sb] ) { */
+/*             return insert_simple(head->sb[sb], item); */
+/*         } else { */
+/*             tmp = xmalloc(sizeof(Node));         */
+/*             tmp->i = item; */
+/*             tmp->key = (head->key << DIM) | sb; */
+/*             tmp->lvl = head->lvl + 1; */
+/*             tmp->c = NULL; */
+/*             tmp->allocated = 1; */
+/*             head->c[sb] = tmp; */
+/*             return 1; */
+/*         } */
+/*     } */
+/*     else { */
+/*         assert(Node->i); */
+/*         assert(!Node->c); */
+/*     } */
+/* } */
 
 
 /* search - traverse tree until node without children or with given key is found

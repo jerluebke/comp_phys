@@ -48,22 +48,22 @@ typedef struct {                                                            \
 /* DArray_start, DArray_end
  * get pointer to first or end (i.e. one behind last) element of data for
  * c++-style iterating:
- * 
+ *
  *     Iterator *it, *end;
  *     it = DArray_start(da);
  *     end = DArray_end(da);
  *     while ( it != end )
  *         // do something
- * 
+ *
  * Params
  * ======
  * da, DArray *    :   DArray over which to iterate
- * 
+ *
  * Returns
  * =======
  * Iterator * (aka TYPE *, e.g. const Item **) pointing to the Arrays first
  *     or one beyond last element
- * 
+ *
  *  */
 #define DARRAY_START(TYPE, NAME)                                            \
 inline NAME##Iterator *DArray_##NAME##_start(DArray_##NAME *da)             \
