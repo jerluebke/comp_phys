@@ -156,6 +156,7 @@ QuadtreeEnv *qtenv_setup(const unsigned int *in, size_t size, unsigned int *si)
     }
     items = xmalloc(sizeof(Item)*size);
     items = build_morton(vals, items, size);
+    /* sorted indices */
     for ( i = 0; i < size; ++i ) si[i] = items[i].idx;
     head = xmalloc(sizeof(Node));
     head->allocated = 1;

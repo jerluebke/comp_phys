@@ -13,7 +13,7 @@ typedef struct Value Value;
 typedef struct Item Item;
 typedef struct Node Node;
 
-typedef lvl_t (*insert_fptr_t)(const Node *, const Item *);
+typedef lvl_t (*insert_fptr_t)(Node *, const Item *);
 
 DARRAY_TYPEDEF(const Item *, Item)
 DARRAY_TYPEDEF(const Value*, Value)

@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <math.h>
 #include "quadtree.h"
 #include "morton.h"
 
@@ -90,6 +91,27 @@ static inline key_t bap( key_t k, lvl_t j, lvl_t l )
 }
 
 
+static inline Node *make_node( key_t key, const Item *i, lvl_t lvl, Node **c )
+{
+    Node *nn;   /* new node */
+    nn      = xmalloc(sizeof(Node));
+    nn->key = key;
+    nn->i   = i;
+    nn->lvl = lvl;
+    nn->c   = c;
+    nn->allocated = 1;
+    return nn;
+}
+
+
+static inline Node **make_children()
+{
+    Node **c = xmalloc(sizeof(Node *) * NOC);
+    for ( int i = 0; i < NOC; ++i ) c[i] = NULL;
+    return c;
+}
+
+
 /* build_branch
  * build whole branch until the node specified by key is reached, starting
  * at head with a depth of nl
@@ -107,7 +129,7 @@ static inline key_t bap( key_t k, lvl_t j, lvl_t l )
  */
 static Node *build_branch( lvl_t cl, lvl_t nl, const Item *item )
 {
-    lvl_t i, j;
+    lvl_t i;
     Node *nn;   /* new nodes */
 
     nn = xmalloc(sizeof(Node) * nl);
@@ -115,8 +137,7 @@ static Node *build_branch( lvl_t cl, lvl_t nl, const Item *item )
     /* set children references between new Nodes */
     for ( i = 0; i < nl-1; ++i ) {
         /* allocate and init children */
-        nn[i].c = xmalloc(sizeof(Node *) * NOC);
-        for ( j = 0; j < NOC; ++j ) nn[i].c[j] = NULL;
+        nn[i].c = make_children();
 
         /* which direction is the next Node? -> look at x_j, y_j of key,
          * where j = head->lvl + i + 1;
@@ -186,18 +207,9 @@ static void scr( const Node *head, const key_t *suffix, DArray_Item *res )
  *     usage!)
  *
  */
-Node *build_tree( const Item *items, lvl_t (*insert_fptr)(const Node *, const Item *) )
+Node *build_tree( const Item *items, lvl_t (*insert_fptr)(Node *, const Item *) )
 {
-    int i;
-    Node *head;
-
-    head            = xmalloc(sizeof(Node));
-    head->key       = 0;
-    head->lvl       = 0;
-    head->i         = NULL;
-    head->allocated = 1;
-    head->c         = xmalloc(sizeof(Node *) * NOC);
-    for ( i = 0; i < NOC; ++i ) head->c[i] = NULL;
+    Node *head = make_node(0, NULL, 0, make_children());
 
     (*insert_fptr)( head, items );
     while ( !items->last )
@@ -249,7 +261,7 @@ void cleanup( Node *head )
  * lvl_t, number of newly created levels
  *
  */
-lvl_t insert_fast( const Node *head, const Item *items )
+lvl_t insert_fast( Node *head, const Item *items )
 {
     lvl_t nl;           /* number of new levels */
     key_t sb, lcl;      /* significant bits x_i, y_i; lowest common level */
@@ -283,46 +295,56 @@ lvl_t insert_fast( const Node *head, const Item *items )
 }
 
 
-/* lvl_t insert_simple( const Node *head, const Item *item ) */
-/* { */
-/*     key_t sb = 0; */
-/*     lvl_t length; */
-/*     Value c; */
-/*     Node *tmp; */
-/*  */
-/*     if ( !Node->c && !Node->i ) { */
-/*         Node->i = item; */
-/*         return 0; */
-/*     } */
-/*  */
-/*     assert(head->lvl != maxlvl); */
-/*     c = coords2(head->key << DIM*(maxlvl-head->lvl)); */
-/*     length = 256 / pow(2, head->lvl+1); */
-/*     assert(item->val->x < (c->x + 2*length)); */
-/*     assert(item->val->y < (c->y + 2*length)); */
-/*     sb |= (item->val->x > (c->x + length)) ? 1 : 0; */
-/*     sb |= (item->val->y > (c->y + length)) ? 2 : 0; */
-/*  */
-/*     if ( Node->c ) { */
-/*         assert(!Node->i); */
-/*         if ( Node->c[sb] ) { */
-/*             return insert_simple(head->sb[sb], item); */
-/*         } else { */
-/*             tmp = xmalloc(sizeof(Node));         */
-/*             tmp->i = item; */
-/*             tmp->key = (head->key << DIM) | sb; */
-/*             tmp->lvl = head->lvl + 1; */
-/*             tmp->c = NULL; */
-/*             tmp->allocated = 1; */
-/*             head->c[sb] = tmp; */
-/*             return 1; */
-/*         } */
-/*     } */
-/*     else { */
-/*         assert(Node->i); */
-/*         assert(!Node->c); */
-/*     } */
-/* } */
+lvl_t insert_simple( Node *head, const Item *item )
+{
+    key_t sb = 0;
+    lvl_t length, num;
+    Value c;
+    Node *tmp;
+
+    if ( !head->c && !head->i ) {
+        head->i = item;
+        return 0;
+    }
+
+    assert( head->lvl != maxlvl );
+    c = coords2(head->key << DIM*(maxlvl-head->lvl));
+    length = 256 / pow(2, head->lvl+1);
+    sb |= (item->val->x < (c.x + length)) ? 0 : 1;
+    sb |= (item->val->y < (c.y + length)) ? 0 : 2;
+
+    if ( head->c && head->c[sb] ) {    /* i.e. head->i == NULL */
+        assert( !head->i );
+        return insert_simple(head->c[sb], item);
+    }
+
+    tmp = make_node( (head->key << DIM) | sb, item, head->lvl+1, NULL );
+
+    if ( head->c ) {
+        head->c[sb] = tmp;
+        return 1;
+    }
+
+    else {
+        head->c = make_children();
+        head->c[sb] = tmp;
+
+        sb = 0;
+        sb |= (head->i->val->x < (c.x + length)) ? 0 : 1;
+        sb |= (head->i->val->y < (c.y + length)) ? 0 : 2;
+
+        if ( head->c[sb]) {
+            num = 1 + insert_simple(head->c[sb], head->i);
+        } else {
+            tmp = make_node( (head->key << DIM) | sb, item, head->lvl+1, NULL );
+            head->c[sb] = tmp;
+            num = 2;
+        }
+
+        head->i = NULL;
+        return num;
+    }
+}
 
 
 /* search - traverse tree until node without children or with given key is found

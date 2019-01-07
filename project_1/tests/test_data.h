@@ -146,7 +146,7 @@ static char *quadtree_build_input_1[] = {
 };
 
 static char *insert_func_ids[] = {
-    "f",
+    "f", "s",
     NULL
 };
 
