@@ -4,7 +4,7 @@ COFLAGS = -O3
 CGFLAGS = $(shell pkg-config libgvc --cflags)
 LDFLAGS = $(shell pkg-config libgvc --libs) -lm
 TFLAGS  = -I./tests
-DFLAGS  = -g -pg
+DFLAGS  = -g	# -pg
 
 SRCDIR 		:= src/
 TESTDIR 	:= tests/
@@ -30,7 +30,7 @@ test: $(OBJSRC) $(OBJTEST)
 	$(CC) $^ $(LDFLAGS) -o $(TEST)
 
 memtest: $(OBJSRC) $(OBJMEM)
-	$(CC) $^ -lm -o $(MEMTEST)
+	$(CC) $^ $(LDFLAGS) -o $(MEMTEST)
 
 
 $(OBJMEM): $(MEMFILES)

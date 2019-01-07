@@ -1,6 +1,19 @@
-#include "types.h"
-#include "morton.h"
-#include "quadtree.h"
+#include "csearch.h"
+
+void print_num( const Value *val, int n )
+{
+    printf("(%u, %u)\tfound: %d\n", val->x, val->y, n);
+}
+
+#define DO_PRINT 0
+#if DO_PRINT
+#define PRINT_NUM(v, n) print_num(v, n);
+#define PRINT_INFO(s) printf("\n\n"#s"\nquery\tfound\n");
+#else
+#define PRINT_NUM(v, n)
+#define PRINT_INFO(s)
+#endif
+
 
 #define SQUARE(x) (x)*(x)
 #define SD(v, w, a) SQUARE((v)->a - (w)->a)         /* squared difference */
@@ -24,16 +37,18 @@ static int search_##TYPE( Value *query, DArray_##TYPE *vals, double r_sq,   \
     return num;                                                             \
 }
 
+#define EMPTY
 #define CHECK_QUERY if (*it==query) continue;
 #define VALUE_ACCESS ->val
-SEARCH_FUNC(Value, CHECK_QUERY,)
-SEARCH_FUNC(Item,, VALUE_ACCESS)
+SEARCH_FUNC(Value, CHECK_QUERY, EMPTY)
+SEARCH_FUNC(Item, EMPTY, VALUE_ACCESS)
 
 
 #define SEARCH_SETUP(NAME, TYPE, DECL, INIT, PREP, PARAM, FREE)             \
 void search_##NAME( const unsigned int *in, size_t size, double r_sq )      \
 {                                                                           \
     size_t i, j;                                                            \
+    int n;                                                                  \
     Value *vals;                                                            \
     DECL                                                                    \
     DArray_##TYPE tmp, res;                                                 \
@@ -44,10 +59,12 @@ void search_##NAME( const unsigned int *in, size_t size, double r_sq )      \
     }                                                                       \
     INIT                                                                    \
     DArray_##TYPE##_init(&res, 8);                                          \
+    PRINT_INFO(NAME)                                                        \
     for ( i = 0; i < size; ++i ) {                                          \
         res._used = 0;                                                      \
         PREP                                                                \
-        search_##TYPE(PARAM, &tmp, r_sq, &res);                             \
+        n = search_##TYPE(PARAM, &tmp, r_sq, &res);                         \
+        PRINT_NUM(PARAM, n)                                                 \
     }                                                                       \
     FREE                                                                    \
     DArray_##TYPE##_free(&res);                                             \
@@ -67,6 +84,7 @@ void search_##NAME( const unsigned int *in, size_t size, double r_sq )      \
 #define FAST_PARAM (Value *)items[i].val
 #define FAST_FREE           \
     DArray_Item_free(&tmp); \
+    cleanup(head);          \
     free(items);
 
 SEARCH_SETUP(fast, Item, FAST_DECL, FAST_INIT(insert_simple), FAST_PREP,
@@ -75,11 +93,15 @@ SEARCH_SETUP(fastfast, Item, FAST_DECL, FAST_INIT(insert_fast), FAST_PREP,
         FAST_PARAM, FAST_FREE)
 
 
-#define SIMPLE_INIT \
-    tmp = (DArray_Value) { (const Value **)&vals, size, size };
+#define SIMPLE_INIT                 \
+    DArray_Value_init(&tmp, size);  \
+    for ( i = 0; i < size; ++i )    \
+        tmp.p[i] = &vals[i];        \
+    tmp._used = size;
 #define SIMPLE_PARAM &vals[i]
+#define SIMPLE_FREE DArray_Value_free(&tmp);
 
-SEARCH_SETUP(naive, Value, , SIMPLE_INIT, , SIMPLE_PARAM, )
+SEARCH_SETUP(naive, Value, EMPTY, SIMPLE_INIT, EMPTY, SIMPLE_PARAM, SIMPLE_FREE)
 
 
 
@@ -141,6 +163,5 @@ void search_fast( const unsigned int *in, size_t size, double r_sq )
     free(vals);
 }
 #endif
-
 
 /* vim: set ff=unix tw=79 sw=4 ts=4 et ic ai : */
