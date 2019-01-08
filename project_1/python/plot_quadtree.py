@@ -35,11 +35,11 @@ cl = ["gray"]*64
 s = ax.scatter(x, d, c='gray', s=200, marker='1', lw=2, zorder=3)
 ax.set_title("raw data")
 ax.set(xlim=(0, 1), ylim=(0, 1))
-plt.savefig(FILENAMETEMPLATE % 0 , dpi=300, format='png')
+#  plt.savefig(FILENAMETEMPLATE % 0 , dpi=300, format='png')
 ax.plot(x[si], d[si], c='gray', lw=1, zorder=1)
 ax.set_title("morton curve")
 ax.set(xlim=(0, 1), ylim=(0, 1))
-plt.savefig(FILENAMETEMPLATE % 1, dpi=300, format='png')
+#  plt.savefig(FILENAMETEMPLATE % 1, dpi=300, format='png')
 
 linekwargs = dict(c = 'black', lw = 1, zorder = 2)
 
@@ -57,7 +57,7 @@ for i in range(1, 64):
             ax.add_line(h)
             ax.add_line(v)
         #  fig.draw()
-        plt.savefig(FILENAMETEMPLATE % (i+1), dpi=300, format='png')
+        #  plt.savefig(FILENAMETEMPLATE % (i+1), dpi=300, format='png')
     except StopIteration:
         break
 

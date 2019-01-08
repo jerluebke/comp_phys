@@ -104,7 +104,7 @@ static inline Node *make_node( key_t key, const Item *i, lvl_t lvl, Node **c )
 }
 
 
-static inline Node **make_children()
+static inline Node **make_children( void )
 {
     Node **c = xmalloc(sizeof(Node *) * NOC);
     for ( int i = 0; i < NOC; ++i ) c[i] = NULL;
@@ -450,7 +450,7 @@ void find_neighbours( key_t key, Node *head, DArray_Item *res )
             tkey    = tmp->i->key;
             it      = DArray_Item_start(res);
             end     = DArray_Item_end(res);
-            while ( *it && tkey != (*it)->key && ++it != end )
+            while ( res->_used && *it && tkey != (*it)->key && ++it != end )
                 ;
             /* if it < end, the element was already found previously */
             if ( it == end )

@@ -11,7 +11,7 @@ TESTDIR 	:= tests/
 OBJDIR		:= obj/
 BINDIR 		:= bin/
 
-SRCFILES 	:= $(shell find $(SRCDIR) -name "*.c")
+SRCFILES 	:= $(shell find $(SRCDIR) \( -name "*.c" -not -name "cvisualise.c" \))
 TESTFILES 	:= $(shell find $(TESTDIR) \( -name "*.c" -not -name "mem_test.c" \))
 MEMFILES 	:= $(TESTDIR)mem_test.c
 ALLSRC		:= $(SRCFILES) $(TESTFILES)
@@ -23,14 +23,18 @@ ALLOBJ		:= $(OBJSRC) $(OBJTEST) $(OBJVISUAL) $(OBJMEM)
 
 TEST		:= $(BINDIR)test.out
 MEMTEST		:= $(BINDIR)mem_test.out
+TIMEIT 		:= $(BINDIR)timeit.out
 ALLBIN 		:= $(TEST) $(MEMTEST)
 
 
 test: $(OBJSRC) $(OBJTEST)
-	$(CC) $^ $(LDFLAGS) -o $(TEST)
+	$(CC) $^ -lm -o $(TEST)
 
 memtest: $(OBJSRC) $(OBJMEM)
-	$(CC) $^ $(LDFLAGS) -o $(MEMTEST)
+	$(CC) $^ -lm -o $(MEMTEST)
+
+timeit: $(OBJSRC)
+	$(CC) $^ -lm -o $(TIMEIT)
 
 
 $(OBJMEM): $(MEMFILES)

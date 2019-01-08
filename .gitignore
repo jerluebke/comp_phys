@@ -18,6 +18,8 @@ __pycache__
 *.fls
 *.pygtex
 *.pygstyle
+visualise.c
+search.c
 
 build
 lib
@@ -26,7 +28,6 @@ obj
 bin
 cython_debug
 key.file
-python/*.c
 
 .ycm_extra_conf.py
 *.taghl
