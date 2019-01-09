@@ -19,7 +19,6 @@ __pycache__
 *.pygtex
 *.pygstyle
 visualise.c
-search.c
 
 build
 lib

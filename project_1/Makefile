@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS 	= -Wall -Wextra -pedantic -std=c11 -I./include
-COFLAGS = -O3 -DNDEBUG
+COFLAGS = -O2 -DNDEBUG
 CGFLAGS = $(shell pkg-config libgvc --cflags)
 LDFLAGS = $(shell pkg-config libgvc --libs)
 TFLAGS  = -I./tests
@@ -12,18 +12,18 @@ OBJDIR		:= obj/
 BINDIR 		:= bin/
 
 SRCFILES 	:= $(shell find $(SRCDIR) \( -name "*.c" -not -name "cvisualise.c" \))
-TESTFILES 	:= $(shell find $(TESTDIR) \( -name "*.c" -not -name "mem_test.c" -not -name "timeit.c" \))
+TESTFILES 	:= $(shell find $(TESTDIR) \( -name "*.c" -not -name "timeit.c" \))
 TIMEITFILES := $(TESTDIR)timeit.c
 ALLSRC		:= $(SRCFILES) $(TESTFILES)
 
 OBJSRC 		:= $(patsubst $(SRCDIR)%.c, $(OBJDIR)%.o, $(SRCFILES))
 OBJTEST 	:= $(patsubst $(TESTDIR)%.c, $(OBJDIR)%.o, $(TESTFILES))
 OBJTIME		:= $(OBJDIR)timeit.o
-ALLOBJ		:= $(OBJSRC) $(OBJTEST) $(OBJMEM) $(OBJTIME)
+ALLOBJ		:= $(OBJSRC) $(OBJTEST) $(OBJTIME)
 
 TEST		:= $(BINDIR)test.out
 TIMEIT 		:= $(BINDIR)timeit.out
-ALLBIN 		:= $(TEST) $(MEMTEST) $(TIMEIT)
+ALLBIN 		:= $(TEST) $(TIMEIT)
 
 
 test: $(OBJSRC) $(OBJTEST)
@@ -37,7 +37,8 @@ $(OBJTIME): $(TIMEITFILES)
 	$(CC) $(CFLAGS) $(COFLAGS) -c $< -o $@
 
 $(OBJDIR)%.o: $(SRCDIR)%.c
-	$(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(COFLAGS) -c $< -o $@
+	# $(CC) $(CFLAGS) $(DFLAGS) -c $< -o $@
 
 $(OBJDIR)%.o: $(TESTDIR)%.c
 	$(CC) $(CFLAGS) $(DFLAGS) $(TFLAGS) -c $< -o $@
