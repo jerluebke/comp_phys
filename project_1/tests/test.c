@@ -118,8 +118,8 @@ test_quadtree_build(const MunitParameter params[], void *data)
     insert_fptr_t ifunc;
     const char *ifunc_str = munit_parameters_get(params, "ifunc");
     switch ( ifunc_str[0] ) {
-        case 'f': ifunc = insert_fast; break;
-        case 's': ifunc = insert_simple;
+        case 's': ifunc = insert_simple; break;
+        default : ifunc = insert_fast;  /* f */
     }
 
     DataStruct *dp  = (DataStruct *)data;

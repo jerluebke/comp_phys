@@ -91,6 +91,20 @@ static inline key_t bap( key_t k, lvl_t j, lvl_t l )
 }
 
 
+/* make_node
+ * construct a new Node-instance and return its pointer
+ *
+ * Params
+ * ======
+ * key, key_t      :    key of new Node
+ * i, Item *       :    item to store in item (or NULL)
+ * lvl, lvl_t      :    level of new Node
+ * c, Node **      :    children (or NULL)
+ *
+ * Returns
+ * =======
+ * Node * to newly created object
+ */
 static inline Node *make_node( key_t key, const Item *i, lvl_t lvl, Node **c )
 {
     Node *nn;   /* new node */
@@ -104,6 +118,13 @@ static inline Node *make_node( key_t key, const Item *i, lvl_t lvl, Node **c )
 }
 
 
+/* make_children
+ * allocate memory for children of Node and initialise each one to NULL
+ *
+ * Returns
+ * =======
+ * Node ** to alloc'd memory (pointer to array)
+ */
 static inline Node **make_children( void )
 {
     Node **c = xmalloc(sizeof(Node *) * NOC);
@@ -172,6 +193,8 @@ static Node *build_branch( lvl_t cl, lvl_t nl, const Item *item )
  * head, Node*         :   node at which to start searching
  * suffix, key_t *     :   relevant search directions, terminated by 0xDEAD
  * res, DArray_Item *  :   Array in which to write result
+ *
+ * TODO: is there a more elegant way of implementing this function?
  *
  */
 static void scr( const Node *head, const key_t *suffix, DArray_Item *res )
@@ -295,6 +318,8 @@ lvl_t insert_fast( Node *head, const Item *items )
 }
 
 
+/* TODO: is broken for large inputs
+ */
 lvl_t insert_simple( Node *head, const Item *item )
 {
     key_t sb = 0;
@@ -319,16 +344,12 @@ lvl_t insert_simple( Node *head, const Item *item )
     }
 
     tmp = make_node( (head->key << DIM) | sb, item, head->lvl+1, NULL );
-
     if ( head->c ) {
         head->c[sb] = tmp;
         return 1;
-    }
-
-    else {
+    } else {
         head->c = make_children();
         head->c[sb] = tmp;
-
         sb = 0;
         sb |= (head->i->val->x < (c.x + length)) ? 0 : 1;
         sb |= (head->i->val->y < (c.y + length)) ? 0 : 2;
@@ -419,6 +440,7 @@ void find_neighbours( key_t key, Node *head, DArray_Item *res )
     /* iterate over directions left, right, top and bottom */
     for ( i = 0; i < 4; ++i ) {
         /* if node is on boundary: skip */
+        /* TODO: there is probably a more elegant way of doing this...  */
         if ( (c->key & bnds[i][0]) == (bnds[i][1] >> 2*(maxlvl - c->lvl)) ) {
             flag |= 1 << i;
             continue;
@@ -450,8 +472,8 @@ void find_neighbours( key_t key, Node *head, DArray_Item *res )
             tkey    = tmp->i->key;
             it      = DArray_Item_start(res);
             end     = DArray_Item_end(res);
-            while ( res->_used && *it && tkey != (*it)->key && ++it != end )
-                ;
+            while ( it != end && /* *it && */ tkey != (*it)->key )
+                ++it;
             /* if it < end, the element was already found previously */
             if ( it == end )
                 DArray_Item_append(res, tmp->i);
