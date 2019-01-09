@@ -1,4 +1,5 @@
-\begin{tikzpicture}[scale=\textwidth/12cm]
+\begin{tikzpicture}[scale=\textwidth/12cm, line width=.5mm,
+    morton/.style={every path/.style={draw=red}}]
     \def\A{\LARGE{\textcolor{blue}{$(5, 2)$}}}
     \def\B{\LARGE{\textcolor{blue}{$(6, 5)$}}}
     \def\C{\LARGE{\textcolor{blue}{$(5, 6)$}}}
@@ -25,6 +26,7 @@
         \draw (\p,0) node[anchor=north west] {\LARGE{$\p$}};
     }
 
+    \begin{scope}[morton]
     \draw (A) -- (B);
     \draw (B) -- (C);
     \draw (C) -- (D);
@@ -32,6 +34,7 @@
     \draw (E) -- (F);
     \draw (F) -- (G);
     \draw (G) -- (H);
+    \end{scope}
 
     \foreach \point in {A, B, C, D, E, F, G, H}
         \fill [black] (\point) circle (3pt);

@@ -1,9 +1,12 @@
 %! TEX program = lualatex
-\documentclass{beamer}
+\documentclass[mathserif]{beamer}
+\usepackage{amsmath}
 \usepackage{animate}
 \usepackage{graphicx}
-\graphicspath{{D:/source/repos/computational_physics/project_1/python/data/}}
+    \graphicspath{{D:/source/repos/computational_physics/project_1/latex/img/}}
 \usepackage{ifthen}
+\usepackage[outputdir=latex_build]{minted}
+    \usemintedstyle{friendly}
 \usepackage{tikz}
 \usetikzlibrary{backgrounds,graphs,graphdrawing,shapes.geometric}
 \usegdlibrary{trees}
@@ -51,7 +54,7 @@
 \tikzstyle{branch} = [%
     circle,
     draw,
-    fill=gray!30
+    % fill=gray!30
 ]
 
 \tikzstyle{null} = [%
@@ -80,84 +83,71 @@
 ]
 
 
+\setcounter{section}{-1}
+\renewcommand{\theequation}{\arabic{section}.\arabic{equation}}
+\newcommand{\bb}{0\textrm{b}}
+\newcommand{\xx}{0\textrm{x}}
+\newcommand{\AND}{\textrm{\textbf{ \& }}}
+\newcommand{\OR}{\textrm{\textbf{\textbar }}}
+\newcommand{\XOR}{\textrm{\textbf{ \^{} }}}
+
+
+\title{Nearest Neighbour Search using Quadtrees}
+\author{Jeremiah Lübke}
+\date{\today}
+\subject{Data Structures and Algorithms}
+
+
 \begin{document}
 
-\begin{frame}
-    \frametitle{Morton curve}
-    \textit{TODO: insert image from wikipedia}
-\end{frame}
-
+\frame{\titlepage}
 
 \begin{frame}
-    \resizebox{\textwidth}{!}{%
-        \input{tikz/abb2.tex}
-    }
+    \frametitle{Table of Contents}
+    \tableofcontents
 \end{frame}
 
+\input{slides/motivation.tex}
 
-\begin{frame}
-    \resizebox{\textwidth}{!}{%
-        \input{tikz/abb3.tex}
-    }
-\end{frame}
+\input{slides/morton.tex}
 
+\input{slides/quadtree.tex}
 
-\begin{frame}
-    \resizebox{\textwidth}{!}{%
-        \input{tikz/abb4i.tex}
-    }
-\end{frame}
+\setcounter{equation}{0}
+\input{slides/implementation.tex}
+
+\input{slides/nearest_neighbours.tex}
 
 
-\begin{frame}
-    \resizebox{\textwidth}{!}{%
-        \input{tikz/abb4ii.tex}
-    }
-\end{frame}
 
+% \begin{frame}
+%     \frametitle{space seperation animation}
+%     \begin{center}
+%         \animategraphics[%
+%             draft,
+%             % every=3,
+%             type=png,
+%             width=.99 \textwidth,
+%             controls={play,step,stop},
+%             buttonsize=10pt
+%         ]{3}{plots/out-}{000}{064}
+%     \end{center}
+% \end{frame}
 
-\begin{frame}
-\begin{animateinline}[%
-    controls={step},
-    buttonsize=10pt
-]{1}
-    \multiframe{4}{i=1+1}{%
-        \resizebox{\textwidth}{!}{%
-            \input{tikz/abb5.tex}
-        }
-    }
-\end{animateinline}
-\end{frame}
-
-
-\begin{frame}
-    \frametitle{space seperation animation}
-    \begin{center}
-        \animategraphics[%
-            draft,
-            % every=3,
-            type=png,
-            width=.99 \textwidth,
-            controls={play,step,stop},
-            buttonsize=10pt
-        ]{3}{plots/out-}{000}{064}
-    \end{center}
-\end{frame}
-
-
-\begin{frame}
-    \frametitle{quadtree construction}
-    \begin{center}
-        \animategraphics[%
-            draft,
-            % every=3,
-            type=png,
-            width=\textwidth,
-            controls={play,step,stop},
-            buttonsize=10pt
-        ]{3}{graphs/extent_out-}{001}{063}
-    \end{center}
-\end{frame}
+%
+% \begin{frame}
+%     \frametitle{quadtree construction}
+%     \begin{center}
+%         \animategraphics[%
+%             draft,
+%             % every=3,
+%             type=png,
+%             width=\textwidth,
+%             controls={play,step,stop},
+%             buttonsize=10pt
+%         ]{3}{graphs/extent_out-}{001}{063}
+%     \end{center}
+% \end{frame}
 
 
 \begin{frame}
@@ -205,54 +195,54 @@
 \end{frame}
 
 
-\begin{frame}
-\begin{tikzpicture} [tree layout]
-\graph {%
-    ROOT [rn] -- {[fresh nodes]
-        / [branch] -- {A [neighbour]}, / [branch] -- {%
-            B [query], C [branch], D [neighbour]
-        },
-        E [neighbour], / [branch] -- {%
-            F [branch], G [branch], H [branch]
-        }
-    }
-};
-\end{tikzpicture}
-\end{frame}
-
-
-\begin{frame}
-\begin{tikzpicture} [tree layout]
-\graph {%
-    ROOT [rn] -- {[fresh nodes]
-        / [candidate] -- {A [branch], / [branch] -- {%
-                B [branch], C [branch], D [branch]
-            }
-        },
-        E [query], / [candidate] -- {%
-            F [branch], G [branch], H [branch]
-        }
-    }
-};
-\end{tikzpicture}
-\end{frame}
-
-
-\begin{frame}
-\begin{tikzpicture} [tree layout]
-\graph {%
-    ROOT [rn] -- {[fresh nodes]
-        / [branch] -- {A [neighbour]}, / [branch] -- {%
-            B [neighbour], C [branch], D [neighbour]
-        },
-        E [query], / [branch] -- {%
-            F [neighbour], G [neighbour], H [branch]
-        }
-    }
-};
-\end{tikzpicture}
-\end{frame}
-
+% \begin{frame}
+% \begin{tikzpicture} [tree layout]
+% \graph {%
+%     ROOT [rn] -- {[fresh nodes]
+%         / [branch] -- {A [neighbour]}, / [branch] -- {%
+%             B [query], C [branch], D [neighbour]
+%         },
+%         E [neighbour], / [branch] -- {%
+%             F [branch], G [branch], H [branch]
+%         }
+%     }
+% };
+% \end{tikzpicture}
+% \end{frame}
+%
+%
+% \begin{frame}
+% \begin{tikzpicture} [tree layout]
+% \graph {%
+%     ROOT [rn] -- {[fresh nodes]
+%         / [candidate] -- {A [branch], / [branch] -- {%
+%                 B [branch], C [branch], D [branch]
+%             }
+%         },
+%         E [query], / [candidate] -- {%
+%             F [branch], G [branch], H [branch]
+%         }
+%     }
+% };
+% \end{tikzpicture}
+% \end{frame}
+%
+%
+% \begin{frame}
+% \begin{tikzpicture} [tree layout]
+% \graph {%
+%     ROOT [rn] -- {[fresh nodes]
+%         / [branch] -- {A [neighbour]}, / [branch] -- {%
+%             B [neighbour], C [branch], D [neighbour]
+%         },
+%         E [query], / [branch] -- {%
+%             F [neighbour], G [neighbour], H [branch]
+%         }
+%     }
+% };
+% \end{tikzpicture}
+% \end{frame}
+%
 \end{document}
 
 % vim: set ff=unix tw=79 sw=4 ts=4 et ic ai :

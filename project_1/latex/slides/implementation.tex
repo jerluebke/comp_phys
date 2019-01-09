@@ -1,0 +1,128 @@
+\section{Implementation}
+\subsection{Structures}
+\begin{frame}[fragile]
+    \frametitle{Implementation}
+    \textbf{Structures}
+    \begin{minted}[linenos,tabsize=4]{c}
+struct node_t {
+    uint16_t key;
+    item_t *item;
+    uint8_t level;
+    node_t *children[];
+};
+
+struct item_t {
+    uint16_t key;
+    /* content of item...
+     * e.g. coordinates, mass, size, etc. */
+    bool is_last;
+};
+    \end{minted}
+\end{frame}
+
+\begin{frame}
+    \textbf{Notes:}
+    \begin{itemize}
+        \item struct -- summary of arbitrary datatypes to a new type \\
+        \item uint16\_t -- type unsigned int, 16 bit wide \\
+        \item *something -- adresse of something (pointer) \\
+        \item *something[] -- array of pointers
+        \item accessesing members of a struct: struct.member,
+            struct\_ptr-->member
+    \end{itemize}
+\end{frame}
+
+
+\subsection{Inserting}
+\begin{frame}
+    \textbf{Inserting new values - the idea}
+    \begin{itemize}
+        \item Items with common parent node are neighbours on the morton curve
+            $\implies$ calculate parent node of current and next item \\
+        \item If that parent node does not exist, build all nodes - starting from
+            the last existing one - including the parent node plus one child
+            for the current item
+    \end{itemize}
+    \textbf{Advantage:} Fast building of the tree without reinserting items
+\end{frame}
+
+\begin{frame}
+    \textbf{How does one calculate the parent node?} \\
+    When comparing two keys, we are interested in the position of the first
+    different bit. This gives the level at which the two items do not share
+    the same branch anymore.
+
+    \noindent\rule{\textwidth}{1pt}
+
+    \textbf{Example:} item[0].coords $= (5, 6)$, item[1].coords $= (6, 5)$ \\
+    \begin{align}
+        \begin{split}
+            w = \textrm{item[0].key} \XOR \textrm{item[1].key} =& \bb00111001 \\
+            \XOR& \bb00110101 \\
+            =& \bb00001100 = 12
+        \end{split}
+    \end{align}
+    \begin{equation}
+        \textrm{level of common parent} =
+        \textrm{maxlevel}-\frac{\lfloor \log_2\left(w\right)
+        \rfloor}{\textrm{dim}} = 2
+    \end{equation}
+    {\small\textit{(here: maxlevel=4, dim=2)}}
+\end{frame}
+
+\begin{frame}[fragile]
+    \textbf{Inserting new values - the code}
+    \begin{minted}[linenos,breaklines,tabsize=4]{c}
+uint8_t insert( node_t *head, item_t items[] )
+{
+    uint8_t new_levels;
+    uint16_t significant_bit, level_of_common_parent;
+    significant_bit = bits_at_position( items[0].key, head->level+1 );
+
+    if ( head->children[significant_bit] != NULL ) {
+        return insert( head->children[significant_bit], items );
+    }
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+    \textit{cont\dots}
+    \begin{minted}[linenos,firstnumber=10,breaklines,tabsize=4]{c}
+    else {
+        if ( items[0].is_last )
+            level_of_common_parent = 0;
+        else
+            level_of_common_parent = \
+                maxlevel - log( items[0].key ^ items[1].key ) / 2;
+
+        new_levels = level_of_common_parent - head->level;
+        if ( new_levels <= 0 )
+            new_levels = 1;
+        head->children[significant_bit] = \
+            build_branch( head->level+1, new_levels, &items[0] );
+
+        return new_levels;
+    }
+}
+    \end{minted}
+\end{frame}
+
+
+\subsection{Searching}
+\begin{frame}[fragile]
+    \textbf{Searching for an item}
+    \begin{minted}[linenos,tabsize=4]{c}
+node_t *search( uint16_t key, node_t *head )
+{
+    uint16_t significant_bit;
+    significant_bit = bits_at_position( key, head->level+1 );
+    while ( head->children != NULL
+            && head->children[significant_bit] != NULL
+            && key != head->key ) {
+        head = head->children[significant_bit];
+        significant_bit = bits_at_position( key, head->level+1 );
+    }
+    return head;
+}
+    \end{minted}
+\end{frame}

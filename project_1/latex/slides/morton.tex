@@ -1,0 +1,142 @@
+\section{The Morton Curve}
+\subsection{Morton Keys}
+\begin{frame}
+    \frametitle{Morton Keys}
+    2D cartesian coordinates in binary representation:
+    \begin{equation}
+        \left( x, y \right) = \left( \bb x_n \cdots x_2 x_1, \bb y_n \cdots
+        y_2, y_1 \right)
+    \end{equation}
+    Interleaving and shuffeling their components yields the \textbf{Morton Key}
+    of the coordinate pair $z$:
+    \begin{equation}
+        \begin{array} {c|c c c c c c c c c}
+            x & & x_n & & x_{n-1} & \cdots & & x_2 & & x_1 \\
+            y & y_n & & y_{n-1} & & \cdots & y_2 & & y_1 \\
+            \hline
+            z & y_n & x_n & y_{n-1} & x_{n-1} & \cdots & y_2 & x_2 & y_1 & x_1
+        \end{array}
+    \end{equation}
+    \textbf{Example:}
+    $\left( 5, 6 \right)=\left(\bb 0 1 0 1, \bb 0 1 1 0\right)$
+    \begin{equation}
+        \begin{array} {c|c c c c c c c c c}
+            x & & 0 & & 1 & & 0 & & 1 \\
+            y & 0 & & 1 & & 1 & & 0 \\
+            \hline
+            z & 0 & 0 & 1 & 1 & 1 & 0 & 0 & 1
+        \end{array}
+    \end{equation}
+    $\implies\boxed{z=\bb00111001=\xx39=57}$
+\end{frame}
+
+\subsection{Morton Curve}
+\begin{frame}
+    \frametitle{Morton Curve}
+    \textbf{Construction:}
+    \begin{itemize}
+        \item Calculate morton key $\forall \left(x, y\right)$ \\
+        \item Sort them \\
+        \item Draw a line from point to point in the order of the sorted morton
+            keys
+    \end{itemize}
+    \textbf{Properties:}
+    \begin{itemize}
+        \item Space filling \\
+        \item Proximity on the morton curve $\implies$ Spatial proximity
+            ($\nLeftarrow$)
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    \begin{figure}
+        \centering
+        \includegraphics[width=.8\textwidth]{Z-curve.png}
+        \caption{General morton curve, source: Wikipedia}
+    \end{figure}
+\end{frame}
+
+\begin{frame}
+    \begin{figure}
+        \centering
+        \resizebox{.8\textwidth}{!}{%
+            \input{tikz/morton_curve.tex}
+        }
+        \caption{Simple morton curve for small set of points}
+    \end{figure}
+\end{frame}
+
+\subsection{Neighbours}
+\begin{frame}
+    \frametitle{Finding Neighbours on the Morton Curve}
+    How does one find the neighbours of a given point based on its morton key?
+    \\ (Here we are using 8-bit keys $\implies x, y = 0, \dots, 15 = 2^4-1$)
+    \begin{align}
+        \textrm{\textbf{left}}\left(z\right) =& \left(\left(\left(
+            z \AND \bb01010101 \right) - 1 \right) \AND \bb01010101 \right)
+            \nonumber \\
+            &\;\,\OR \left( z \AND \bb10101010 \right)
+    \end{align}
+    \textbf{Example:} $\left( 5, 6 \right) = \bb00111001$
+    \begin{align}
+        \begin{array}{c c c}
+            w :=& z \AND \bb01010101 &= \bb00010001 \\
+            w :=& w - 1 &= \bb00010000 \\
+            w :=& w \AND \bb01010101 &= \bb00010000 \\
+            \tilde{w} :=& z \AND \bb10101010 &= \bb00101000 \\
+            & w \OR \widetilde{w} &= \bb00111000
+        \end{array} \\
+        \begin{array}{c | c c c c c c c c}
+            z & 0 & 0 & 1 & 1 & 1 & 0 & 0 & 0 \\
+            \hline
+            x & & 0 & & 1 & & 0 & & 0 \\
+            y & 0 & & 1 & & 1 & & 0 \\
+        \end{array}
+        \implies \boxed{\textrm{left}\left(\left(5, 6\right)\right) =
+        \left(4, 6\right)}
+    \end{align}
+\end{frame}
+
+\begin{frame}
+    \begin{align}
+        \textrm{\textbf{right}}\left(z\right) =& \left(\left(\left(
+            z \OR \bb10101010 \right) + 1 \right) \AND \bb01010101 \right)
+            \nonumber \\
+            &\;\,\OR \left( z \AND \bb10101010 \right)
+    \end{align}
+    \textbf{Example:} $\left( 5, 6 \right) = \bb00111001$
+    \begin{align}
+        \begin{array}{c c c}
+            w :=& z \OR \bb10101010 &= \bb10111011 \\
+            w :=& w + 1 &= \bb10111100 \\
+            w :=& w \AND \bb01010101 &= \bb00010100 \\
+            \tilde{w} :=& z \AND \bb10101010 &= \bb00101000 \\
+            & w \OR \widetilde{w} &= \bb00111100
+        \end{array} \\
+        \begin{array}{c | c c c c c c c c}
+            z & 0 & 0 & 1 & 1 & 1 & 1 & 0 & 0 \\
+            \hline
+            x & & 0 & & 1 & & 1 & & 0 \\
+            y & 0 & & 1 & & 1 & & 0 \\
+        \end{array}
+        \implies \boxed{\textrm{left}\left(\left(5, 6\right)\right) =
+        \left(6, 6\right)}
+    \end{align}
+\end{frame}
+
+\begin{frame}
+    \begin{align}
+        \textrm{\textbf{top}}\left(z\right) =& \left(\left(\left(z \AND
+        \bb10101010 \right) -1 \right) \AND \bb10101010 \right)
+        \nonumber \\
+        &\;\,\OR \left( z \AND
+        \bb01010101 \right)
+    \end{align}
+    \begin{align}
+        \textrm{\textbf{bottom}}\left(z\right) =& \left(\left(\left(z \OR
+        \bb01010101 \right) +1 \right) \AND \bb10101010 \right)
+        \nonumber \\
+        &\;\,\OR \left( z \AND
+        \bb01010101 \right)
+    \end{align}
+\end{frame}

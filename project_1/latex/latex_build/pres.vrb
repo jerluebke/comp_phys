@@ -1,0 +1,15 @@
+\textbf{Searching for an item}
+    \begin{minted}[linenos,tabsize=4]{c}
+node_t *search( uint16_t key, node_t *head )
+{
+    uint16_t significant_bit;
+    significant_bit = bits_at_position( key, head->level+1 );
+    while ( head->children != NULL
+            && head->children[significant_bit] != NULL
+            && key != head->key ) {
+        head = head->children[significant_bit];
+        significant_bit = bits_at_position( key, head->level+1 );
+    }
+    return head;
+}
+    \end{minted}

@@ -1,0 +1,28 @@
+\section{Nearest Neighbours}
+\begin{frame}
+    \frametitle{Nearest Neighbours}
+    \textbf{putting it all together\dots}
+    \begin{itemize}
+        \item for each item: calculate morton key \\
+        \item for a given query point: calculate neighbour candidates on morton
+            curve \\
+        \item for each candidate: \\
+        \begin{itemize}
+            \item is the candidate on a boundary? If yes, continue with next \\
+            \item search the candidate's node in the tree $\implies$ 3 cases \\
+            \begin{enumerate}
+                \item candidate exists and is end node \textrightarrow take as
+                    neighbour and continue \\
+                \item candidate doesn't exist \textrightarrow take last
+                    existing parent node as neighbour and continue \\
+                \item candidate exists and has further children \textrightarrow
+                    search its children recursively, facing in the direction of
+                    the query point
+            \end{enumerate}
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+    
+\end{frame}
