@@ -1,0 +1,120 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{mathtools}
+\usepackage{xcolor}
+
+\newcommand{\ws}[1]{\qquad #1}
+\newcommand{\bb}{0\textrm{b}}
+\newcommand{\AND}{\textrm{\textbf{ \& }}}
+\newcommand{\OR}{\textrm{\textbf{\textbar }}}
+\newcommand{\XOR}{\textrm{\textbf{ \^{} }}}
+
+\begin{document}
+
+\begin{subequations}
+    \begin{align}
+    \left( x, y \right) = \left( \bb x_n \cdots x_2 x_1, \bb y_n \cdots y_2,
+    y_1 \right) \\
+    \begin{array} {c|c c c c c c c c c}
+        x & & x_n & & x_{n-1} & \cdots & & x_2 & & x_1 \\
+        y & y_n & & y_{n-1} & & \cdots & y_2 & & y_1 \\
+    \hline
+    z & y_n & x_n & y_{n-1} & x_{n-1} & \cdots & y_2 & x_2 & y_1 & x_1
+    \end{array}
+    \end{align}
+\end{subequations}
+
+\begin{subequations}
+    \begin{align}
+    \left( 5, 6 \right) = \left( \bb 0 1 0 1, \bb 0 1 1 0 \right) \\
+    \begin{array} {c|c c c c c c c c c}
+        x & & 0 & & 1 & & 0 & & 1 \\
+        y & 0 & & 1 & & 1 & & 0 \\
+    \hline
+    z & 0 & 0 & 1 & 1 & 1 & 0 & 0 & 1
+    \end{array}
+    \end{align}
+\end{subequations}
+
+\begin{subequations}
+    \begin{align}
+        \boxed{%
+        \textrm{left}\left(z\right) = \left(\left(\left(
+            z \AND \bb01010101 \right) - 1 \right) \AND \bb01010101 \right)
+            \OR \left( z \AND \bb10101010 \right)
+        }\\
+            \begin{array}{c c c}
+                & \boxed{\left( 5, 6 \right) = \bb00111001} & \\
+                w :=& z \AND \bb01010101 &= \bb00010001 \\
+                w :=& w - 1 &= \bb00010000 \\
+                w :=& w \AND \bb01010101 &= \bb00010000 \\
+                \tilde{w} :=& z \AND \bb10101010 &= \bb00101000 \\
+                & w \OR \widetilde{w} &= \bb00111000
+            \end{array} \\
+            \begin{array}{c | c c c c c c c c}
+                z & 0 & 0 & 1 & 1 & 1 & 0 & 0 & 0 \\
+                \hline
+                x & & 0 & & 1 & & 0 & & 0 \\
+                y & 0 & & 1 & & 1 & & 0 \\
+            \end{array}
+            \implies \boxed{\textrm{left}\left(\left(5, 6\right)\right) =
+            \left(4, 6\right)}
+    \end{align}
+\end{subequations}
+
+\begin{subequations}
+    \begin{align}
+        \boxed{%
+        \textrm{right}\left(z\right) = \left(\left(\left(
+            z \OR \bb10101010 \right) + 1 \right) \AND \bb01010101 \right)
+            \OR \left( z \AND \bb10101010 \right)
+        }\\
+            \begin{array}{c c c}
+                & \boxed{\left( 5, 6 \right) = \bb00111001} & \\
+                w :=& z \OR \bb10101010 &= \bb10111011 \\
+                w :=& w + 1 &= \bb10111100 \\
+                w :=& w \AND \bb01010101 &= \bb00010100 \\
+                \tilde{w} :=& z \AND \bb10101010 &= \bb00101000 \\
+                & w \OR \widetilde{w} &= \bb00111100
+            \end{array} \\
+            \begin{array}{c | c c c c c c c c}
+                z & 0 & 0 & 1 & 1 & 1 & 1 & 0 & 0 \\
+                \hline
+                x & & 0 & & 1 & & 1 & & 0 \\
+                y & 0 & & 1 & & 1 & & 0 \\
+            \end{array}
+            \implies \boxed{\textrm{left}\left(\left(5, 6\right)\right) =
+            \left(6, 6\right)}
+    \end{align}
+\end{subequations}
+
+\begin{subequations}
+    \begin{align}
+        \Aboxed{%
+            \textrm{top}\left(z\right) = \left(\left(\left(z \AND \bb10101010
+            \right) -1 \right) \AND \bb10101010 \right) \OR \left( z \AND
+            \bb01010101 \right)
+        }\\
+        \Aboxed{%
+            \textrm{bottom}\left(z\right) = \left(\left(\left(z \OR \bb01010101
+            \right) +1 \right) \AND \bb10101010 \right) \OR \left( z \AND
+            \bb01010101 \right)
+        }
+    \end{align}
+\end{subequations}
+
+item[0].coords $= (5, 6)$, item[1].coords $= (6, 5)$
+\begin{subequations}
+\begin{align}
+    \begin{split}
+        w = \textrm{item[0].key} \XOR \textrm{item[1].key} =& \bb00111001 \\
+        \XOR& \bb00110101 \\
+        =& \bb00001100
+    \end{split} \\
+    \textrm{level of common parent} =
+    \textrm{maxlevel}-\frac{\lfloor \log_2\left(w\right) \rfloor}{2} = 2
+\end{align}
+\end{subequations}
+
+
+\end{document}
