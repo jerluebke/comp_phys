@@ -107,7 +107,6 @@ uint8_t insert( node_t *head, item_t items[] )
     \end{minted}
 \end{frame}
 
-
 \subsection{Searching}
 \begin{frame}[fragile]
     \textbf{Searching for an item}
@@ -126,3 +125,23 @@ node_t *search( uint16_t key, node_t *head )
 }
     \end{minted}
 \end{frame}
+
+\begin{frame}[fragile]
+    \textbf{Comparing the Performance:} fast vs regular inserting \\
+    \begin{minted}[linenos,tabsize=4]{bash}
+~$: bin/timeit.out
+
+TIMEIT regular - 256 items - 100 runs
+average     :   (247.3 +- 39.4) μs
+    max/min :   (425.1 / 229.5) μs
+total time  :   24839.2 μs
+
+TIMEIT fast - 256 items - 100 runs
+average     :   (154.0 +- 23.3) μs
+    max/min :   (291.1 / 143.4) μs
+total time  :   15534.9 μs
+
+    \end{minted}
+\end{frame}
+
+% vim: set ff=unix tw=79 sw=4 ts=4 et ic ai :

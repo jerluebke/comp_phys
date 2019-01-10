@@ -1,10 +1,15 @@
 \textit{cont\dots}
-    \begin{minted}[linenos,firstnumber=13,breaklines,tabsize=4]{c}
-    else {
-        if ( head->children[suffixes[i][0]] != NULL )
-            search_children( head->children[suffixes[i][0]], i, res );
-        if ( head->children[i][1] != NULL )
-            search_children( head->children[suffixes[i][1]], i, res );
-    }
-}
-\end{minted}
+    \begin{minted}[linenos,firstnumber=12,tabsize=4]{bash}
+~$: bin/timeit.out
+
+TIMEIT naive - 1265 items - 100 runs
+average     :   (3511.6 +- 464.3) mus
+    max/min :   (7954.8 / 3382.4) μs
+total time  :   351213.0 μs
+
+TIMEIT quadtree - 1265 items - 100 runs
+average     :   (891.8 +- 133.3) μs
+    max/min :   (1787.1 / 833.7) μs
+total time  :   89300.7 μs
+
+    \end{minted}

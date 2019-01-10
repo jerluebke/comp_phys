@@ -187,3 +187,41 @@ void search_children( node_t *head, int i, dynarr_t *res )
 }
 \end{minted}
 \end{frame}
+
+\begin{frame}[fragile]
+    \textbf{Comparing the Performance:} quadtree vs naive
+    \begin{minted}[linenos,tabsize=4]{bash}
+~$: bin/timeit.out
+
+TIMEIT naive - 256 items - 100 runs
+average     :   (170.9 +- 24.3) μs
+    max/min :   (335.3 / 141.6) μs
+total time  :   17206.8 μs
+
+TIMEIT quadtree - 256 items - 100 runs
+average     :   (154.0 +- 23.3) μs
+    max/min :   (291.1 / 143.4) μs
+total time  :   15534.9 μs
+
+    \end{minted}
+\end{frame}
+
+\begin{frame}[fragile]
+    \textit{cont\dots}
+    \begin{minted}[linenos,firstnumber=12,tabsize=4]{bash}
+~$: bin/timeit.out
+
+TIMEIT naive - 1265 items - 100 runs
+average     :   (3511.6 +- 464.3) mus
+    max/min :   (7954.8 / 3382.4) μs
+total time  :   351213.0 μs
+
+TIMEIT quadtree - 1265 items - 100 runs
+average     :   (891.8 +- 133.3) μs
+    max/min :   (1787.1 / 833.7) μs
+total time  :   89300.7 μs
+
+    \end{minted}
+\end{frame}
+
+% vim: set ff=unix tw=79 sw=4 ts=4 et ic ai :

@@ -1,5 +1,6 @@
 %! TEX program = lualatex
 \documentclass[mathserif]{beamer}
+\usepackage{fontspec}
 \usepackage{amsmath}
 \usepackage{animate}
 \usepackage{graphicx}
@@ -10,6 +11,10 @@
 \usepackage{tikz}
 \usetikzlibrary{backgrounds,graphs,graphdrawing,shapes.geometric}
 \usegdlibrary{trees}
+
+% \usetheme{Singapore}
+\usecolortheme{dolphin}
+\setmonofont{DejaVu Sans Mono}[Scale=MatchLowercase]
 
 \newcommand{\nodelabel}[1]{%
     {\LARGE{\textcolor{blue}{$#1$}}}
@@ -107,7 +112,8 @@
     \tableofcontents
 \end{frame}
 
-\input{slides/motivation.tex}
+\section{Motivation}
+% \input{slides/motivation.tex}
 
 \input{slides/morton.tex}
 
@@ -117,6 +123,8 @@
 \input{slides/implementation.tex}
 
 \input{slides/nearest_neighbours.tex}
+
+\input{slides/references.tex}
 
 \end{document}
 
