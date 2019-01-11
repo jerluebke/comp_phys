@@ -104,6 +104,7 @@ static inline key_t bap( key_t k, lvl_t j, lvl_t l )
  * Returns
  * =======
  * Node * to newly created object
+ *
  */
 static inline Node *make_node( key_t key, const Item *i, lvl_t lvl, Node **c )
 {
@@ -124,6 +125,7 @@ static inline Node *make_node( key_t key, const Item *i, lvl_t lvl, Node **c )
  * Returns
  * =======
  * Node ** to alloc'd memory (pointer to array)
+ *
  */
 static inline Node **make_children( void )
 {
@@ -318,7 +320,12 @@ lvl_t insert_fast( Node *head, const Item *items )
 }
 
 
-/* TODO: is broken for large inputs
+/* insert_simple
+ *
+ * build tree node-by-node (when requiered)
+ * Params see insert_fast
+ * Returns number of newly created nodes
+ *
  */
 lvl_t insert_simple( Node *head, const Item *item )
 {
@@ -332,8 +339,11 @@ lvl_t insert_simple( Node *head, const Item *item )
         return 0;
     }
 
+    /* when reaching the lowest node,
+       it should neither have children nor items */
     assert( head->lvl != maxlvl );
     c = coords2(head->key << DIM*(maxlvl-head->lvl));
+    /* edge length of the next level's quadrants */
     length = 256 / pow(2, head->lvl+1);
     sb |= (item->val->x < (c.x + length)) ? 0 : 1;
     sb |= (item->val->y < (c.y + length)) ? 0 : 2;
@@ -347,17 +357,18 @@ lvl_t insert_simple( Node *head, const Item *item )
     if ( head->c ) {
         head->c[sb] = tmp;
         return 1;
-    } else {
+    } else {    /* head->item != NULL: insert current item in next level,
+                   then reinsert head's item */
         head->c = make_children();
         head->c[sb] = tmp;
         sb = 0;
         sb |= (head->i->val->x < (c.x + length)) ? 0 : 1;
         sb |= (head->i->val->y < (c.y + length)) ? 0 : 2;
 
-        if ( head->c[sb]) {
+        if ( head->c[sb] ) {
             num = 1 + insert_simple(head->c[sb], head->i);
         } else {
-            tmp = make_node( (head->key << DIM) | sb, item, head->lvl+1, NULL );
+            tmp = make_node( (head->key << DIM) | sb, head->i, head->lvl+1, NULL );
             head->c[sb] = tmp;
             num = 2;
         }

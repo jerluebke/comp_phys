@@ -34,6 +34,7 @@ struct item_t {
 
 
 \subsection{Inserting}
+\subsubsection*{The Idea}
 \begin{frame}
     \textbf{Inserting new values - the idea}
     \begin{itemize}
@@ -65,11 +66,12 @@ struct item_t {
     \begin{equation}
         \textrm{level of common parent} =
         \textrm{maxlevel}-\frac{\lfloor \log_2\left(w\right)
-        \rfloor}{\textrm{dim}} = 2
+        \rfloor}{\textrm{dim}} = 3
     \end{equation}
     {\small\textit{(here: maxlevel=4, dim=2)}}
 \end{frame}
 
+\subsubsection*{The Code}
 \begin{frame}[fragile]
     \textbf{Inserting new values - the code}
     \begin{minted}[linenos,breaklines,tabsize=4]{c}
@@ -107,6 +109,55 @@ uint8_t insert( node_t *head, item_t items[] )
     \end{minted}
 \end{frame}
 
+\subsubsection*{An Example}
+\begin{frame}
+    \textbf{Space Seperation Animation}
+    \begin{center}
+        \animategraphics[%
+            % draft,
+            % every=3,
+            type=png,
+            width=.99 \textwidth,
+            controls={play,step,stop},
+            buttonsize=10pt
+        ]{3}{plots/out-}{000}{064}
+    \end{center}
+\end{frame}
+
+\begin{frame}
+    \textbf{Quadtree Construction}
+    \begin{center}
+        \animategraphics[%
+            % draft,
+            % every=3,
+            type=png,
+            width=\textwidth,
+            controls={play,step,stop},
+            buttonsize=10pt
+        ]{3}{graphs/extent_out-}{001}{063}
+    \end{center}
+\end{frame}
+
+\subsubsection*{Performance}
+\begin{frame}[fragile]
+    \textbf{Comparing the Performance:} fast vs regular inserting \\
+    \begin{minted}[linenos,tabsize=4]{bash}
+~$: bin/timeit.out
+
+TIMEIT regular - 256 items - 100 runs
+average     :   (247.3 +- 39.4) μs
+    max/min :   (425.1 / 229.5) μs
+total time  :   24839.2 μs
+
+TIMEIT fast - 256 items - 100 runs
+average     :   (154.0 +- 23.3) μs
+    max/min :   (291.1 / 143.4) μs
+total time  :   15534.9 μs
+
+    \end{minted}
+\end{frame}
+
+
 \subsection{Searching}
 \begin{frame}[fragile]
     \textbf{Searching for an item}
@@ -123,24 +174,6 @@ node_t *search( uint16_t key, node_t *head )
     }
     return head;
 }
-    \end{minted}
-\end{frame}
-
-\begin{frame}[fragile]
-    \textbf{Comparing the Performance:} fast vs regular inserting \\
-    \begin{minted}[linenos,tabsize=4]{bash}
-~$: bin/timeit.out
-
-TIMEIT regular - 256 items - 100 runs
-average     :   (247.3 +- 39.4) μs
-    max/min :   (425.1 / 229.5) μs
-total time  :   24839.2 μs
-
-TIMEIT fast - 256 items - 100 runs
-average     :   (154.0 +- 23.3) μs
-    max/min :   (291.1 / 143.4) μs
-total time  :   15534.9 μs
-
     \end{minted}
 \end{frame}
 
